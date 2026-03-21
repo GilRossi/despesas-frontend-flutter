@@ -6,6 +6,8 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
@@ -17,12 +19,14 @@ class ExpensesListScreen extends StatefulWidget {
     super.key,
     required this.sessionController,
     required this.expensesRepository,
+    required this.financialAssistantRepository,
     required this.reportsRepository,
     required this.reviewOperationsRepository,
   });
 
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
+  final FinancialAssistantRepository financialAssistantRepository;
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
 
@@ -92,6 +96,16 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     );
   }
 
+  Future<void> _openFinancialAssistant() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => FinancialAssistantScreen(
+          financialAssistantRepository: widget.financialAssistantRepository,
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleFlowResult(ExpenseFlowResult? result) async {
     if (!mounted || result == null) {
       return;
@@ -124,6 +138,11 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
           appBar: AppBar(
             title: const Text('Despesas'),
             actions: [
+              IconButton(
+                tooltip: 'Assistente financeiro',
+                onPressed: _openFinancialAssistant,
+                icon: const Icon(Icons.psychology_alt_outlined),
+              ),
               IconButton(
                 tooltip: 'Relatorios',
                 onPressed: _openReports,
@@ -215,6 +234,11 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             onPressed: _openCreateExpense,
                             icon: const Icon(Icons.add),
                             label: const Text('Nova despesa'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _openFinancialAssistant,
+                            icon: const Icon(Icons.psychology_alt_outlined),
+                            label: const Text('Assistente financeiro'),
                           ),
                           OutlinedButton.icon(
                             onPressed: _openReports,

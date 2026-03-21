@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
@@ -12,6 +14,9 @@ import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart'
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
 import 'package:despesas_frontend/features/reports/domain/report_insights.dart';
@@ -318,6 +323,37 @@ class FakeReportsRepository implements ReportsRepository {
         fakeReportsSnapshot(
           referenceMonth: referenceMonth,
           comparePrevious: comparePrevious,
+        );
+  }
+}
+
+class FakeFinancialAssistantRepository implements FinancialAssistantRepository {
+  FakeFinancialAssistantRepository({this.reply, this.error, this.onAsk});
+
+  FinancialAssistantReply? reply;
+  Exception? error;
+  FutureOr<void> Function(String question, DateTime referenceMonth)? onAsk;
+  int askCalls = 0;
+  String? lastQuestion;
+  DateTime? lastReferenceMonth;
+
+  @override
+  Future<FinancialAssistantReply> askQuestion({
+    required String question,
+    required DateTime referenceMonth,
+  }) async {
+    askCalls += 1;
+    lastQuestion = question;
+    lastReferenceMonth = referenceMonth;
+    if (error != null) {
+      throw error!;
+    }
+    await onAsk?.call(question, referenceMonth);
+    return reply ??
+        fakeFinancialAssistantReply(
+          question: question,
+          mode: 'FALLBACK',
+          intent: 'PERIOD_SUMMARY',
         );
   }
 }
@@ -711,5 +747,47 @@ ReportRecommendation fakeReportRecommendation({
     title: title,
     rationale: rationale,
     action: action,
+  );
+}
+
+FinancialAssistantReply fakeFinancialAssistantReply({
+  String question = 'Como posso economizar este mes?',
+  String mode = 'AI',
+  String intent = 'SAVINGS_RECOMMENDATIONS',
+  String answer =
+      'Voce pode revisar os gastos de moradia e reduzir despesas recorrentes menos criticas.',
+  ReportSummary? summary,
+  ReportMonthComparison? monthComparison,
+  ReportCategoryTotal? highestSpendingCategory,
+  List<ReportTopExpense>? topExpenses,
+  List<ReportIncreaseAlert>? increaseAlerts,
+  List<ReportRecurringExpense>? recurringExpenses,
+  List<ReportRecommendation>? recommendations,
+  FinancialAssistantAiUsage? aiUsage,
+}) {
+  return FinancialAssistantReply(
+    question: question,
+    mode: mode,
+    intent: intent,
+    answer: answer,
+    summary: summary ?? fakeReportSummary(),
+    monthComparison: monthComparison ?? fakeReportMonthComparison(),
+    highestSpendingCategory: highestSpendingCategory ?? fakeReportCategoryTotal(),
+    topExpenses: topExpenses ?? [fakeReportTopExpense()],
+    increaseAlerts: increaseAlerts ?? [fakeReportIncreaseAlert()],
+    recurringExpenses: recurringExpenses ?? [fakeReportRecurringExpense()],
+    recommendations: recommendations ?? [fakeReportRecommendation()],
+    aiUsage:
+        aiUsage ??
+        const FinancialAssistantAiUsage(
+          model: 'deepseek-chat',
+          inputTokens: 80,
+          outputTokens: 40,
+          totalTokens: 120,
+          cachedInputTokens: 0,
+          reasoningTokens: 20,
+          toolExecutionCount: 1,
+          finishReason: 'STOP',
+        ),
   );
 }

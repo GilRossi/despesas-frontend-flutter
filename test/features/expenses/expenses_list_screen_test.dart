@@ -3,6 +3,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_form_sc
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
+import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,7 @@ void main() {
         home: ExpensesListScreen(
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -62,6 +64,7 @@ void main() {
               hasPrevious: false,
             ),
           ),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -98,6 +101,7 @@ void main() {
               hasPrevious: false,
             ),
           ),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -146,6 +150,7 @@ void main() {
         home: ExpensesListScreen(
           sessionController: controller,
           expensesRepository: repository,
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -177,6 +182,7 @@ void main() {
         home: ExpensesListScreen(
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -204,6 +210,7 @@ void main() {
         home: ExpensesListScreen(
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -230,6 +237,7 @@ void main() {
         home: ExpensesListScreen(
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -242,5 +250,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ReportsScreen), findsOneWidget);
+  });
+
+  testWidgets('opens financial assistant from main expenses hub', (
+    tester,
+  ) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          reportsRepository: FakeReportsRepository(),
+          reviewOperationsRepository: FakeReviewOperationsRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Assistente financeiro'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FinancialAssistantScreen), findsOneWidget);
   });
 }

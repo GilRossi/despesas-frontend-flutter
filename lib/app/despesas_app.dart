@@ -3,6 +3,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
@@ -14,6 +15,7 @@ class DespesasApp extends StatefulWidget {
     required this.environment,
     required this.sessionController,
     required this.expensesRepository,
+    required this.financialAssistantRepository,
     required this.reportsRepository,
     required this.reviewOperationsRepository,
     this.autoRestoreSession = true,
@@ -22,6 +24,7 @@ class DespesasApp extends StatefulWidget {
   final AppEnvironment environment;
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
+  final FinancialAssistantRepository financialAssistantRepository;
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
   final bool autoRestoreSession;
@@ -62,6 +65,8 @@ class _DespesasAppState extends State<DespesasApp> {
               return ExpensesListScreen(
                 sessionController: widget.sessionController,
                 expensesRepository: widget.expensesRepository,
+                financialAssistantRepository:
+                    widget.financialAssistantRepository,
                 reportsRepository: widget.reportsRepository,
                 reviewOperationsRepository: widget.reviewOperationsRepository,
               );
