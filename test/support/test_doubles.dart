@@ -3,6 +3,7 @@ import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
+import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_payment.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_reference.dart';
@@ -70,14 +71,20 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.error,
     this.detailResult,
     this.detailError,
+    this.registerPaymentError,
+    this.onRegisterPayment,
   });
 
   PagedResult<ExpenseSummary>? result;
   Exception? error;
   ExpenseDetail? detailResult;
   Exception? detailError;
+  Exception? registerPaymentError;
+  void Function(CreateExpensePaymentInput input)? onRegisterPayment;
   int listCalls = 0;
   int detailCalls = 0;
+  int registerPaymentCalls = 0;
+  CreateExpensePaymentInput? lastPaymentInput;
 
   @override
   Future<PagedResult<ExpenseSummary>> listExpenses({
@@ -98,6 +105,16 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw detailError!;
     }
     return detailResult ?? fakeExpenseDetail(id: expenseId);
+  }
+
+  @override
+  Future<void> registerExpensePayment(CreateExpensePaymentInput input) async {
+    registerPaymentCalls += 1;
+    lastPaymentInput = input;
+    if (registerPaymentError != null) {
+      throw registerPaymentError!;
+    }
+    onRegisterPayment?.call(input);
   }
 }
 

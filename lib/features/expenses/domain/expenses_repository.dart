@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
@@ -9,4 +10,6 @@ abstract interface class ExpensesRepository {
   });
 
   Future<ExpenseDetail> getExpenseDetail(int expenseId);
+
+  Future<void> registerExpensePayment(CreateExpensePaymentInput input);
 }
