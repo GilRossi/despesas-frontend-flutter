@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/network/authorized_request_executor.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
+import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
@@ -131,5 +132,32 @@ class HttpExpensesRepository implements ExpensesRepository {
     if (response.statusCode >= 400) {
       throw ApiException.fromResponse(response);
     }
+  }
+
+  @override
+  Future<void> registerExpensePayment(CreateExpensePaymentInput input) async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.postJson(
+        '/api/v1/payments',
+        headers: headers,
+        body: {
+          'expenseId': input.expenseId,
+          'amount': input.amount,
+          'paidAt': _formatDate(input.paidAt),
+          'method': input.method,
+          'notes': input.notes.trim(),
+        },
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+  }
+
+  String _formatDate(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
   }
 }

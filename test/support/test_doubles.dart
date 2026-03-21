@@ -4,6 +4,7 @@ import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
+import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_payment.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_reference.dart';
@@ -77,9 +78,11 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.createError,
     this.updateError,
     this.deleteError,
+    this.registerPaymentError,
     this.onCreate,
     this.onUpdate,
     this.onDelete,
+    this.onRegisterPayment,
   });
 
   PagedResult<ExpenseSummary>? result;
@@ -91,19 +94,23 @@ class FakeExpensesRepository implements ExpensesRepository {
   Exception? createError;
   Exception? updateError;
   Exception? deleteError;
+  Exception? registerPaymentError;
   void Function(SaveExpenseInput input)? onCreate;
   void Function(int expenseId, SaveExpenseInput input)? onUpdate;
   void Function(int expenseId)? onDelete;
+  void Function(CreateExpensePaymentInput input)? onRegisterPayment;
   int listCalls = 0;
   int detailCalls = 0;
   int catalogCalls = 0;
   int createCalls = 0;
   int updateCalls = 0;
   int deleteCalls = 0;
+  int registerPaymentCalls = 0;
   SaveExpenseInput? lastCreatedInput;
   SaveExpenseInput? lastUpdatedInput;
   int? lastUpdatedExpenseId;
   int? lastDeletedExpenseId;
+  CreateExpensePaymentInput? lastPaymentInput;
 
   @override
   Future<PagedResult<ExpenseSummary>> listExpenses({
@@ -167,6 +174,16 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw deleteError!;
     }
     onDelete?.call(expenseId);
+  }
+
+  @override
+  Future<void> registerExpensePayment(CreateExpensePaymentInput input) async {
+    registerPaymentCalls += 1;
+    lastPaymentInput = input;
+    if (registerPaymentError != null) {
+      throw registerPaymentError!;
+    }
+    onRegisterPayment?.call(input);
   }
 }
 
