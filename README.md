@@ -10,9 +10,20 @@ Esta V1 mobile implementa apenas:
 - restauração de sessão
 - refresh token
 - lista read-only de despesas
+- detalhe read-only de despesa
+- histórico read-only de pagamentos no detalhe
 - logout
 
 O backend continua como fonte de verdade. Nenhuma regra financeira foi movida para o app.
+
+## Baseline visual
+
+Toda tela atual e futura deve respeitar esta premissa:
+
+- sem overflow visual, faixa amarela/preta ou clipping
+- segura com teclado aberto
+- segura em altura reduzida
+- `SafeArea` e rolagem quando o viewport encolher
 
 ## Configuração
 
