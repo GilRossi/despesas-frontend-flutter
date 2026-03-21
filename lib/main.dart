@@ -6,6 +6,7 @@ import 'package:despesas_frontend/core/network/despesas_api_client.dart';
 import 'package:despesas_frontend/features/auth/data/http_auth_repository.dart';
 import 'package:despesas_frontend/features/auth/data/secure_session_store.dart';
 import 'package:despesas_frontend/features/expenses/data/http_expenses_repository.dart';
+import 'package:despesas_frontend/features/review_operations/data/http_review_operations_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -30,12 +31,16 @@ void main() {
     sessionManager: sessionController,
   );
   final expensesRepository = HttpExpensesRepository(authorizedRequestExecutor);
+  final reviewOperationsRepository = HttpReviewOperationsRepository(
+    authorizedRequestExecutor,
+  );
 
   runApp(
     DespesasApp(
       environment: environment,
       sessionController: sessionController,
       expensesRepository: expensesRepository,
+      reviewOperationsRepository: reviewOperationsRepository,
     ),
   );
 }

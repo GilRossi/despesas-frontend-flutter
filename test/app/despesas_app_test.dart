@@ -25,6 +25,7 @@ void main() {
         ),
         sessionController: controller,
         expensesRepository: FakeExpensesRepository(),
+        reviewOperationsRepository: FakeReviewOperationsRepository(),
         autoRestoreSession: false,
       ),
     );
@@ -49,6 +50,7 @@ void main() {
         ),
         sessionController: controller,
         expensesRepository: FakeExpensesRepository(),
+        reviewOperationsRepository: FakeReviewOperationsRepository(),
         autoRestoreSession: false,
       ),
     );

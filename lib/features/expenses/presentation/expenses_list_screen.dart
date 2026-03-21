@@ -6,6 +6,8 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
+import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
+import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
 
 class ExpensesListScreen extends StatefulWidget {
@@ -13,10 +15,12 @@ class ExpensesListScreen extends StatefulWidget {
     super.key,
     required this.sessionController,
     required this.expensesRepository,
+    required this.reviewOperationsRepository,
   });
 
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
+  final ReviewOperationsRepository reviewOperationsRepository;
 
   @override
   State<ExpensesListScreen> createState() => _ExpensesListScreenState();
@@ -65,6 +69,16 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     await _handleFlowResult(result);
   }
 
+  Future<void> _openReviewOperations() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ReviewOperationsListScreen(
+          reviewOperationsRepository: widget.reviewOperationsRepository,
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleFlowResult(ExpenseFlowResult? result) async {
     if (!mounted || result == null) {
       return;
@@ -91,11 +105,18 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       listenable: Listenable.merge([widget.sessionController, _viewModel]),
       builder: (context, _) {
         final user = widget.sessionController.currentUser;
+        final canReviewOperations = user?.role == 'OWNER';
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('Despesas'),
             actions: [
+              if (canReviewOperations)
+                IconButton(
+                  tooltip: 'Review operations',
+                  onPressed: _openReviewOperations,
+                  icon: const Icon(Icons.fact_check_outlined),
+                ),
               IconButton(
                 tooltip: 'Nova despesa',
                 onPressed: _openCreateExpense,
@@ -177,6 +198,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             icon: const Icon(Icons.add),
                             label: const Text('Nova despesa'),
                           ),
+                          if (canReviewOperations)
+                            OutlinedButton.icon(
+                              onPressed: _openReviewOperations,
+                              icon: const Icon(Icons.fact_check_outlined),
+                              label: const Text('Review operations'),
+                            ),
                         ],
                       ),
                     ),

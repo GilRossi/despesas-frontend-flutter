@@ -12,6 +12,11 @@ import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart'
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_action_result.dart';
+import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_detail.dart';
+import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_item.dart';
+import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_summary.dart';
+import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({
@@ -187,6 +192,96 @@ class FakeExpensesRepository implements ExpensesRepository {
   }
 }
 
+class FakeReviewOperationsRepository implements ReviewOperationsRepository {
+  FakeReviewOperationsRepository({
+    this.listResult,
+    this.listError,
+    this.detailResult,
+    this.detailError,
+    this.approveResult,
+    this.approveError,
+    this.rejectResult,
+    this.rejectError,
+    this.onApprove,
+    this.onReject,
+  });
+
+  PagedResult<EmailIngestionReviewSummary>? listResult;
+  Exception? listError;
+  EmailIngestionReviewDetail? detailResult;
+  Exception? detailError;
+  EmailIngestionReviewActionResult? approveResult;
+  Exception? approveError;
+  EmailIngestionReviewActionResult? rejectResult;
+  Exception? rejectError;
+  void Function(int ingestionId)? onApprove;
+  void Function(int ingestionId)? onReject;
+  int listCalls = 0;
+  int detailCalls = 0;
+  int approveCalls = 0;
+  int rejectCalls = 0;
+  int? lastDetailId;
+  int? lastApprovedId;
+  int? lastRejectedId;
+
+  @override
+  Future<PagedResult<EmailIngestionReviewSummary>> listPendingReviews({
+    int page = 0,
+    int size = 20,
+  }) async {
+    listCalls += 1;
+    if (listError != null) {
+      throw listError!;
+    }
+    return listResult ?? emptyReviewPage();
+  }
+
+  @override
+  Future<EmailIngestionReviewDetail> getReviewDetail(int ingestionId) async {
+    detailCalls += 1;
+    lastDetailId = ingestionId;
+    if (detailError != null) {
+      throw detailError!;
+    }
+    return detailResult ?? fakeReviewDetail(ingestionId: ingestionId);
+  }
+
+  @override
+  Future<EmailIngestionReviewActionResult> approveReview(
+    int ingestionId,
+  ) async {
+    approveCalls += 1;
+    lastApprovedId = ingestionId;
+    if (approveError != null) {
+      throw approveError!;
+    }
+    onApprove?.call(ingestionId);
+    return approveResult ??
+        fakeReviewActionResult(
+          ingestionId: ingestionId,
+          decision: 'AUTO_IMPORTED',
+          decisionReason: 'MANUALLY_IMPORTED',
+          expenseId: 88,
+        );
+  }
+
+  @override
+  Future<EmailIngestionReviewActionResult> rejectReview(int ingestionId) async {
+    rejectCalls += 1;
+    lastRejectedId = ingestionId;
+    if (rejectError != null) {
+      throw rejectError!;
+    }
+    onReject?.call(ingestionId);
+    return rejectResult ??
+        fakeReviewActionResult(
+          ingestionId: ingestionId,
+          decision: 'IGNORED',
+          decisionReason: 'MANUALLY_REJECTED',
+        );
+  }
+}
+
 MobileSession fakeSession({
   String accessToken = 'access-token',
   String refreshToken = 'refresh-token',
@@ -321,5 +416,112 @@ ApiException fakeApiException({
     statusCode: statusCode,
     message: message,
     fieldErrors: fieldErrors,
+  );
+}
+
+PagedResult<EmailIngestionReviewSummary> emptyReviewPage() {
+  return const PagedResult(
+    items: [],
+    page: 0,
+    size: 20,
+    totalElements: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+  );
+}
+
+EmailIngestionReviewSummary fakeReviewSummary({
+  int ingestionId = 51,
+  String subject = 'Compra Cobasi',
+  String sender = 'noreply@cobasi.com.br',
+  String sourceAccount = 'financeiro@gmail.com',
+  String merchantOrPayee = 'Cobasi',
+  double totalAmount = 289.7,
+  String summary = 'Compra pet shop',
+  String classification = 'MANUAL_PURCHASE',
+  double confidence = 0.72,
+  String decisionReason = 'REVIEW_REQUESTED',
+}) {
+  return EmailIngestionReviewSummary(
+    ingestionId: ingestionId,
+    sourceAccount: sourceAccount,
+    sender: sender,
+    subject: subject,
+    receivedAt: DateTime.parse('2026-03-19T10:15:30Z'),
+    merchantOrPayee: merchantOrPayee,
+    totalAmount: totalAmount,
+    currency: 'BRL',
+    summary: summary,
+    classification: classification,
+    confidence: confidence,
+    decisionReason: decisionReason,
+  );
+}
+
+EmailIngestionReviewItem fakeReviewItem({
+  String description = 'Racao',
+  double amount = 289.7,
+  double? quantity,
+}) {
+  return EmailIngestionReviewItem(
+    description: description,
+    amount: amount,
+    quantity: quantity,
+  );
+}
+
+EmailIngestionReviewDetail fakeReviewDetail({
+  int ingestionId = 51,
+  String subject = 'Compra Cobasi',
+  String sender = 'noreply@cobasi.com.br',
+  String sourceAccount = 'financeiro@gmail.com',
+  String merchantOrPayee = 'Cobasi',
+  double totalAmount = 289.7,
+  String summary = 'Compra pet shop',
+  String classification = 'MANUAL_PURCHASE',
+  double confidence = 0.72,
+  String decisionReason = 'REVIEW_REQUESTED',
+  List<EmailIngestionReviewItem>? items,
+}) {
+  return EmailIngestionReviewDetail(
+    ingestionId: ingestionId,
+    sourceAccount: sourceAccount,
+    externalMessageId: 'msg-1',
+    sender: sender,
+    subject: subject,
+    receivedAt: DateTime.parse('2026-03-19T10:15:30Z'),
+    merchantOrPayee: merchantOrPayee,
+    suggestedCategoryName: 'Pets',
+    suggestedSubcategoryName: 'Pet shop',
+    totalAmount: totalAmount,
+    dueDate: DateTime.utc(2026, 3, 25),
+    occurredOn: DateTime.utc(2026, 3, 19),
+    currency: 'BRL',
+    summary: summary,
+    classification: classification,
+    confidence: confidence,
+    rawReference: 'gmail:msg-1',
+    desiredDecision: 'REVIEW',
+    finalDecision: 'REVIEW_REQUIRED',
+    decisionReason: decisionReason,
+    importedExpenseId: null,
+    createdAt: DateTime.parse('2026-03-19T10:15:30Z'),
+    updatedAt: DateTime.parse('2026-03-19T10:16:30Z'),
+    items: items ?? [fakeReviewItem()],
+  );
+}
+
+EmailIngestionReviewActionResult fakeReviewActionResult({
+  int ingestionId = 51,
+  String decision = 'AUTO_IMPORTED',
+  String decisionReason = 'MANUALLY_IMPORTED',
+  int? expenseId = 88,
+}) {
+  return EmailIngestionReviewActionResult(
+    ingestionId: ingestionId,
+    decision: decision,
+    decisionReason: decisionReason,
+    expenseId: expenseId,
   );
 }
