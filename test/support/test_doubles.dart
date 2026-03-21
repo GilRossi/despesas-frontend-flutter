@@ -3,12 +3,14 @@ import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
+import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_payment.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_reference.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
+import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({
@@ -70,14 +72,38 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.error,
     this.detailResult,
     this.detailError,
+    this.catalogOptions,
+    this.catalogError,
+    this.createError,
+    this.updateError,
+    this.deleteError,
+    this.onCreate,
+    this.onUpdate,
+    this.onDelete,
   });
 
   PagedResult<ExpenseSummary>? result;
   Exception? error;
   ExpenseDetail? detailResult;
   Exception? detailError;
+  List<CatalogOption>? catalogOptions;
+  Exception? catalogError;
+  Exception? createError;
+  Exception? updateError;
+  Exception? deleteError;
+  void Function(SaveExpenseInput input)? onCreate;
+  void Function(int expenseId, SaveExpenseInput input)? onUpdate;
+  void Function(int expenseId)? onDelete;
   int listCalls = 0;
   int detailCalls = 0;
+  int catalogCalls = 0;
+  int createCalls = 0;
+  int updateCalls = 0;
+  int deleteCalls = 0;
+  SaveExpenseInput? lastCreatedInput;
+  SaveExpenseInput? lastUpdatedInput;
+  int? lastUpdatedExpenseId;
+  int? lastDeletedExpenseId;
 
   @override
   Future<PagedResult<ExpenseSummary>> listExpenses({
@@ -98,6 +124,49 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw detailError!;
     }
     return detailResult ?? fakeExpenseDetail(id: expenseId);
+  }
+
+  @override
+  Future<List<CatalogOption>> listCatalogOptions() async {
+    catalogCalls += 1;
+    if (catalogError != null) {
+      throw catalogError!;
+    }
+    return catalogOptions ?? fakeCatalogOptions();
+  }
+
+  @override
+  Future<void> createExpense(SaveExpenseInput input) async {
+    createCalls += 1;
+    lastCreatedInput = input;
+    if (createError != null) {
+      throw createError!;
+    }
+    onCreate?.call(input);
+  }
+
+  @override
+  Future<void> updateExpense({
+    required int expenseId,
+    required SaveExpenseInput input,
+  }) async {
+    updateCalls += 1;
+    lastUpdatedExpenseId = expenseId;
+    lastUpdatedInput = input;
+    if (updateError != null) {
+      throw updateError!;
+    }
+    onUpdate?.call(expenseId, input);
+  }
+
+  @override
+  Future<void> deleteExpense(int expenseId) async {
+    deleteCalls += 1;
+    lastDeletedExpenseId = expenseId;
+    if (deleteError != null) {
+      throw deleteError!;
+    }
+    onDelete?.call(expenseId);
   }
 }
 
@@ -208,9 +277,32 @@ PagedResult<ExpenseSummary> emptyPage() {
   );
 }
 
+List<CatalogOption> fakeCatalogOptions() {
+  return const [
+    CatalogOption(
+      id: 1,
+      name: 'Casa',
+      subcategories: [
+        ExpenseReference(id: 11, name: 'Internet'),
+        ExpenseReference(id: 12, name: 'Energia'),
+      ],
+    ),
+    CatalogOption(
+      id: 2,
+      name: 'Veiculo',
+      subcategories: [ExpenseReference(id: 21, name: 'Combustivel')],
+    ),
+  ];
+}
+
 ApiException fakeApiException({
   int statusCode = 422,
   String message = 'Falha simulada',
+  Map<String, String> fieldErrors = const {},
 }) {
-  return ApiException(statusCode: statusCode, message: message);
+  return ApiException(
+    statusCode: statusCode,
+    message: message,
+    fieldErrors: fieldErrors,
+  );
 }

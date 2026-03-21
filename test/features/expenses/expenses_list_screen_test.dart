@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
@@ -143,5 +144,32 @@ void main() {
     expect(find.text('Detalhe da despesa'), findsOneWidget);
     expect(find.text('Resumo'), findsOneWidget);
     expect(repository.detailCalls, 1);
+  });
+
+  testWidgets('opens expense form when tapping new expense action', (
+    tester,
+  ) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(result: emptyPage()),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Nova despesa').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExpenseFormScreen), findsOneWidget);
+    expect(find.text('Nova despesa'), findsWidgets);
   });
 }

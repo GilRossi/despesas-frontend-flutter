@@ -3,6 +3,8 @@ import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
 import 'package:flutter/material.dart';
 
@@ -41,15 +43,44 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     return widget.sessionController.logout();
   }
 
-  Future<void> _openExpenseDetail(ExpenseSummary expense) {
-    return Navigator.of(context).push(
-      MaterialPageRoute<void>(
+  Future<void> _openCreateExpense() async {
+    final result = await Navigator.of(context).push<ExpenseFlowResult>(
+      MaterialPageRoute(
+        builder: (_) =>
+            ExpenseFormScreen(expensesRepository: widget.expensesRepository),
+      ),
+    );
+    await _handleFlowResult(result);
+  }
+
+  Future<void> _openExpenseDetail(ExpenseSummary expense) async {
+    final result = await Navigator.of(context).push<ExpenseFlowResult>(
+      MaterialPageRoute(
         builder: (_) => ExpenseDetailScreen(
           expenseId: expense.id,
           expensesRepository: widget.expensesRepository,
         ),
       ),
     );
+    await _handleFlowResult(result);
+  }
+
+  Future<void> _handleFlowResult(ExpenseFlowResult? result) async {
+    if (!mounted || result == null) {
+      return;
+    }
+
+    if (result.shouldReload) {
+      await _viewModel.load();
+    }
+
+    if (!mounted || result.message == null) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message!)));
   }
 
   @override
@@ -65,6 +96,11 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
           appBar: AppBar(
             title: const Text('Despesas'),
             actions: [
+              IconButton(
+                tooltip: 'Nova despesa',
+                onPressed: _openCreateExpense,
+                icon: const Icon(Icons.add_circle_outline),
+              ),
               IconButton(
                 tooltip: 'Sair',
                 onPressed: _logout,
@@ -107,6 +143,45 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        runSpacing: 16,
+                        spacing: 16,
+                        children: [
+                          SizedBox(
+                            width: 420,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Gestao principal de despesas',
+                                  style: theme.textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Crie, acompanhe, edite e remova despesas do household atual sem voltar ao legado.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: const Color(0xFF65727B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          FilledButton.icon(
+                            onPressed: _openCreateExpense,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Nova despesa'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   if (_viewModel.isLoading) ...[
                     const SizedBox(height: 120),
                     const Center(child: CircularProgressIndicator()),
@@ -121,11 +196,11 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                     const _StateCard(
                       title: 'Nenhuma despesa encontrada',
                       message:
-                          'Quando houver lancamentos neste household, eles aparecerao aqui.',
+                          'Crie a primeira despesa do household para iniciar a gestao pelo Flutter Web.',
                     ),
                   ] else ...[
                     Text(
-                      'Lista read-only do household atual',
+                      'Despesas do household atual',
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),

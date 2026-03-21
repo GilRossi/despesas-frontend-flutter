@@ -1,9 +1,12 @@
-import 'package:despesas_frontend/core/utils/currency_formatter.dart';
+import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_payment.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_view_model.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:flutter/material.dart';
 
 class ExpenseDetailScreen extends StatefulWidget {
@@ -22,6 +25,8 @@ class ExpenseDetailScreen extends StatefulWidget {
 
 class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   late final ExpenseDetailViewModel _viewModel;
+  ExpenseFlowResult? _resultOnClose;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -38,49 +43,178 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     super.dispose();
   }
 
+  void _close() {
+    Navigator.of(context).pop(_resultOnClose);
+  }
+
+  Future<void> _openEditExpense(ExpenseDetail expense) async {
+    final result = await Navigator.of(context).push<ExpenseFlowResult>(
+      MaterialPageRoute(
+        builder: (_) => ExpenseFormScreen(
+          expensesRepository: widget.expensesRepository,
+          initialExpense: expense,
+        ),
+      ),
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    if (result.shouldReload) {
+      _resultOnClose = const ExpenseFlowResult.reload();
+      await _viewModel.load();
+    }
+
+    if (!mounted || result.message == null) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message!)));
+  }
+
+  Future<void> _confirmDelete(ExpenseDetail expense) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Excluir despesa'),
+              content: Text(
+                'Tem certeza que deseja excluir "${expense.description}"? Essa acao nao pode ser desfeita.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Excluir'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    setState(() => _isDeleting = true);
+    try {
+      await widget.expensesRepository.deleteExpense(expense.id);
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(
+        const ExpenseFlowResult.reload(
+          message: 'Despesa excluida com sucesso.',
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nao foi possivel excluir a despesa.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Detalhe da despesa')),
-          body: SafeArea(
-            top: false,
-            child: Builder(
-              builder: (context) {
-                if (_viewModel.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (_viewModel.isNotFound) {
-                  return _DetailStateCard(
-                    title: 'Despesa nao encontrada',
-                    message:
-                        'Esse lancamento pode ter sido removido ou nao pertence ao household atual.',
-                  );
-                }
-
-                if (_viewModel.hasError) {
-                  return _DetailStateCard(
-                    title: 'Nao foi possivel carregar a despesa.',
-                    message: _viewModel.errorMessage!,
-                    actionLabel: 'Tentar novamente',
-                    onAction: _viewModel.load,
-                  );
-                }
-
-                final expense = _viewModel.expense;
-                if (expense == null) {
-                  return const SizedBox.shrink();
-                }
-
-                return _DetailContent(expense: expense);
-              },
-            ),
-          ),
-        );
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _close();
+        }
       },
+      child: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) {
+          final expense = _viewModel.expense;
+
+          return Scaffold(
+            appBar: AppBar(
+              leading: BackButton(onPressed: _close),
+              title: const Text('Detalhe da despesa'),
+              actions: [
+                if (expense != null && !_viewModel.isLoading) ...[
+                  IconButton(
+                    tooltip: 'Editar',
+                    onPressed: _isDeleting
+                        ? null
+                        : () => _openEditExpense(expense),
+                    icon: const Icon(Icons.edit_outlined),
+                  ),
+                  IconButton(
+                    tooltip: 'Excluir',
+                    onPressed: _isDeleting
+                        ? null
+                        : () => _confirmDelete(expense),
+                    icon: _isDeleting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.delete_outline),
+                  ),
+                ],
+              ],
+            ),
+            body: SafeArea(
+              top: false,
+              child: Builder(
+                builder: (context) {
+                  if (_viewModel.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (_viewModel.isNotFound) {
+                    return const _DetailStateCard(
+                      title: 'Despesa nao encontrada',
+                      message:
+                          'Esse lancamento pode ter sido removido ou nao pertence ao household atual.',
+                    );
+                  }
+
+                  if (_viewModel.hasError) {
+                    return _DetailStateCard(
+                      title: 'Nao foi possivel carregar a despesa.',
+                      message: _viewModel.errorMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: _viewModel.load,
+                    );
+                  }
+
+                  if (expense == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return _DetailContent(expense: expense);
+                },
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

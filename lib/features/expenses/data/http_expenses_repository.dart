@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/network/authorized_request_executor.dart';
+import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
+import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 
 class HttpExpensesRepository implements ExpensesRepository {
   HttpExpensesRepository(this._authorizedRequestExecutor);
@@ -62,5 +64,72 @@ class HttpExpensesRepository implements ExpensesRepository {
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final data = decoded['data'] as Map<String, dynamic>;
     return ExpenseDetail.fromJson(data);
+  }
+
+  @override
+  Future<List<CatalogOption>> listCatalogOptions() async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.get(
+        '/api/v1/catalog/options',
+        headers: headers,
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = decoded['data'] as List<dynamic>? ?? const [];
+    return data
+        .map((item) => CatalogOption.fromJson(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> createExpense(SaveExpenseInput input) async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.postJson(
+        '/api/v1/expenses',
+        headers: headers,
+        body: input.toJson(),
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+  }
+
+  @override
+  Future<void> updateExpense({
+    required int expenseId,
+    required SaveExpenseInput input,
+  }) async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.patchJson(
+        '/api/v1/expenses/$expenseId',
+        headers: headers,
+        body: input.toJson(),
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+  }
+
+  @override
+  Future<void> deleteExpense(int expenseId) async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.delete(
+        '/api/v1/expenses/$expenseId',
+        headers: headers,
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
   }
 }
