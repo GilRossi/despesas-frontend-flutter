@@ -1,0 +1,257 @@
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/utils/currency_formatter.dart';
+import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
+import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
+import 'package:flutter/material.dart';
+
+class ExpensesListScreen extends StatefulWidget {
+  const ExpensesListScreen({
+    super.key,
+    required this.sessionController,
+    required this.expensesRepository,
+  });
+
+  final SessionController sessionController;
+  final ExpensesRepository expensesRepository;
+
+  @override
+  State<ExpensesListScreen> createState() => _ExpensesListScreenState();
+}
+
+class _ExpensesListScreenState extends State<ExpensesListScreen> {
+  late final ExpensesListViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = ExpensesListViewModel(
+      expensesRepository: widget.expensesRepository,
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _logout() {
+    return widget.sessionController.logout();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListenableBuilder(
+      listenable: Listenable.merge([widget.sessionController, _viewModel]),
+      builder: (context, _) {
+        final user = widget.sessionController.currentUser;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Despesas'),
+            actions: [
+              IconButton(
+                tooltip: 'Sair',
+                onPressed: _logout,
+                icon: const Icon(Icons.logout),
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(60),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.name ?? 'Sessao ativa',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user?.email ?? '',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF65727B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          body: RefreshIndicator(
+            onRefresh: _viewModel.load,
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                if (_viewModel.isLoading) ...[
+                  const SizedBox(height: 120),
+                  const Center(child: CircularProgressIndicator()),
+                ] else if (_viewModel.errorMessage != null) ...[
+                  _StateCard(
+                    title: 'Nao foi possivel carregar as despesas.',
+                    message: _viewModel.errorMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: _viewModel.load,
+                  ),
+                ] else if (_viewModel.isEmpty) ...[
+                  const _StateCard(
+                    title: 'Nenhuma despesa encontrada',
+                    message:
+                        'Quando houver lancamentos neste household, eles aparecerao aqui.',
+                  ),
+                ] else ...[
+                  Text(
+                    'Lista read-only do household atual',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  for (final expense in _viewModel.expenses) ...[
+                    _ExpenseCard(expense: expense),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ExpenseCard extends StatelessWidget {
+  const _ExpenseCard({required this.expense});
+
+  final ExpenseSummary expense;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dueDate =
+        '${expense.dueDate.day.toString().padLeft(2, '0')}/${expense.dueDate.month.toString().padLeft(2, '0')}/${expense.dueDate.year}';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        expense.description,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${expense.category.name} · ${expense.subcategory.name}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF65727B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  formatCurrency(expense.amount),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MetaChip(label: 'Vence em $dueDate'),
+                _MetaChip(label: expense.status),
+                _MetaChip(label: expense.context),
+                if (expense.overdue) const _MetaChip(label: 'Atrasada'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F4F3),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(label),
+      ),
+    );
+  }
+}
+
+class _StateCard extends StatelessWidget {
+  const _StateCard({
+    required this.title,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String title;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF65727B),
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 16),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
