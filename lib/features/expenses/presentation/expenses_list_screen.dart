@@ -6,6 +6,8 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
+import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
+import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -15,11 +17,13 @@ class ExpensesListScreen extends StatefulWidget {
     super.key,
     required this.sessionController,
     required this.expensesRepository,
+    required this.reportsRepository,
     required this.reviewOperationsRepository,
   });
 
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
+  final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
 
   @override
@@ -79,6 +83,15 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     );
   }
 
+  Future<void> _openReports() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            ReportsScreen(reportsRepository: widget.reportsRepository),
+      ),
+    );
+  }
+
   Future<void> _handleFlowResult(ExpenseFlowResult? result) async {
     if (!mounted || result == null) {
       return;
@@ -111,6 +124,11 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
           appBar: AppBar(
             title: const Text('Despesas'),
             actions: [
+              IconButton(
+                tooltip: 'Relatorios',
+                onPressed: _openReports,
+                icon: const Icon(Icons.insert_chart_outlined),
+              ),
               if (canReviewOperations)
                 IconButton(
                   tooltip: 'Review operations',
@@ -197,6 +215,11 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             onPressed: _openCreateExpense,
                             icon: const Icon(Icons.add),
                             label: const Text('Nova despesa'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _openReports,
+                            icon: const Icon(Icons.insert_chart_outlined),
+                            label: const Text('Relatorios'),
                           ),
                           if (canReviewOperations)
                             OutlinedButton.icon(

@@ -12,6 +12,16 @@ import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart'
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
+import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
+import 'package:despesas_frontend/features/reports/domain/report_insights.dart';
+import 'package:despesas_frontend/features/reports/domain/report_month_comparison.dart';
+import 'package:despesas_frontend/features/reports/domain/report_recommendation.dart';
+import 'package:despesas_frontend/features/reports/domain/report_recurring_expense.dart';
+import 'package:despesas_frontend/features/reports/domain/report_summary.dart';
+import 'package:despesas_frontend/features/reports/domain/report_top_expense.dart';
+import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
+import 'package:despesas_frontend/features/reports/domain/reports_snapshot.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_action_result.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_detail.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_item.dart';
@@ -282,6 +292,36 @@ class FakeReviewOperationsRepository implements ReviewOperationsRepository {
   }
 }
 
+class FakeReportsRepository implements ReportsRepository {
+  FakeReportsRepository({this.snapshot, this.error, this.onLoad});
+
+  ReportsSnapshot? snapshot;
+  Exception? error;
+  void Function(DateTime referenceMonth, bool comparePrevious)? onLoad;
+  int loadCalls = 0;
+  DateTime? lastReferenceMonth;
+  bool? lastComparePrevious;
+
+  @override
+  Future<ReportsSnapshot> loadMonthlyReport({
+    required DateTime referenceMonth,
+    required bool comparePrevious,
+  }) async {
+    loadCalls += 1;
+    lastReferenceMonth = referenceMonth;
+    lastComparePrevious = comparePrevious;
+    if (error != null) {
+      throw error!;
+    }
+    onLoad?.call(referenceMonth, comparePrevious);
+    return snapshot ??
+        fakeReportsSnapshot(
+          referenceMonth: referenceMonth,
+          comparePrevious: comparePrevious,
+        );
+  }
+}
+
 MobileSession fakeSession({
   String accessToken = 'access-token',
   String refreshToken = 'refresh-token',
@@ -523,5 +563,153 @@ EmailIngestionReviewActionResult fakeReviewActionResult({
     decision: decision,
     decisionReason: decisionReason,
     expenseId: expenseId,
+  );
+}
+
+ReportsSnapshot fakeReportsSnapshot({
+  DateTime? referenceMonth,
+  bool comparePrevious = true,
+  ReportSummary? summary,
+  ReportInsights? insights,
+  List<ReportRecommendation>? recommendations,
+}) {
+  final month = referenceMonth ?? DateTime(2026, 3);
+
+  return ReportsSnapshot(
+    referenceMonth: DateTime(month.year, month.month),
+    comparePrevious: comparePrevious,
+    summary: summary ?? fakeReportSummary(),
+    insights: insights ?? fakeReportInsights(),
+    recommendations: recommendations ?? [fakeReportRecommendation()],
+  );
+}
+
+ReportSummary fakeReportSummary({
+  DateTime? from,
+  DateTime? to,
+  int totalExpenses = 3,
+  double totalAmount = 420,
+  double paidAmount = 180,
+  double remainingAmount = 240,
+  String highestSpendingCategory = 'Moradia',
+  List<ReportCategoryTotal>? categoryTotals,
+  List<ReportTopExpense>? topExpenses,
+}) {
+  return ReportSummary(
+    from: from ?? DateTime.utc(2026, 3, 1),
+    to: to ?? DateTime.utc(2026, 3, 31),
+    totalExpenses: totalExpenses,
+    totalAmount: totalAmount,
+    paidAmount: paidAmount,
+    remainingAmount: remainingAmount,
+    highestSpendingCategory: highestSpendingCategory,
+    categoryTotals: categoryTotals ?? [fakeReportCategoryTotal()],
+    topExpenses: topExpenses ?? [fakeReportTopExpense()],
+  );
+}
+
+ReportCategoryTotal fakeReportCategoryTotal({
+  int categoryId = 10,
+  String categoryName = 'Moradia',
+  double totalAmount = 220,
+  int expensesCount = 2,
+  double sharePercentage = 52.38,
+}) {
+  return ReportCategoryTotal(
+    categoryId: categoryId,
+    categoryName: categoryName,
+    totalAmount: totalAmount,
+    expensesCount: expensesCount,
+    sharePercentage: sharePercentage,
+  );
+}
+
+ReportTopExpense fakeReportTopExpense({
+  int expenseId = 7,
+  String description = 'Aluguel',
+  double amount = 220,
+}) {
+  return ReportTopExpense(
+    expenseId: expenseId,
+    description: description,
+    amount: amount,
+    dueDate: DateTime.utc(2026, 3, 10),
+    categoryName: 'Moradia',
+    subcategoryName: 'Aluguel',
+    context: 'CASA',
+  );
+}
+
+ReportInsights fakeReportInsights({
+  ReportMonthComparison? monthComparison,
+  List<ReportIncreaseAlert>? increaseAlerts,
+  List<ReportRecurringExpense>? recurringExpenses,
+}) {
+  return ReportInsights(
+    monthComparison: monthComparison ?? fakeReportMonthComparison(),
+    increaseAlerts: increaseAlerts ?? [fakeReportIncreaseAlert()],
+    recurringExpenses: recurringExpenses ?? [fakeReportRecurringExpense()],
+  );
+}
+
+ReportMonthComparison fakeReportMonthComparison({
+  String currentMonth = '2026-03',
+  double currentTotal = 420,
+  String previousMonth = '2026-02',
+  double previousTotal = 300,
+  double deltaAmount = 120,
+  double deltaPercentage = 40,
+}) {
+  return ReportMonthComparison(
+    currentMonth: currentMonth,
+    currentTotal: currentTotal,
+    previousMonth: previousMonth,
+    previousTotal: previousTotal,
+    deltaAmount: deltaAmount,
+    deltaPercentage: deltaPercentage,
+  );
+}
+
+ReportRecurringExpense fakeReportRecurringExpense({
+  String description = 'Internet Fibra',
+  double averageAmount = 129.9,
+  int occurrences = 3,
+}) {
+  return ReportRecurringExpense(
+    description: description,
+    categoryName: 'Casa',
+    subcategoryName: 'Internet',
+    averageAmount: averageAmount,
+    occurrences: occurrences,
+    likelyFixedAmount: true,
+    lastOccurrence: DateTime.utc(2026, 3, 25),
+  );
+}
+
+ReportIncreaseAlert fakeReportIncreaseAlert({
+  String categoryName = 'Moradia',
+  double currentAmount = 220,
+  double previousAmount = 150,
+  double deltaAmount = 70,
+  double deltaPercentage = 46.67,
+}) {
+  return ReportIncreaseAlert(
+    categoryName: categoryName,
+    currentAmount: currentAmount,
+    previousAmount: previousAmount,
+    deltaAmount: deltaAmount,
+    deltaPercentage: deltaPercentage,
+  );
+}
+
+ReportRecommendation fakeReportRecommendation({
+  String title = 'Revisar gastos fixos',
+  String rationale = 'Moradia segue liderando o mes.',
+  String action = 'Negocie contratos ou reduza custos recorrentes.',
+}) {
+  return ReportRecommendation(
+    title: title,
+    rationale: rationale,
+    action: action,
   );
 }
