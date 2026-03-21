@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/network/authorized_request_executor.dart';
+import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
@@ -43,5 +44,23 @@ class HttpExpensesRepository implements ExpensesRepository {
       hasNext: pageData['hasNext'] as bool,
       hasPrevious: pageData['hasPrevious'] as bool,
     );
+  }
+
+  @override
+  Future<ExpenseDetail> getExpenseDetail(int expenseId) async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.get(
+        '/api/v1/expenses/$expenseId',
+        headers: headers,
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = decoded['data'] as Map<String, dynamic>;
+    return ExpenseDetail.fromJson(data);
   }
 }

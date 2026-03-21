@@ -3,6 +3,8 @@ import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
+import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
+import 'package:despesas_frontend/features/expenses/domain/expense_payment.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_reference.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
@@ -63,11 +65,19 @@ class MemorySessionStore implements SessionStore {
 }
 
 class FakeExpensesRepository implements ExpensesRepository {
-  FakeExpensesRepository({this.result, this.error});
+  FakeExpensesRepository({
+    this.result,
+    this.error,
+    this.detailResult,
+    this.detailError,
+  });
 
   PagedResult<ExpenseSummary>? result;
   Exception? error;
+  ExpenseDetail? detailResult;
+  Exception? detailError;
   int listCalls = 0;
+  int detailCalls = 0;
 
   @override
   Future<PagedResult<ExpenseSummary>> listExpenses({
@@ -79,6 +89,15 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw error!;
     }
     return result ?? emptyPage();
+  }
+
+  @override
+  Future<ExpenseDetail> getExpenseDetail(int expenseId) async {
+    detailCalls += 1;
+    if (detailError != null) {
+      throw detailError!;
+    }
+    return detailResult ?? fakeExpenseDetail(id: expenseId);
   }
 }
 
@@ -125,6 +144,55 @@ ExpenseSummary fakeExpense({
     paidAmount: 0,
     remainingAmount: amount,
     overdue: false,
+  );
+}
+
+ExpenseDetail fakeExpenseDetail({
+  int id = 1,
+  String description = 'Internet Fibra',
+  double amount = 129.9,
+  String category = 'Casa',
+  String subcategory = 'Internet',
+  String status = 'ABERTA',
+  String notes = 'Conta mensal',
+  double paidAmount = 40,
+  double remainingAmount = 89.9,
+  int paymentsCount = 1,
+  bool overdue = false,
+  List<ExpensePayment>? payments,
+}) {
+  return ExpenseDetail(
+    id: id,
+    description: description,
+    amount: amount,
+    dueDate: DateTime.utc(2026, 3, 25),
+    context: 'CASA',
+    category: ExpenseReference(id: 1, name: category),
+    subcategory: ExpenseReference(id: 2, name: subcategory),
+    notes: notes,
+    status: status,
+    paidAmount: paidAmount,
+    remainingAmount: remainingAmount,
+    paymentsCount: paymentsCount,
+    overdue: overdue,
+    payments: payments ?? [fakeExpensePayment()],
+  );
+}
+
+ExpensePayment fakeExpensePayment({
+  int id = 1,
+  int expenseId = 1,
+  double amount = 40,
+  String method = 'PIX',
+  String notes = 'Pagamento parcial',
+}) {
+  return ExpensePayment(
+    id: id,
+    expenseId: expenseId,
+    amount: amount,
+    paidAt: DateTime.utc(2026, 3, 20),
+    method: method,
+    notes: notes,
   );
 }
 

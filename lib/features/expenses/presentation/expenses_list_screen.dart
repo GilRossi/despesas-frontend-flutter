@@ -2,6 +2,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
 import 'package:flutter/material.dart';
 
@@ -38,6 +39,17 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
 
   Future<void> _logout() {
     return widget.sessionController.logout();
+  }
+
+  Future<void> _openExpenseDetail(ExpenseSummary expense) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ExpenseDetailScreen(
+          expenseId: expense.id,
+          expensesRepository: widget.expensesRepository,
+        ),
+      ),
+    );
   }
 
   @override
@@ -88,39 +100,45 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
               ),
             ),
           ),
-          body: RefreshIndicator(
-            onRefresh: _viewModel.load,
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                if (_viewModel.isLoading) ...[
-                  const SizedBox(height: 120),
-                  const Center(child: CircularProgressIndicator()),
-                ] else if (_viewModel.errorMessage != null) ...[
-                  _StateCard(
-                    title: 'Nao foi possivel carregar as despesas.',
-                    message: _viewModel.errorMessage!,
-                    actionLabel: 'Tentar novamente',
-                    onAction: _viewModel.load,
-                  ),
-                ] else if (_viewModel.isEmpty) ...[
-                  const _StateCard(
-                    title: 'Nenhuma despesa encontrada',
-                    message:
-                        'Quando houver lancamentos neste household, eles aparecerao aqui.',
-                  ),
-                ] else ...[
-                  Text(
-                    'Lista read-only do household atual',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  for (final expense in _viewModel.expenses) ...[
-                    _ExpenseCard(expense: expense),
-                    const SizedBox(height: 12),
+          body: SafeArea(
+            top: false,
+            child: RefreshIndicator(
+              onRefresh: _viewModel.load,
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  if (_viewModel.isLoading) ...[
+                    const SizedBox(height: 120),
+                    const Center(child: CircularProgressIndicator()),
+                  ] else if (_viewModel.errorMessage != null) ...[
+                    _StateCard(
+                      title: 'Nao foi possivel carregar as despesas.',
+                      message: _viewModel.errorMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: _viewModel.load,
+                    ),
+                  ] else if (_viewModel.isEmpty) ...[
+                    const _StateCard(
+                      title: 'Nenhuma despesa encontrada',
+                      message:
+                          'Quando houver lancamentos neste household, eles aparecerao aqui.',
+                    ),
+                  ] else ...[
+                    Text(
+                      'Lista read-only do household atual',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    for (final expense in _viewModel.expenses) ...[
+                      _ExpenseCard(
+                        expense: expense,
+                        onTap: () => _openExpenseDetail(expense),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ],
                 ],
-              ],
+              ),
             ),
           ),
         );
@@ -130,9 +148,10 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
 }
 
 class _ExpenseCard extends StatelessWidget {
-  const _ExpenseCard({required this.expense});
+  const _ExpenseCard({required this.expense, required this.onTap});
 
   final ExpenseSummary expense;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -141,53 +160,67 @@ class _ExpenseCard extends StatelessWidget {
         '${expense.dueDate.day.toString().padLeft(2, '0')}/${expense.dueDate.month.toString().padLeft(2, '0')}/${expense.dueDate.year}';
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          expense.description,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${expense.category.name} · ${expense.subcategory.name}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF65727B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        expense.description,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${expense.category.name} · ${expense.subcategory.name}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF65727B),
+                        formatCurrency(expense.amount),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Icon(
+                        Icons.chevron_right,
+                        color: theme.colorScheme.primary,
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  formatCurrency(expense.amount),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _MetaChip(label: 'Vence em $dueDate'),
-                _MetaChip(label: expense.status),
-                _MetaChip(label: expense.context),
-                if (expense.overdue) const _MetaChip(label: 'Atrasada'),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MetaChip(label: 'Vence em $dueDate'),
+                  _MetaChip(label: expense.status),
+                  _MetaChip(label: expense.context),
+                  if (expense.overdue) const _MetaChip(label: 'Atrasada'),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
