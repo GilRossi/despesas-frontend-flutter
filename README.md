@@ -41,6 +41,14 @@ scripts/build_local_web.sh
 
 Em device físico Android, carregue `~/envs/despesas/local/backend.env`, ajuste `API_BASE_URL` para o IP LAN do backend e rode o `flutter run` com os mesmos `--dart-define`.
 
+Se o backend local estiver na mesma máquina do Android conectado via ADB, use o helper governado:
+
+```bash
+scripts/run_local_android.sh
+```
+
+O script aplica `adb reverse` para a porta da API configurada e sobe o app com os `--dart-define` oficiais.
+
 ## Comandos úteis
 
 ```bash
