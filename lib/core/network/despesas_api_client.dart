@@ -37,6 +37,29 @@ class DespesasApiClient {
     );
   }
 
+  Future<http.Response> patchJson(
+    String path, {
+    Map<String, String>? headers,
+    Map<String, Object?>? body,
+  }) {
+    return _httpClient.patch(
+      _buildUri(path, null),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...?headers,
+      },
+      body: jsonEncode(body ?? const {}),
+    );
+  }
+
+  Future<http.Response> delete(String path, {Map<String, String>? headers}) {
+    return _httpClient.delete(
+      _buildUri(path, null),
+      headers: {'Accept': 'application/json', ...?headers},
+    );
+  }
+
   Uri _buildUri(String path, Map<String, String?>? queryParameters) {
     final resolved = _baseUrl.resolve(
       path.startsWith('/') ? path.substring(1) : path,

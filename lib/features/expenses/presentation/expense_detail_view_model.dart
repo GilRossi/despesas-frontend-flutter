@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -15,20 +16,27 @@ class ExpenseDetailViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isNotFound = false;
+  bool _isSubmittingPayment = false;
   String? _errorMessage;
+  String? _paymentErrorMessage;
   ExpenseDetail? _expense;
 
   bool get isLoading => _isLoading;
   bool get isNotFound => _isNotFound;
+  bool get isSubmittingPayment => _isSubmittingPayment;
   String? get errorMessage => _errorMessage;
+  String? get paymentErrorMessage => _paymentErrorMessage;
   ExpenseDetail? get expense => _expense;
   bool get hasError => !_isNotFound && _errorMessage != null;
 
-  Future<void> load() async {
-    _isLoading = true;
+  Future<void> load({bool showLoading = true}) async {
+    if (showLoading) {
+      _isLoading = true;
+      notifyListeners();
+    }
+
     _isNotFound = false;
     _errorMessage = null;
-    notifyListeners();
 
     try {
       _expense = await _expensesRepository.getExpenseDetail(_expenseId);
@@ -43,6 +51,29 @@ class ExpenseDetailViewModel extends ChangeNotifier {
       _errorMessage = 'Nao foi possivel carregar o detalhe da despesa.';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> registerPayment(CreateExpensePaymentInput input) async {
+    _isSubmittingPayment = true;
+    _paymentErrorMessage = null;
+    notifyListeners();
+
+    try {
+      await _expensesRepository.registerExpensePayment(input);
+      _expense = await _expensesRepository.getExpenseDetail(_expenseId);
+      _isNotFound = false;
+      _errorMessage = null;
+      return true;
+    } on ApiException catch (error) {
+      _paymentErrorMessage = error.message;
+      return false;
+    } catch (_) {
+      _paymentErrorMessage = 'Nao foi possivel registrar o pagamento.';
+      return false;
+    } finally {
+      _isSubmittingPayment = false;
       notifyListeners();
     }
   }

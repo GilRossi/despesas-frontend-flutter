@@ -9,14 +9,10 @@ import 'package:despesas_frontend/features/expenses/data/http_expenses_repositor
 import 'package:http/http.dart' as http;
 
 Future<void> main() async {
-  final baseUrl =
-      Platform.environment['API_BASE_URL'] ?? 'http://127.0.0.1:8080';
-  final email =
-      Platform.environment['SMOKE_EMAIL'] ??
-      'mobile.smoke.${DateTime.now().millisecondsSinceEpoch}@example.com';
-  final password = Platform.environment['SMOKE_PASSWORD'] ?? 'Senha123!';
-  final householdName =
-      Platform.environment['SMOKE_HOUSEHOLD'] ?? 'Mobile Smoke';
+  final baseUrl = _requiredEnv('API_BASE_URL');
+  final email = _requiredEnv('SMOKE_EMAIL');
+  final password = _requiredEnv('SMOKE_PASSWORD');
+  final householdName = _requiredEnv('SMOKE_HOUSEHOLD');
 
   final httpClient = http.Client();
   final apiClient = DespesasApiClient(
@@ -67,6 +63,16 @@ Future<void> main() async {
   } finally {
     httpClient.close();
   }
+}
+
+String _requiredEnv(String name) {
+  final value = Platform.environment[name];
+  if (value == null || value.trim().isEmpty) {
+    throw StateError(
+      'Variavel obrigatoria ausente para o smoke real: $name. Carregue o ambiente governado antes de executar.',
+    );
+  }
+  return value.trim();
 }
 
 Future<void> _registerIfNeeded({

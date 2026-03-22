@@ -25,6 +25,10 @@ void main() {
         ),
         sessionController: controller,
         expensesRepository: FakeExpensesRepository(),
+        financialAssistantRepository: FakeFinancialAssistantRepository(),
+        householdMembersRepository: FakeHouseholdMembersRepository(),
+        reportsRepository: FakeReportsRepository(),
+        reviewOperationsRepository: FakeReviewOperationsRepository(),
         autoRestoreSession: false,
       ),
     );
@@ -49,6 +53,10 @@ void main() {
         ),
         sessionController: controller,
         expensesRepository: FakeExpensesRepository(),
+        financialAssistantRepository: FakeFinancialAssistantRepository(),
+        householdMembersRepository: FakeHouseholdMembersRepository(),
+        reportsRepository: FakeReportsRepository(),
+        reviewOperationsRepository: FakeReviewOperationsRepository(),
         autoRestoreSession: false,
       ),
     );

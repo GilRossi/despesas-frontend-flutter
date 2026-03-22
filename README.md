@@ -27,23 +27,27 @@ Toda tela atual e futura deve respeitar esta premissa:
 
 ## Configuração
 
-O app usa `--dart-define` para ambiente e URL da API:
+O app usa `--dart-define` para ambiente e URL da API. A URL agora e obrigatoria e deve vir do ambiente governado:
 
 ```bash
-flutter run \
-  --dart-define=APP_ENV=local \
-  --dart-define=API_BASE_URL=http://127.0.0.1:8080
+scripts/run_local_web.sh
 ```
 
-Em device físico Android, use o IP LAN da máquina que está rodando o backend, por exemplo:
+Build oficial do Flutter Web para o front-door:
 
 ```bash
-flutter run \
-  --dart-define=APP_ENV=local \
-  --dart-define=API_BASE_URL=http://192.168.31.94:8080
+scripts/build_local_web.sh
 ```
 
-Se nenhum `API_BASE_URL` for informado, o app usa defaults locais por plataforma.
+Em device físico Android, carregue `~/envs/despesas/local/backend.env`, ajuste `API_BASE_URL` para o IP LAN do backend e rode o `flutter run` com os mesmos `--dart-define`.
+
+Se o backend local estiver na mesma máquina do Android conectado via ADB, use o helper governado:
+
+```bash
+scripts/run_local_android.sh
+```
+
+O script aplica `adb reverse` para a porta da API configurada e sobe o app com os `--dart-define` oficiais.
 
 ## Comandos úteis
 
@@ -56,5 +60,5 @@ flutter test
 Smoke real contra o backend:
 
 ```bash
-API_BASE_URL=http://127.0.0.1:8080 dart run tool/smoke_real.dart
+scripts/run_local_smoke.sh
 ```
