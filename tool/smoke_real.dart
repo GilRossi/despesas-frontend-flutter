@@ -12,7 +12,6 @@ Future<void> main() async {
   final baseUrl = _requiredEnv('API_BASE_URL');
   final email = _requiredEnv('SMOKE_EMAIL');
   final password = _requiredEnv('SMOKE_PASSWORD');
-  final householdName = _requiredEnv('SMOKE_HOUSEHOLD');
 
   final httpClient = http.Client();
   final apiClient = DespesasApiClient(
@@ -29,13 +28,6 @@ Future<void> main() async {
   );
 
   try {
-    await _registerIfNeeded(
-      apiClient: apiClient,
-      email: email,
-      password: password,
-      householdName: householdName,
-    );
-
     final loginSession = await authRepository.login(
       email: email,
       password: password,
@@ -73,31 +65,6 @@ String _requiredEnv(String name) {
     );
   }
   return value.trim();
-}
-
-Future<void> _registerIfNeeded({
-  required DespesasApiClient apiClient,
-  required String email,
-  required String password,
-  required String householdName,
-}) async {
-  final response = await apiClient.postJson(
-    '/api/v1/auth/register',
-    body: {
-      'name': 'Mobile Smoke',
-      'email': email,
-      'password': password,
-      'householdName': householdName,
-    },
-  );
-
-  if (response.statusCode == 201 || response.statusCode == 409) {
-    return;
-  }
-
-  throw StateError(
-    'Falha ao registrar usuario de smoke (${response.statusCode}): ${response.body}',
-  );
 }
 
 class _SmokeSessionManager implements SessionManager {
