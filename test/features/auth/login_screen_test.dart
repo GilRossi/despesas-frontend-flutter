@@ -44,6 +44,7 @@ void main() {
       find.text('A senha deve ter pelo menos 6 caracteres.'),
       findsOneWidget,
     );
+    expect(find.textContaining('cadastro', findRichText: true), findsNothing);
   });
 
   testWidgets('stays usable with keyboard open on small heights', (

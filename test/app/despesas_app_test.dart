@@ -3,6 +3,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
+import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/test_doubles.dart';
@@ -27,6 +28,7 @@ void main() {
         expensesRepository: FakeExpensesRepository(),
         financialAssistantRepository: FakeFinancialAssistantRepository(),
         householdMembersRepository: FakeHouseholdMembersRepository(),
+        platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
         autoRestoreSession: false,
@@ -55,6 +57,7 @@ void main() {
         expensesRepository: FakeExpensesRepository(),
         financialAssistantRepository: FakeFinancialAssistantRepository(),
         householdMembersRepository: FakeHouseholdMembersRepository(),
+        platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
         autoRestoreSession: false,
@@ -63,5 +66,39 @@ void main() {
     await tester.pump();
 
     expect(find.byType(ExpensesListScreen), findsOneWidget);
+  });
+
+  testWidgets('auth gate shows admin screen for platform admin', (tester) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          role: 'PLATFORM_ADMIN',
+          householdId: null,
+          email: 'admin@local.invalid',
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'admin@local.invalid', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      DespesasApp(
+        environment: AppEnvironment(
+          name: 'test',
+          apiBaseUrl: Uri.parse('http://localhost:8080'),
+        ),
+        sessionController: controller,
+        expensesRepository: FakeExpensesRepository(),
+        financialAssistantRepository: FakeFinancialAssistantRepository(),
+        householdMembersRepository: FakeHouseholdMembersRepository(),
+        platformAdminRepository: FakePlatformAdminRepository(),
+        reportsRepository: FakeReportsRepository(),
+        reviewOperationsRepository: FakeReviewOperationsRepository(),
+        autoRestoreSession: false,
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(PlatformAdminScreen), findsOneWidget);
   });
 }

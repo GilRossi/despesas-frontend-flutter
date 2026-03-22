@@ -20,6 +20,9 @@ import 'package:despesas_frontend/features/financial_assistant/domain/financial_
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/create_household_owner_input.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_household.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
 import 'package:despesas_frontend/features/reports/domain/report_insights.dart';
@@ -410,12 +413,43 @@ class FakeHouseholdMembersRepository implements HouseholdMembersRepository {
   }
 }
 
+class FakePlatformAdminRepository implements PlatformAdminRepository {
+  FakePlatformAdminRepository({this.result, this.error, this.onCreate});
+
+  PlatformAdminHousehold? result;
+  Exception? error;
+  void Function(CreateHouseholdOwnerInput input)? onCreate;
+  int createCalls = 0;
+  CreateHouseholdOwnerInput? lastInput;
+
+  @override
+  Future<PlatformAdminHousehold> createHouseholdWithOwner(
+    CreateHouseholdOwnerInput input,
+  ) async {
+    createCalls += 1;
+    lastInput = input;
+    if (error != null) {
+      throw error!;
+    }
+    onCreate?.call(input);
+    return result ??
+        PlatformAdminHousehold(
+          householdId: 99,
+          householdName: input.householdName,
+          ownerUserId: 77,
+          ownerEmail: input.ownerEmail,
+          ownerRole: 'OWNER',
+        );
+  }
+}
+
 MobileSession fakeSession({
   String accessToken = 'access-token',
   String refreshToken = 'refresh-token',
   String name = 'Gil Rossi',
   String email = 'gil@example.com',
   String role = 'OWNER',
+  int? householdId = 10,
 }) {
   final now = DateTime.utc(2026, 3, 21, 10);
   return MobileSession(
@@ -426,7 +460,7 @@ MobileSession fakeSession({
     refreshTokenExpiresAt: now.add(const Duration(days: 7)),
     user: AuthUser(
       userId: 1,
-      householdId: 10,
+      householdId: householdId,
       email: email,
       name: name,
       role: role,
