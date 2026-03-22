@@ -344,4 +344,48 @@ void main() {
 
     expect(find.text('Membros do household'), findsNothing);
   });
+
+  testWidgets('remains stable with increased text scale in header', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 740);
+    addTearDown(tester.view.reset);
+
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          name: 'Nome com zoom alto no Android',
+          email: 'email.muito.longo.para.validar.text.scale@example.com',
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          return MediaQuery(
+            data: mediaQuery.copyWith(textScaler: const TextScaler.linear(1.4)),
+            child: child!,
+          );
+        },
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
+          reportsRepository: FakeReportsRepository(),
+          reviewOperationsRepository: FakeReviewOperationsRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Nome com zoom alto no Android'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

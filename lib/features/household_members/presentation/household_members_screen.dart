@@ -255,30 +255,42 @@ class _HouseholdMemberCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          runSpacing: 12,
-          spacing: 12,
-          children: [
-            SizedBox(
-              width: 420,
-              child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final memberInfo = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(member.name, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(
+                  member.email,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF65727B),
+                  ),
+                ),
+              ],
+            );
+
+            if (constraints.maxWidth < 520) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(member.name, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 6),
-                  Text(
-                    member.email,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF65727B),
-                    ),
-                  ),
+                  memberInfo,
+                  const SizedBox(height: 12),
+                  Chip(label: Text(_formatRoleLabel(member.role))),
                 ],
-              ),
-            ),
-            Chip(label: Text(_formatRoleLabel(member.role))),
-          ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: memberInfo),
+                const SizedBox(width: 12),
+                Chip(label: Text(_formatRoleLabel(member.role))),
+              ],
+            );
+          },
         ),
       ),
     );

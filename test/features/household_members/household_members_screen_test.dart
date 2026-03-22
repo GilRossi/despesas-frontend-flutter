@@ -124,4 +124,47 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('keeps household member cards stable on narrow widths', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HouseholdMembersScreen(
+          householdMembersRepository: FakeHouseholdMembersRepository(
+            members: [
+              fakeHouseholdMember(
+                name: 'Nome longo para validar viewport estreito',
+                email: 'email.longo@example.com',
+                role: 'OWNER',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text(
+        'Nome longo para validar viewport estreito',
+        skipOffstage: false,
+      ),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Nome longo para validar viewport estreito'),
+      findsOneWidget,
+    );
+    expect(find.text('email.longo@example.com'), findsOneWidget);
+    expect(find.text('Owner'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

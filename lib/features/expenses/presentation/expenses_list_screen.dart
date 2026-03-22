@@ -186,27 +186,25 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
               ),
             ],
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(60),
+              preferredSize: const Size.fromHeight(76),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user?.name ?? 'Sessao ativa',
-                            style: theme.textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            user?.email ?? '',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF65727B),
-                            ),
-                          ),
-                        ],
+                    Text(
+                      user?.name ?? 'Sessao ativa',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.email ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF65727B),
                       ),
                     ),
                   ],
@@ -230,8 +228,8 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                         runSpacing: 16,
                         spacing: 16,
                         children: [
-                          SizedBox(
-                            width: 420,
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 420),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
