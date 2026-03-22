@@ -6,6 +6,7 @@ class ResponsiveScrollBody extends StatelessWidget {
   const ResponsiveScrollBody({
     super.key,
     required this.child,
+    this.controller,
     this.maxWidth = double.infinity,
     this.padding = const EdgeInsets.all(20),
     this.centerVertically = false,
@@ -13,6 +14,7 @@ class ResponsiveScrollBody extends StatelessWidget {
   });
 
   final Widget child;
+  final ScrollController? controller;
   final double maxWidth;
   final EdgeInsetsGeometry padding;
   final bool centerVertically;
@@ -28,6 +30,7 @@ class ResponsiveScrollBody extends StatelessWidget {
             .toDouble();
 
         return SingleChildScrollView(
+          controller: controller,
           keyboardDismissBehavior: keyboardDismissBehavior,
           padding: resolvedPadding,
           child: ConstrainedBox(

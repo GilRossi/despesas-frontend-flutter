@@ -187,4 +187,44 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('auto-scrolls to the latest assistant answer on small screens', (
+    tester,
+  ) async {
+    configureSmallViewport(tester);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FinancialAssistantScreen(
+          financialAssistantRepository: FakeFinancialAssistantRepository(
+            reply: fakeFinancialAssistantReply(
+              question: 'Como posso economizar este mes?',
+              answer: 'Resposta visivel sem exigir scroll manual.',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField),
+      'Como posso economizar este mes?',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Perguntar'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Perguntar'), warnIfMissed: false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+
+    final viewportHeight = tester.view.physicalSize.height;
+    final answerPosition = tester.getTopLeft(find.text('Resposta do assistente'));
+
+    expect(answerPosition.dy, lessThan(viewportHeight));
+  });
 }
