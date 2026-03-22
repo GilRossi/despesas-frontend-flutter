@@ -8,7 +8,7 @@ class AuthUser {
   });
 
   final int userId;
-  final int householdId;
+  final int? householdId;
   final String email;
   final String name;
   final String role;
@@ -16,7 +16,7 @@ class AuthUser {
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       userId: json['userId'] as int,
-      householdId: json['householdId'] as int,
+      householdId: json['householdId'] as int?,
       email: json['email'] as String,
       name: json['name'] as String,
       role: json['role'] as String,
