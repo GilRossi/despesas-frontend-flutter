@@ -37,6 +37,8 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
   late final FinancialAssistantViewModel _viewModel;
   final _formKey = GlobalKey<FormState>();
   final _questionController = TextEditingController();
+  final _scrollController = ScrollController();
+  final _latestEntryKey = GlobalKey();
 
   @override
   void initState() {
@@ -49,8 +51,34 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
   @override
   void dispose() {
     _questionController.dispose();
+    _scrollController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _scrollToLatestEntry() {
+    if (!mounted) {
+      return;
+    }
+
+    final latestContext = _latestEntryKey.currentContext;
+    if (latestContext != null) {
+      Scrollable.ensureVisible(
+        latestContext,
+        alignment: 0.08,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -68,6 +96,9 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
 
     if (_viewModel.errorMessage == null) {
       _questionController.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToLatestEntry();
+      });
     }
   }
 
@@ -86,6 +117,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
           body: SafeArea(
             top: false,
             child: ResponsiveScrollBody(
+              controller: _scrollController,
               maxWidth: 1180,
               keyboardDismissBehavior:
                   ScrollViewKeyboardDismissBehavior.onDrag,
@@ -151,8 +183,19 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                   if (!_viewModel.hasConversation && !_viewModel.isLoading)
                     const _EmptyConversationCard(),
                   if (_viewModel.hasConversation)
-                    for (final entry in _viewModel.entries) ...[
-                      _ConversationEntryCard(entry: entry),
+                    for (
+                      var index = 0;
+                      index < _viewModel.entries.length;
+                      index++
+                    ) ...[
+                      Container(
+                        key: index == _viewModel.entries.length - 1
+                            ? _latestEntryKey
+                            : null,
+                        child: _ConversationEntryCard(
+                          entry: _viewModel.entries[index],
+                        ),
+                      ),
                       const SizedBox(height: 16),
                     ],
                 ],
