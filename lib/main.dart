@@ -7,6 +7,7 @@ import 'package:despesas_frontend/features/auth/data/http_auth_repository.dart';
 import 'package:despesas_frontend/features/auth/data/secure_session_store.dart';
 import 'package:despesas_frontend/features/expenses/data/http_expenses_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/data/http_financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/household_members/data/http_household_members_repository.dart';
 import 'package:despesas_frontend/features/reports/data/http_reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/data/http_review_operations_repository.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,9 @@ void main() {
   final financialAssistantRepository = HttpFinancialAssistantRepository(
     authorizedRequestExecutor,
   );
+  final householdMembersRepository = HttpHouseholdMembersRepository(
+    authorizedRequestExecutor,
+  );
   final reportsRepository = HttpReportsRepository(authorizedRequestExecutor);
   final reviewOperationsRepository = HttpReviewOperationsRepository(
     authorizedRequestExecutor,
@@ -47,6 +51,7 @@ void main() {
       sessionController: sessionController,
       expensesRepository: expensesRepository,
       financialAssistantRepository: financialAssistantRepository,
+      householdMembersRepository: householdMembersRepository,
       reportsRepository: reportsRepository,
       reviewOperationsRepository: reviewOperationsRepository,
     ),

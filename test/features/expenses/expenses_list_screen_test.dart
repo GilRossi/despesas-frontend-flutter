@@ -4,6 +4,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
+import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,7 @@ void main() {
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -65,6 +67,7 @@ void main() {
             ),
           ),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -102,6 +105,7 @@ void main() {
             ),
           ),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -151,6 +155,7 @@ void main() {
           sessionController: controller,
           expensesRepository: repository,
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -183,6 +188,7 @@ void main() {
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -211,6 +217,7 @@ void main() {
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -238,6 +245,7 @@ void main() {
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -267,6 +275,7 @@ void main() {
           sessionController: controller,
           expensesRepository: FakeExpensesRepository(result: emptyPage()),
           financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
           reportsRepository: FakeReportsRepository(),
           reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
@@ -279,5 +288,60 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(FinancialAssistantScreen), findsOneWidget);
+  });
+
+  testWidgets('opens household members flow for owner', (tester) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
+          reportsRepository: FakeReportsRepository(),
+          reviewOperationsRepository: FakeReviewOperationsRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Membros do household'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HouseholdMembersScreen), findsOneWidget);
+  });
+
+  testWidgets('hides household members flow for non-owner', (tester) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(role: 'MEMBER'),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'bia@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
+          reportsRepository: FakeReportsRepository(),
+          reviewOperationsRepository: FakeReviewOperationsRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Membros do household'), findsNothing);
   });
 }

@@ -17,6 +17,9 @@ import 'package:despesas_frontend/features/expenses/domain/save_expense_input.da
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
+import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
+import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
 import 'package:despesas_frontend/features/reports/domain/report_insights.dart';
@@ -358,11 +361,61 @@ class FakeFinancialAssistantRepository implements FinancialAssistantRepository {
   }
 }
 
+class FakeHouseholdMembersRepository implements HouseholdMembersRepository {
+  FakeHouseholdMembersRepository({
+    this.members,
+    this.listError,
+    this.createError,
+    this.onCreate,
+  });
+
+  List<HouseholdMember>? members;
+  Exception? listError;
+  Exception? createError;
+  void Function(CreateHouseholdMemberInput input)? onCreate;
+  int listCalls = 0;
+  int createCalls = 0;
+  CreateHouseholdMemberInput? lastCreatedInput;
+
+  @override
+  Future<List<HouseholdMember>> listMembers() async {
+    listCalls += 1;
+    if (listError != null) {
+      throw listError!;
+    }
+    return members ?? [fakeHouseholdMember()];
+  }
+
+  @override
+  Future<HouseholdMember> createMember(CreateHouseholdMemberInput input) async {
+    createCalls += 1;
+    lastCreatedInput = input;
+    if (createError != null) {
+      throw createError!;
+    }
+    onCreate?.call(input);
+    final created = fakeHouseholdMember(
+      id: 99,
+      userId: 77,
+      name: input.name,
+      email: input.email,
+      role: 'MEMBER',
+    );
+    final current = List<HouseholdMember>.from(
+      members ?? [fakeHouseholdMember()],
+    );
+    current.add(created);
+    members = current;
+    return created;
+  }
+}
+
 MobileSession fakeSession({
   String accessToken = 'access-token',
   String refreshToken = 'refresh-token',
   String name = 'Gil Rossi',
   String email = 'gil@example.com',
+  String role = 'OWNER',
 }) {
   final now = DateTime.utc(2026, 3, 21, 10);
   return MobileSession(
@@ -376,8 +429,26 @@ MobileSession fakeSession({
       householdId: 10,
       email: email,
       name: name,
-      role: 'OWNER',
+      role: role,
     ),
+  );
+}
+
+HouseholdMember fakeHouseholdMember({
+  int id = 1,
+  int userId = 1,
+  int householdId = 10,
+  String name = 'Gil Rossi',
+  String email = 'gil@example.com',
+  String role = 'OWNER',
+}) {
+  return HouseholdMember(
+    id: id,
+    userId: userId,
+    householdId: householdId,
+    name: name,
+    email: email,
+    role: role,
   );
 }
 
@@ -772,7 +843,8 @@ FinancialAssistantReply fakeFinancialAssistantReply({
     answer: answer,
     summary: summary ?? fakeReportSummary(),
     monthComparison: monthComparison ?? fakeReportMonthComparison(),
-    highestSpendingCategory: highestSpendingCategory ?? fakeReportCategoryTotal(),
+    highestSpendingCategory:
+        highestSpendingCategory ?? fakeReportCategoryTotal(),
     topExpenses: topExpenses ?? [fakeReportTopExpense()],
     increaseAlerts: increaseAlerts ?? [fakeReportIncreaseAlert()],
     recurringExpenses: recurringExpenses ?? [fakeReportRecurringExpense()],

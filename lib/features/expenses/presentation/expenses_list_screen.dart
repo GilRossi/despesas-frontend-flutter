@@ -8,6 +8,8 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_form_sc
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
+import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
@@ -20,6 +22,7 @@ class ExpensesListScreen extends StatefulWidget {
     required this.sessionController,
     required this.expensesRepository,
     required this.financialAssistantRepository,
+    required this.householdMembersRepository,
     required this.reportsRepository,
     required this.reviewOperationsRepository,
   });
@@ -27,6 +30,7 @@ class ExpensesListScreen extends StatefulWidget {
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
   final FinancialAssistantRepository financialAssistantRepository;
+  final HouseholdMembersRepository householdMembersRepository;
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
 
@@ -106,6 +110,16 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     );
   }
 
+  Future<void> _openHouseholdMembers() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => HouseholdMembersScreen(
+          householdMembersRepository: widget.householdMembersRepository,
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleFlowResult(ExpenseFlowResult? result) async {
     if (!mounted || result == null) {
       return;
@@ -148,6 +162,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                 onPressed: _openReports,
                 icon: const Icon(Icons.insert_chart_outlined),
               ),
+              if (canReviewOperations)
+                IconButton(
+                  tooltip: 'Membros do household',
+                  onPressed: _openHouseholdMembers,
+                  icon: const Icon(Icons.group_outlined),
+                ),
               if (canReviewOperations)
                 IconButton(
                   tooltip: 'Review operations',
@@ -245,6 +265,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             icon: const Icon(Icons.insert_chart_outlined),
                             label: const Text('Relatorios'),
                           ),
+                          if (canReviewOperations)
+                            OutlinedButton.icon(
+                              onPressed: _openHouseholdMembers,
+                              icon: const Icon(Icons.group_outlined),
+                              label: const Text('Membros do household'),
+                            ),
                           if (canReviewOperations)
                             OutlinedButton.icon(
                               onPressed: _openReviewOperations,
