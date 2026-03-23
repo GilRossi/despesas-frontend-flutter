@@ -249,28 +249,35 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             ),
                           ),
                           FilledButton.icon(
+                            key: const ValueKey('expenses-new-expense-button'),
                             onPressed: _openCreateExpense,
                             icon: const Icon(Icons.add),
                             label: const Text('Nova despesa'),
                           ),
                           OutlinedButton.icon(
+                            key: const ValueKey('expenses-assistant-button'),
                             onPressed: _openFinancialAssistant,
                             icon: const Icon(Icons.psychology_alt_outlined),
                             label: const Text('Assistente financeiro'),
                           ),
                           OutlinedButton.icon(
+                            key: const ValueKey('expenses-reports-button'),
                             onPressed: _openReports,
                             icon: const Icon(Icons.insert_chart_outlined),
                             label: const Text('Relatorios'),
                           ),
                           if (canReviewOperations)
                             OutlinedButton.icon(
+                              key: const ValueKey('expenses-members-button'),
                               onPressed: _openHouseholdMembers,
                               icon: const Icon(Icons.group_outlined),
                               label: const Text('Membros do household'),
                             ),
                           if (canReviewOperations)
                             OutlinedButton.icon(
+                              key: const ValueKey(
+                                'expenses-review-operations-button',
+                              ),
                               onPressed: _openReviewOperations,
                               icon: const Icon(Icons.fact_check_outlined),
                               label: const Text('Review operations'),

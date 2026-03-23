@@ -271,6 +271,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         ),
                         const SizedBox(height: 24),
                         TextFormField(
+                          key: const ValueKey('expense-form-description-field'),
                           controller: _descriptionController,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
@@ -289,6 +290,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
+                          key: const ValueKey('expense-form-amount-field'),
                           controller: _amountController,
                           textInputAction: TextInputAction.next,
                           keyboardType: const TextInputType.numberWithOptions(
@@ -314,6 +316,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
+                          key: const ValueKey('expense-form-due-date-field'),
                           controller: _dueDateController,
                           readOnly: true,
                           onTap: _pickDueDate,
@@ -436,6 +439,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
+                          key: const ValueKey('expense-form-notes-field'),
                           controller: _notesController,
                           minLines: 3,
                           maxLines: 5,
@@ -470,6 +474,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: FilledButton(
+                                key: const ValueKey(
+                                  'expense-form-submit-button',
+                                ),
                                 onPressed: _viewModel.isSubmitting
                                     ? null
                                     : _submit,

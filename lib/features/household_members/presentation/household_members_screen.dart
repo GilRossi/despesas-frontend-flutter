@@ -123,6 +123,9 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
+                              key: const ValueKey(
+                                'household-member-name-field',
+                              ),
                               controller: _nameController,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
@@ -138,6 +141,9 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
+                              key: const ValueKey(
+                                'household-member-email-field',
+                              ),
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
@@ -155,6 +161,9 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
+                              key: const ValueKey(
+                                'household-member-password-field',
+                              ),
                               controller: _passwordController,
                               obscureText: true,
                               textInputAction: TextInputAction.done,
@@ -181,6 +190,9 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                             ],
                             const SizedBox(height: 16),
                             FilledButton.icon(
+                              key: const ValueKey(
+                                'household-member-submit-button',
+                              ),
                               onPressed: _viewModel.isSubmitting
                                   ? null
                                   : _submit,

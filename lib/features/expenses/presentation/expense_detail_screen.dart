@@ -497,6 +497,7 @@ class _PaymentFormCardState extends State<_PaymentFormCard> {
               if (!_isPaidOff) ...[
                 const SizedBox(height: 20),
                 TextFormField(
+                  key: const ValueKey('expense-payment-amount-field'),
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -510,6 +511,7 @@ class _PaymentFormCardState extends State<_PaymentFormCard> {
                 ),
                 const SizedBox(height: 16),
                 InkWell(
+                  key: const ValueKey('expense-payment-date-field'),
                   onTap: widget.isSubmitting ? null : _selectPaidAt,
                   borderRadius: BorderRadius.circular(12),
                   child: InputDecorator(
@@ -529,6 +531,7 @@ class _PaymentFormCardState extends State<_PaymentFormCard> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+                  key: const ValueKey('expense-payment-method-field'),
                   initialValue: _method,
                   decoration: const InputDecoration(
                     labelText: 'Metodo de pagamento',
@@ -552,6 +555,7 @@ class _PaymentFormCardState extends State<_PaymentFormCard> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const ValueKey('expense-payment-notes-field'),
                   controller: _notesController,
                   maxLines: 3,
                   minLines: 2,
@@ -580,6 +584,7 @@ class _PaymentFormCardState extends State<_PaymentFormCard> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    key: const ValueKey('expense-payment-submit-button'),
                     onPressed: widget.isSubmitting ? null : _submit,
                     child: widget.isSubmitting
                         ? const SizedBox(

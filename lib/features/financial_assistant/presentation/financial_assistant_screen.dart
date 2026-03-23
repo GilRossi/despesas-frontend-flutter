@@ -119,8 +119,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
             child: ResponsiveScrollBody(
               controller: _scrollController,
               maxWidth: 1180,
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.fromLTRB(
                 20,
                 20,
@@ -157,7 +156,8 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                           : 'Reenviar ultima pergunta',
                       onAction: _viewModel.retryLastQuestion,
                     ),
-                  if (_viewModel.errorMessage != null) const SizedBox(height: 16),
+                  if (_viewModel.errorMessage != null)
+                    const SizedBox(height: 16),
                   if (_viewModel.isLoading)
                     const Card(
                       child: Padding(
@@ -321,6 +321,7 @@ class _QuestionComposer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextFormField(
+                    key: const ValueKey('assistant-question-field'),
                     controller: controller,
                     minLines: 2,
                     maxLines: 4,
@@ -358,6 +359,7 @@ class _QuestionComposer extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: FilledButton.icon(
+                      key: const ValueKey('assistant-submit-button'),
                       onPressed: isLoading ? null : () => onSubmit(),
                       icon: const Icon(Icons.send_outlined),
                       label: const Text('Perguntar'),
@@ -494,7 +496,8 @@ class _ConversationEntryCard extends StatelessWidget {
                 _MetaChip(label: _formatEnumLabel(reply.intent)),
                 if (reply.aiUsage != null)
                   _MetaChip(
-                    label: '${reply.aiUsage!.model} · ${reply.aiUsage!.totalTokens} tokens',
+                    label:
+                        '${reply.aiUsage!.model} · ${reply.aiUsage!.totalTokens} tokens',
                   ),
               ],
             ),
@@ -519,7 +522,10 @@ class _ConversationEntryCard extends StatelessWidget {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 5, child: _PrimarySupportColumn(reply: reply)),
+                      Expanded(
+                        flex: 5,
+                        child: _PrimarySupportColumn(reply: reply),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         flex: 4,
@@ -553,9 +559,7 @@ class _PrimarySupportColumn extends StatelessWidget {
           _TopExpensesSupportCard(expenses: reply.topExpenses),
         if (reply.topExpenses.isNotEmpty) const SizedBox(height: 12),
         if (reply.recommendations.isNotEmpty)
-          _RecommendationsSupportCard(
-            recommendations: reply.recommendations,
-          ),
+          _RecommendationsSupportCard(recommendations: reply.recommendations),
       ],
     );
   }
@@ -660,7 +664,10 @@ class _CategorySupportCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(category.categoryName, style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            category.categoryName,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           const SizedBox(height: 8),
           Text(
             '${formatCurrency(category.totalAmount)} • ${category.sharePercentage.toStringAsFixed(2)}% do periodo',
@@ -745,7 +752,9 @@ class _IncreaseAlertsSupportCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 4),
-            Text('${alert.deltaPercentage.toStringAsFixed(2)}% vs mes anterior'),
+            Text(
+              '${alert.deltaPercentage.toStringAsFixed(2)}% vs mes anterior',
+            ),
             const SizedBox(height: 12),
           ],
         ],

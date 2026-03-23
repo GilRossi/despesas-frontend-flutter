@@ -71,9 +71,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
       _ownerEmailController.clear();
       _ownerPasswordController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Household e owner criados com sucesso.'),
-        ),
+        const SnackBar(content: Text('Household e owner criados com sucesso.')),
       );
     } on ApiException catch (error) {
       if (!mounted) {
@@ -154,6 +152,9 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        key: const ValueKey(
+                          'platform-admin-household-name-field',
+                        ),
                         controller: _householdNameController,
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
@@ -168,6 +169,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
+                        key: const ValueKey('platform-admin-owner-name-field'),
                         controller: _ownerNameController,
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
@@ -182,6 +184,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
+                        key: const ValueKey('platform-admin-owner-email-field'),
                         controller: _ownerEmailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
@@ -198,6 +201,9 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
+                        key: const ValueKey(
+                          'platform-admin-owner-password-field',
+                        ),
                         controller: _ownerPasswordController,
                         obscureText: true,
                         textInputAction: TextInputAction.done,
@@ -223,6 +229,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                       ],
                       const SizedBox(height: 16),
                       FilledButton.icon(
+                        key: const ValueKey('platform-admin-submit-button'),
                         onPressed: _isSubmitting ? null : _submit,
                         icon: _isSubmitting
                             ? const SizedBox(
@@ -247,6 +254,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
             if (_lastProvisioned != null) ...[
               const SizedBox(height: 16),
               Card(
+                key: const ValueKey('platform-admin-last-provisioned-card'),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(

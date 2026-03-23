@@ -93,6 +93,41 @@ class MemorySessionStore implements SessionStore {
   }
 }
 
+class ThrowingSessionStore implements SessionStore {
+  ThrowingSessionStore({this.readError, this.writeError, this.clearError});
+
+  Exception? readError;
+  Exception? writeError;
+  Exception? clearError;
+  String? refreshToken;
+  bool cleared = false;
+
+  @override
+  Future<void> clear() async {
+    if (clearError != null) {
+      throw clearError!;
+    }
+    refreshToken = null;
+    cleared = true;
+  }
+
+  @override
+  Future<String?> readRefreshToken() async {
+    if (readError != null) {
+      throw readError!;
+    }
+    return refreshToken;
+  }
+
+  @override
+  Future<void> writeRefreshToken(String refreshToken) async {
+    if (writeError != null) {
+      throw writeError!;
+    }
+    this.refreshToken = refreshToken;
+  }
+}
+
 class FakeExpensesRepository implements ExpensesRepository {
   FakeExpensesRepository({
     this.result,
