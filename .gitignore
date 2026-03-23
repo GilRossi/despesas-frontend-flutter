@@ -36,7 +36,14 @@ migrate_working_dir/
 /coverage/
 /test-results/
 /.qa-temp/
+
+# Local-only AI / agent tooling
 AGENTS.md
+CLAUDE.md
+.agents/
+.agents*.zip
+.codex/
+.codex.zip
 
 # Symbolication related
 app.*.symbols
@@ -49,4 +56,3 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/local.properties
-CLAUDE.md
