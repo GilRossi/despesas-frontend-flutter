@@ -1,5 +1,8 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_input.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_result.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/create_household_owner_input.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_household.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
@@ -20,14 +23,22 @@ class PlatformAdminScreen extends StatefulWidget {
 }
 
 class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _provisionFormKey = GlobalKey<FormState>();
+  final _passwordResetFormKey = GlobalKey<FormState>();
   final _householdNameController = TextEditingController();
   final _ownerNameController = TextEditingController();
   final _ownerEmailController = TextEditingController();
   final _ownerPasswordController = TextEditingController();
+  final _resetTargetEmailController = TextEditingController();
+  final _resetPasswordController = TextEditingController();
+  final _resetPasswordConfirmationController = TextEditingController();
   bool _isSubmitting = false;
+  bool _isResetSubmitting = false;
   String? _errorMessage;
+  String? _resetErrorMessage;
+  Map<String, String> _resetFieldErrors = const {};
   PlatformAdminHousehold? _lastProvisioned;
+  AdminPasswordResetResult? _lastPasswordReset;
 
   @override
   void dispose() {
@@ -35,11 +46,14 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
     _ownerNameController.dispose();
     _ownerEmailController.dispose();
     _ownerPasswordController.dispose();
+    _resetTargetEmailController.dispose();
+    _resetPasswordController.dispose();
+    _resetPasswordConfirmationController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    final valid = _formKey.currentState?.validate() ?? false;
+    final valid = _provisionFormKey.currentState?.validate() ?? false;
     if (!valid || _isSubmitting) {
       return;
     }
@@ -65,7 +79,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
       setState(() {
         _lastProvisioned = provisioned;
       });
-      _formKey.currentState?.reset();
+      _provisionFormKey.currentState?.reset();
       _householdNameController.clear();
       _ownerNameController.clear();
       _ownerEmailController.clear();
@@ -94,6 +108,73 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
         });
       }
     }
+  }
+
+  Future<void> _submitPasswordReset() async {
+    final valid = _passwordResetFormKey.currentState?.validate() ?? false;
+    if (!valid || _isResetSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _isResetSubmitting = true;
+      _resetErrorMessage = null;
+      _resetFieldErrors = const {};
+    });
+
+    try {
+      final result = await widget.platformAdminRepository.resetUserPassword(
+        AdminPasswordResetInput(
+          targetEmail: _resetTargetEmailController.text.trim(),
+          newPassword: _resetPasswordController.text,
+          newPasswordConfirmation: _resetPasswordConfirmationController.text,
+        ),
+      );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _lastPasswordReset = result;
+      });
+      _passwordResetFormKey.currentState?.reset();
+      _resetTargetEmailController.clear();
+      _resetPasswordController.clear();
+      _resetPasswordConfirmationController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Senha resetada com sucesso.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _resetErrorMessage = error.message;
+        _resetFieldErrors = error.fieldErrors;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _resetErrorMessage = 'Nao foi possivel resetar a senha agora.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResetSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openChangePassword() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            ChangePasswordScreen(sessionController: widget.sessionController),
+      ),
+    );
   }
 
   @override
@@ -133,6 +214,15 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                         color: const Color(0xFF65727B),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      key: const ValueKey(
+                        'platform-admin-open-change-password-button',
+                      ),
+                      onPressed: _openChangePassword,
+                      icon: const Icon(Icons.lock_outline),
+                      label: const Text('Minha senha'),
+                    ),
                   ],
                 ),
               ),
@@ -142,7 +232,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Form(
-                  key: _formKey,
+                  key: _provisionFormKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -251,6 +341,126 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _passwordResetFormKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reset administrativo de senha',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Fluxo restrito a PLATFORM_ADMIN. Informe o e-mail do usuario alvo e a nova senha. Outros platform admins devem usar apenas o proprio fluxo autenticado.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF65727B),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        key: const ValueKey(
+                          'platform-admin-reset-target-email-field',
+                        ),
+                        controller: _resetTargetEmailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Email do usuario alvo',
+                          errorText: _resetFieldErrors['targetEmail'],
+                        ),
+                        validator: (value) {
+                          final trimmed = value?.trim() ?? '';
+                          if (trimmed.isEmpty || !trimmed.contains('@')) {
+                            return 'Informe um email valido.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        key: const ValueKey(
+                          'platform-admin-reset-new-password-field',
+                        ),
+                        controller: _resetPasswordController,
+                        obscureText: true,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Nova senha provisoria',
+                          errorText: _resetFieldErrors['newPassword'],
+                        ),
+                        validator: (value) {
+                          if (value == null || value.length < 6) {
+                            return 'A senha deve ter ao menos 6 caracteres.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        key: const ValueKey(
+                          'platform-admin-reset-confirm-password-field',
+                        ),
+                        controller: _resetPasswordConfirmationController,
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: 'Confirmacao da nova senha',
+                          errorText:
+                              _resetFieldErrors['newPasswordConfirmation'],
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Confirme a nova senha.';
+                          }
+                          if (value != _resetPasswordController.text) {
+                            return 'A confirmacao deve ser igual a nova senha.';
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (_) => _submitPasswordReset(),
+                      ),
+                      if (_resetErrorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          _resetErrorMessage!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        key: const ValueKey(
+                          'platform-admin-reset-submit-button',
+                        ),
+                        onPressed: _isResetSubmitting
+                            ? null
+                            : _submitPasswordReset,
+                        icon: _isResetSubmitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.lock_reset_outlined),
+                        label: Text(
+                          _isResetSubmitting
+                              ? 'Resetando senha...'
+                              : 'Resetar senha do usuario',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             if (_lastProvisioned != null) ...[
               const SizedBox(height: 16),
               Card(
@@ -270,6 +480,30 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                       Text('Owner: ${_lastProvisioned!.ownerEmail}'),
                       const SizedBox(height: 4),
                       Text('Role: ${_lastProvisioned!.ownerRole}'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (_lastPasswordReset != null) ...[
+              const SizedBox(height: 16),
+              Card(
+                key: const ValueKey('platform-admin-last-reset-card'),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ultimo reset de senha',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Alvo: ${_lastPasswordReset!.targetEmailMasked}'),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Refresh tokens revogados: ${_lastPasswordReset!.revokedRefreshTokens}',
+                      ),
                     ],
                   ),
                 ),

@@ -101,4 +101,23 @@ void main() {
       expect(controller.currentUser, isNull);
     },
   );
+
+  test('changeOwnPassword delegates to auth repository', () async {
+    final authRepository = FakeAuthRepository();
+    final controller = SessionController(
+      authRepository: authRepository,
+      sessionStore: MemorySessionStore(),
+    );
+
+    final result = await controller.changeOwnPassword(
+      currentPassword: 'SenhaAtual123',
+      newPassword: 'SenhaNova456',
+      newPasswordConfirmation: 'SenhaNova456',
+    );
+
+    expect(authRepository.changePasswordCalls, 1);
+    expect(authRepository.lastCurrentPassword, 'SenhaAtual123');
+    expect(authRepository.lastNewPassword, 'SenhaNova456');
+    expect(result.reauthenticationRequired, isTrue);
+  });
 }

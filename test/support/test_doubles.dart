@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
+import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
@@ -20,6 +21,8 @@ import 'package:despesas_frontend/features/financial_assistant/domain/financial_
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_input.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_result.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/create_household_owner_input.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_household.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
@@ -43,15 +46,23 @@ class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({
     this.loginResult,
     this.refreshResult,
+    this.changePasswordResult,
     this.loginError,
     this.refreshError,
+    this.changePasswordError,
   });
 
   MobileSession? loginResult;
   MobileSession? refreshResult;
+  ChangePasswordResult? changePasswordResult;
   Exception? loginError;
   Exception? refreshError;
+  Exception? changePasswordError;
   int refreshCalls = 0;
+  int changePasswordCalls = 0;
+  String? lastCurrentPassword;
+  String? lastNewPassword;
+  String? lastNewPasswordConfirmation;
 
   @override
   Future<MobileSession> login({
@@ -71,6 +82,26 @@ class FakeAuthRepository implements AuthRepository {
       throw refreshError!;
     }
     return refreshResult ?? fakeSession();
+  }
+
+  @override
+  Future<ChangePasswordResult> changeOwnPassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    changePasswordCalls += 1;
+    lastCurrentPassword = currentPassword;
+    lastNewPassword = newPassword;
+    lastNewPasswordConfirmation = newPasswordConfirmation;
+    if (changePasswordError != null) {
+      throw changePasswordError!;
+    }
+    return changePasswordResult ??
+        const ChangePasswordResult(
+          revokedRefreshTokens: 1,
+          reauthenticationRequired: true,
+        );
   }
 }
 
@@ -449,13 +480,25 @@ class FakeHouseholdMembersRepository implements HouseholdMembersRepository {
 }
 
 class FakePlatformAdminRepository implements PlatformAdminRepository {
-  FakePlatformAdminRepository({this.result, this.error, this.onCreate});
+  FakePlatformAdminRepository({
+    this.result,
+    this.error,
+    this.onCreate,
+    this.resetResult,
+    this.resetError,
+    this.onReset,
+  });
 
   PlatformAdminHousehold? result;
   Exception? error;
   void Function(CreateHouseholdOwnerInput input)? onCreate;
+  AdminPasswordResetResult? resetResult;
+  Exception? resetError;
+  void Function(AdminPasswordResetInput input)? onReset;
   int createCalls = 0;
+  int resetCalls = 0;
   CreateHouseholdOwnerInput? lastInput;
+  AdminPasswordResetInput? lastResetInput;
 
   @override
   Future<PlatformAdminHousehold> createHouseholdWithOwner(
@@ -474,6 +517,23 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
           ownerUserId: 77,
           ownerEmail: input.ownerEmail,
           ownerRole: 'OWNER',
+        );
+  }
+
+  @override
+  Future<AdminPasswordResetResult> resetUserPassword(
+    AdminPasswordResetInput input,
+  ) async {
+    resetCalls += 1;
+    lastResetInput = input;
+    if (resetError != null) {
+      throw resetError!;
+    }
+    onReset?.call(input);
+    return resetResult ??
+        const AdminPasswordResetResult(
+          targetEmailMasked: 'u***@local.invalid',
+          revokedRefreshTokens: 2,
         );
   }
 }
