@@ -83,4 +83,22 @@ void main() {
       expect(controller.currentUser, isNull);
     },
   );
+
+  test(
+    'refreshSession falls back to false when session store read fails',
+    () async {
+      final controller = SessionController(
+        authRepository: FakeAuthRepository(),
+        sessionStore: ThrowingSessionStore(
+          readError: Exception('storage unavailable'),
+        ),
+      );
+
+      final refreshed = await controller.refreshSession();
+
+      expect(refreshed, isFalse);
+      expect(controller.status, SessionStatus.unauthenticated);
+      expect(controller.currentUser, isNull);
+    },
+  );
 }

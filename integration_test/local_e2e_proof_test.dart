@@ -14,9 +14,7 @@ const _proofRunId = String.fromEnvironment(
 );
 
 void main() {
-  final binding =
-      IntegrationTestWidgetsFlutterBinding.ensureInitialized()
-          as IntegrationTestWidgetsFlutterBinding;
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('executa a prova local web fim a fim', (tester) async {
     _assertDefines();
@@ -225,7 +223,9 @@ Future<void> _pumpUntilVisible(
       throw exception;
     }
   }
-  throw TestFailure('Timed out waiting for ${finder.description}');
+  throw TestFailure(
+    'Timed out waiting for ${finder.describeMatch(Plurality.many)}',
+  );
 }
 
 Future<void> _waitForHomeScreen(

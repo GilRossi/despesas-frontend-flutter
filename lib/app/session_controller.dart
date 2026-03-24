@@ -88,7 +88,7 @@ class SessionController extends ChangeNotifier implements SessionManager {
     }
 
     final refreshToken =
-        _session?.refreshToken ?? await _sessionStore.readRefreshToken();
+        _session?.refreshToken ?? await _readStoredRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
       await clearSession();
       return false;
