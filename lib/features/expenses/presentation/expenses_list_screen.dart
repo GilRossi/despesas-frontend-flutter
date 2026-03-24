@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
+import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
@@ -116,6 +117,15 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
         builder: (_) => HouseholdMembersScreen(
           householdMembersRepository: widget.householdMembersRepository,
         ),
+      ),
+    );
+  }
+
+  Future<void> _openChangePassword() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            ChangePasswordScreen(sessionController: widget.sessionController),
       ),
     );
   }
@@ -265,6 +275,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             onPressed: _openReports,
                             icon: const Icon(Icons.insert_chart_outlined),
                             label: const Text('Relatorios'),
+                          ),
+                          OutlinedButton.icon(
+                            key: const ValueKey('expenses-security-button'),
+                            onPressed: _openChangePassword,
+                            icon: const Icon(Icons.lock_outline),
+                            label: const Text('Minha senha'),
                           ),
                           if (canReviewOperations)
                             OutlinedButton.icon(

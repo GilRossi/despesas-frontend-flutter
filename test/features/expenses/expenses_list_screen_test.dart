@@ -3,6 +3,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_form_sc
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
+import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
@@ -16,6 +17,12 @@ void main() {
   void configureSmallViewport(WidgetTester tester) {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 640);
+    addTearDown(tester.view.reset);
+  }
+
+  void configureLargeViewport(WidgetTester tester) {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 1400);
     addTearDown(tester.view.reset);
   }
 
@@ -126,6 +133,8 @@ void main() {
   });
 
   testWidgets('opens expense detail when tapping a list item', (tester) async {
+    configureLargeViewport(tester);
+
     final controller = SessionController(
       authRepository: FakeAuthRepository(loginResult: fakeSession()),
       sessionStore: MemorySessionStore(),
@@ -164,7 +173,18 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.tap(find.text('Conta de Agua'));
+    final expenseCard = find.ancestor(
+      of: find.text('Conta de Agua'),
+      matching: find.byType(InkWell),
+    );
+
+    await tester.scrollUntilVisible(
+      expenseCard,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(expenseCard);
+    await tester.tap(expenseCard);
     await tester.pumpAndSettle();
 
     expect(find.byType(ExpenseDetailScreen), findsOneWidget);
@@ -387,5 +407,35 @@ void main() {
 
     expect(find.text('Nome com zoom alto no Android'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('opens account security from the authenticated hub', (
+    tester,
+  ) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(result: emptyPage()),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
+          reportsRepository: FakeReportsRepository(),
+          reviewOperationsRepository: FakeReviewOperationsRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('expenses-security-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChangePasswordScreen), findsOneWidget);
   });
 }

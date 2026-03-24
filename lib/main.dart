@@ -25,8 +25,12 @@ void main() {
     httpClient: httpClient,
   );
   final sessionStore = SecureSessionStore(const FlutterSecureStorage());
-  final authRepository = HttpAuthRepository(apiClient);
-  final sessionController = SessionController(
+  late final SessionController sessionController;
+  final authRepository = HttpAuthRepository(
+    apiClient,
+    accessTokenProvider: () => sessionController.accessToken,
+  );
+  sessionController = SessionController(
     authRepository: authRepository,
     sessionStore: sessionStore,
   );

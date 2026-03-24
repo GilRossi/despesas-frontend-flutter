@@ -4,6 +4,7 @@ import 'package:despesas_frontend/core/network/authorized_request_executor.dart'
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
+import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
 import 'package:flutter/foundation.dart';
@@ -102,6 +103,18 @@ class SessionController extends ChangeNotifier implements SessionManager {
 
   Future<void> logout() async {
     await clearSession();
+  }
+
+  Future<ChangePasswordResult> changeOwnPassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) {
+    return _authRepository.changeOwnPassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      newPasswordConfirmation: newPasswordConfirmation,
+    );
   }
 
   @override
