@@ -62,8 +62,4 @@ jobs:
       - name: Smoke check
         run: |
           sleep 5
-          STATUS=$(curl -sk -o /dev/null -w '%{http_code}' \
-            https://app.rossicompany.com.br/)
-          echo "Frontend: $STATUS"
-          [ "$STATUS" = "200" ] || (echo "SMOKE FAILED" && exit 1)
-          echo "Frontend deploy OK"
+          scripts/run_production_surface_smoke.sh
