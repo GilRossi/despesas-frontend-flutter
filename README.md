@@ -62,12 +62,25 @@ Este repositório ja possui esteira real para Flutter Web:
 - `Flutter Web CD`: publica `build/web` na VPS em `/srv/despesas/frontend-web/current/`
 - `Flutter Web Production Artifact`: gera o artefato de producao por `workflow_dispatch`
 
+## Governanca operacional
+
+Fluxo normal de publicacao:
+
+1. branch
+2. PR
+3. merge em `main`
+4. `Flutter Web CD` publica o build oficial
+5. smoke governado confirma o front-door publico
+
+O modo padrao nao deve depender de shell manual na VPS. Auditoria e deploy rotineiros devem ficar versionados e executados por GitHub Actions.
+
 ## Contrato atual de publicacao
 
 - o build web e publicado separadamente do deploy do backend
 - o backend continua servindo `/` a partir do diretório sincronizado na VPS
 - ainda nao existe release atomica unica entre backend, Flutter Web e n8n
 - por isso, compatibilidade entre API e build web depende de coordenacao entre os repositorios e de smoke pos-publicacao
+- o smoke governado do Flutter Web precisa manter `GET /` em `200` e `GET /password-console.html` em `404`
 
 ## Baseline visual
 
