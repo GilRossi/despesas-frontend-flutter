@@ -39,7 +39,7 @@ class SessionController extends ChangeNotifier implements SessionManager {
       return;
     }
 
-    final refreshToken = await _sessionStore.readRefreshToken();
+    final refreshToken = await _readStoredRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
       _status = SessionStatus.unauthenticated;
       notifyListeners();
@@ -88,7 +88,7 @@ class SessionController extends ChangeNotifier implements SessionManager {
     }
 
     final refreshToken =
-        _session?.refreshToken ?? await _sessionStore.readRefreshToken();
+        _session?.refreshToken ?? await _readStoredRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
       await clearSession();
       return false;
@@ -109,7 +109,7 @@ class SessionController extends ChangeNotifier implements SessionManager {
     _session = null;
     _status = SessionStatus.unauthenticated;
     _errorMessage = null;
-    await _sessionStore.clear();
+    await _clearStoredRefreshToken();
     notifyListeners();
   }
 
@@ -128,7 +128,31 @@ class SessionController extends ChangeNotifier implements SessionManager {
     _session = session;
     _status = SessionStatus.authenticated;
     _errorMessage = null;
-    await _sessionStore.writeRefreshToken(session.refreshToken);
+    await _persistRefreshToken(session.refreshToken);
     notifyListeners();
+  }
+
+  Future<String?> _readStoredRefreshToken() async {
+    try {
+      return await _sessionStore.readRefreshToken();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _persistRefreshToken(String refreshToken) async {
+    try {
+      await _sessionStore.writeRefreshToken(refreshToken);
+    } catch (_) {
+      // Keep the in-memory authenticated session even if persistence fails.
+    }
+  }
+
+  Future<void> _clearStoredRefreshToken() async {
+    try {
+      await _sessionStore.clear();
+    } catch (_) {
+      // Clearing persistence failure must not keep the in-memory session alive.
+    }
   }
 }
