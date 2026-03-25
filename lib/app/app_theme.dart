@@ -12,9 +12,26 @@ ThemeData buildAppTheme() {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: const Color(0xFFF7F8F7),
     useMaterial3: true,
+    textTheme: Typography.material2021().black.apply(
+          bodyColor: const Color(0xFF1E252B),
+          displayColor: const Color(0xFF1E252B),
+        ),
     appBarTheme: const AppBarTheme(
       centerTitle: false,
       surfaceTintColor: Colors.transparent,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     ),
     cardTheme: CardThemeData(
       color: Colors.white,

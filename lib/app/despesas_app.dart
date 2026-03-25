@@ -1,16 +1,17 @@
+import 'package:despesas_frontend/app/app_router.dart';
 import 'package:despesas_frontend/app/app_theme.dart';
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/app/splash_screen.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
-import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
-import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class DespesasApp extends StatefulWidget {
   const DespesasApp({
@@ -41,6 +42,8 @@ class DespesasApp extends StatefulWidget {
 }
 
 class _DespesasAppState extends State<DespesasApp> {
+  late final GoRouter _router;
+
   @override
   void initState() {
     super.initState();
@@ -49,54 +52,30 @@ class _DespesasAppState extends State<DespesasApp> {
         widget.sessionController.restoreSession();
       });
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Despesas',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
-      home: ListenableBuilder(
-        listenable: widget.sessionController,
-        builder: (context, _) {
-          switch (widget.sessionController.status) {
-            case SessionStatus.bootstrapping:
-              return const _SplashScreen();
-            case SessionStatus.unauthenticated:
-              return LoginScreen(
-                sessionController: widget.sessionController,
-                environment: widget.environment,
-              );
-            case SessionStatus.authenticated:
-              if (widget.sessionController.currentUser?.role ==
-                  'PLATFORM_ADMIN') {
-                return PlatformAdminScreen(
-                  sessionController: widget.sessionController,
-                  platformAdminRepository: widget.platformAdminRepository,
-                );
-              }
-              return ExpensesListScreen(
-                sessionController: widget.sessionController,
-                expensesRepository: widget.expensesRepository,
-                financialAssistantRepository:
-                    widget.financialAssistantRepository,
-                householdMembersRepository: widget.householdMembersRepository,
-                reportsRepository: widget.reportsRepository,
-                reviewOperationsRepository: widget.reviewOperationsRepository,
-              );
-          }
-        },
+    _router = createAppRouter(
+      sessionController: widget.sessionController,
+      expensesRepository: widget.expensesRepository,
+      financialAssistantRepository: widget.financialAssistantRepository,
+      householdMembersRepository: widget.householdMembersRepository,
+      platformAdminRepository: widget.platformAdminRepository,
+      reportsRepository: widget.reportsRepository,
+      reviewOperationsRepository: widget.reviewOperationsRepository,
+      splashScreen: const SplashScreen(),
+      loginScreenBuilder: () => LoginScreen(
+        sessionController: widget.sessionController,
+        environment: widget.environment,
       ),
     );
   }
-}
-
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return MaterialApp.router(
+      title: 'Despesas',
+      debugShowCheckedModeBanner: false,
+      theme: buildAppTheme(),
+      routerConfig: _router,
+    );
   }
 }
