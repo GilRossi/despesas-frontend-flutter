@@ -4,7 +4,9 @@ import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/network/despesas_api_client.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
+import 'package:despesas_frontend/features/auth/domain/forgot_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
+import 'package:despesas_frontend/features/auth/domain/reset_password_result.dart';
 import 'package:http/http.dart' as http;
 
 typedef AccessTokenProvider = String? Function();
@@ -71,6 +73,66 @@ class HttpAuthRepository implements AuthRepository {
       fallbackMessage: 'Resposta invalida da troca de senha.',
     );
     return ChangePasswordResult.fromJson(data);
+  }
+
+  @override
+  Future<ForgotPasswordResult> forgotPassword({required String email}) async {
+    final response = await _apiClient.postJson(
+      '/api/v1/auth/forgot-password',
+      body: {'email': email},
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final maskedEmail = decoded['maskedEmail'] as String?;
+    if (maskedEmail == null) {
+      throw const ApiException(
+        statusCode: 500,
+        code: 'INVALID_RESPONSE',
+        message: 'Resposta invalida do pedido de recuperacao de senha.',
+      );
+    }
+    final resetToken = decoded['resetToken'] as String?;
+    return ForgotPasswordResult(maskedEmail: maskedEmail, resetToken: resetToken);
+  }
+
+  @override
+  Future<ResetPasswordResult> resetPassword({
+    required String token,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    final response = await _apiClient.postJson(
+      '/api/v1/auth/reset-password',
+      body: {
+        'token': token,
+        'newPassword': newPassword,
+        'newPasswordConfirmation': newPasswordConfirmation,
+      },
+    );
+
+    final data = _parseDataMap(
+      response,
+      fallbackMessage: 'Resposta invalida da redefinicao de senha.',
+    );
+
+    final revokedTokens = data['revokedRefreshTokens'];
+    final success = data['success'];
+    if (revokedTokens is! int || success is! bool) {
+      throw const ApiException(
+        statusCode: 500,
+        code: 'INVALID_RESPONSE',
+        message: 'Resposta invalida da redefinicao de senha.',
+      );
+    }
+
+    return ResetPasswordResult(
+      revokedRefreshTokens: revokedTokens,
+      success: success,
+    );
   }
 
   MobileSession _parseSessionResponse(http.Response response) {

@@ -5,7 +5,9 @@ import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
+import 'package:despesas_frontend/features/auth/domain/forgot_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
+import 'package:despesas_frontend/features/auth/domain/reset_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
@@ -175,6 +177,20 @@ class FakeAuthRepository implements AuthRepository {
       revokedRefreshTokens: 0,
       reauthenticationRequired: false,
     );
+  }
+
+  @override
+  Future<ForgotPasswordResult> forgotPassword({required String email}) async {
+    return ForgotPasswordResult(maskedEmail: 'm***@example.com');
+  }
+
+  @override
+  Future<ResetPasswordResult> resetPassword({
+    required String token,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    return const ResetPasswordResult(revokedRefreshTokens: 0, success: true);
   }
 }
 

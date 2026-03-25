@@ -4,6 +4,7 @@ import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart'
 import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -140,6 +141,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               )
                             : const Text('Entrar'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        key: const ValueKey('login-forgot-password-button'),
+                        onPressed: isSubmitting
+                            ? null
+                            : () => context.go('/forgot-password'),
+                        child: const Text('Esqueci minha senha'),
                       ),
                     ),
                     const SizedBox(height: 16),

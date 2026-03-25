@@ -1,6 +1,8 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/app/splash_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
+import 'package:despesas_frontend/features/auth/presentation/forgot_password_screen.dart';
+import 'package:despesas_frontend/features/auth/presentation/reset_password_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
@@ -30,13 +32,18 @@ GoRouter createAppRouter({
       final status = sessionController.status;
       final loggingIn = state.matchedLocation == '/login';
       final inSplash = state.matchedLocation == '/splash';
+      final inForgot = state.matchedLocation == '/forgot-password';
+      final inReset = state.matchedLocation == '/reset-password';
 
       if (status == SessionStatus.bootstrapping) {
         return inSplash ? null : '/splash';
       }
 
       if (status == SessionStatus.unauthenticated) {
-        return loggingIn ? null : '/login';
+        if (loggingIn || inForgot || inReset) {
+          return null;
+        }
+        return '/login';
       }
 
       // Authenticated
@@ -54,6 +61,19 @@ GoRouter createAppRouter({
       GoRoute(
         path: '/login',
         builder: (_, __) => loginScreenBuilder(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => ForgotPasswordScreen(
+          sessionController: sessionController,
+        ),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => ResetPasswordScreen(
+          sessionController: sessionController,
+          token: state.uri.queryParameters['token'],
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) => _AuthenticatedShell(child: child),
