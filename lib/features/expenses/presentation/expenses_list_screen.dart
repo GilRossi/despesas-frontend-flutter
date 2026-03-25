@@ -1,4 +1,7 @@
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/empty_state.dart';
+import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
@@ -158,183 +161,159 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
         final user = widget.sessionController.currentUser;
         final canReviewOperations = user?.role == 'OWNER';
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Despesas'),
-            actions: [
-              IconButton(
-                tooltip: 'Assistente financeiro',
-                onPressed: _openFinancialAssistant,
-                icon: const Icon(Icons.psychology_alt_outlined),
-              ),
-              IconButton(
-                tooltip: 'Relatorios',
-                onPressed: _openReports,
-                icon: const Icon(Icons.insert_chart_outlined),
-              ),
-              if (canReviewOperations)
-                IconButton(
-                  tooltip: 'Membros do household',
-                  onPressed: _openHouseholdMembers,
-                  icon: const Icon(Icons.group_outlined),
-                ),
-              if (canReviewOperations)
-                IconButton(
-                  tooltip: 'Review operations',
-                  onPressed: _openReviewOperations,
-                  icon: const Icon(Icons.fact_check_outlined),
-                ),
-              IconButton(
-                tooltip: 'Nova despesa',
-                onPressed: _openCreateExpense,
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-              IconButton(
-                tooltip: 'Sair',
-                onPressed: _logout,
-                icon: const Icon(Icons.logout),
-              ),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(76),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user?.name ?? 'Sessao ativa',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user?.email ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF65727B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        return AppScaffold(
+          title: 'Despesas',
+          subtitle: user?.name,
+          actions: [
+            IconButton(
+              tooltip: 'Assistente financeiro',
+              onPressed: _openFinancialAssistant,
+              icon: const Icon(Icons.psychology_alt_outlined),
             ),
-          ),
-          body: SafeArea(
-            top: false,
-            child: RefreshIndicator(
-              onRefresh: _viewModel.load,
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        runSpacing: 16,
-                        spacing: 16,
-                        children: [
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 420),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Gestao principal de despesas',
-                                  style: theme.textTheme.titleLarge,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Crie, acompanhe, edite e remova despesas do household atual sem voltar ao legado.',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: const Color(0xFF65727B),
-                                  ),
-                                ),
-                              ],
+            IconButton(
+              tooltip: 'Relatorios',
+              onPressed: _openReports,
+              icon: const Icon(Icons.insert_chart_outlined),
+            ),
+            if (canReviewOperations)
+              IconButton(
+                tooltip: 'Membros do household',
+                onPressed: _openHouseholdMembers,
+                icon: const Icon(Icons.group_outlined),
+              ),
+            if (canReviewOperations)
+              IconButton(
+                tooltip: 'Review operations',
+                onPressed: _openReviewOperations,
+                icon: const Icon(Icons.fact_check_outlined),
+              ),
+            IconButton(
+              tooltip: 'Nova despesa',
+              onPressed: _openCreateExpense,
+              icon: const Icon(Icons.add_circle_outline),
+            ),
+            IconButton(
+              tooltip: 'Sair',
+              onPressed: _logout,
+              icon: const Icon(Icons.logout),
+            ),
+          ],
+          body: RefreshIndicator(
+            onRefresh: _viewModel.load,
+            child: ListView(
+              children: [
+                SectionCard(
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    runSpacing: 16,
+                    spacing: 16,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Gestao principal de despesas',
+                              style: theme.textTheme.titleLarge,
                             ),
-                          ),
-                          FilledButton.icon(
-                            key: const ValueKey('expenses-new-expense-button'),
-                            onPressed: _openCreateExpense,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Nova despesa'),
-                          ),
-                          OutlinedButton.icon(
-                            key: const ValueKey('expenses-assistant-button'),
-                            onPressed: _openFinancialAssistant,
-                            icon: const Icon(Icons.psychology_alt_outlined),
-                            label: const Text('Assistente financeiro'),
-                          ),
-                          OutlinedButton.icon(
-                            key: const ValueKey('expenses-reports-button'),
-                            onPressed: _openReports,
-                            icon: const Icon(Icons.insert_chart_outlined),
-                            label: const Text('Relatorios'),
-                          ),
-                          OutlinedButton.icon(
-                            key: const ValueKey('expenses-security-button'),
-                            onPressed: _openChangePassword,
-                            icon: const Icon(Icons.lock_outline),
-                            label: const Text('Minha senha'),
-                          ),
-                          if (canReviewOperations)
-                            OutlinedButton.icon(
-                              key: const ValueKey('expenses-members-button'),
-                              onPressed: _openHouseholdMembers,
-                              icon: const Icon(Icons.group_outlined),
-                              label: const Text('Membros do household'),
-                            ),
-                          if (canReviewOperations)
-                            OutlinedButton.icon(
-                              key: const ValueKey(
-                                'expenses-review-operations-button',
+                            const SizedBox(height: 8),
+                            if (user?.email != null)
+                              Text(
+                                user!.email,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: const Color(0xFF65727B),
+                                ),
                               ),
-                              onPressed: _openReviewOperations,
-                              icon: const Icon(Icons.fact_check_outlined),
-                              label: const Text('Review operations'),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Crie, acompanhe, edite e remova despesas do household atual sem voltar ao legado.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF65727B),
+                              ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      FilledButton.icon(
+                        key: const ValueKey('expenses-new-expense-button'),
+                        onPressed: _openCreateExpense,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Nova despesa'),
+                      ),
+                      OutlinedButton.icon(
+                        key: const ValueKey('expenses-assistant-button'),
+                        onPressed: _openFinancialAssistant,
+                        icon: const Icon(Icons.psychology_alt_outlined),
+                        label: const Text('Assistente financeiro'),
+                      ),
+                      OutlinedButton.icon(
+                        key: const ValueKey('expenses-reports-button'),
+                        onPressed: _openReports,
+                        icon: const Icon(Icons.insert_chart_outlined),
+                        label: const Text('Relatorios'),
+                      ),
+                      OutlinedButton.icon(
+                        key: const ValueKey('expenses-security-button'),
+                        onPressed: _openChangePassword,
+                        icon: const Icon(Icons.lock_outline),
+                        label: const Text('Minha senha'),
+                      ),
+                      if (canReviewOperations)
+                        OutlinedButton.icon(
+                          key: const ValueKey('expenses-members-button'),
+                          onPressed: _openHouseholdMembers,
+                          icon: const Icon(Icons.group_outlined),
+                          label: const Text('Membros do household'),
+                        ),
+                      if (canReviewOperations)
+                        OutlinedButton.icon(
+                          key: const ValueKey('expenses-review-operations-button'),
+                          onPressed: _openReviewOperations,
+                          icon: const Icon(Icons.fact_check_outlined),
+                          label: const Text('Review operations'),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  if (_viewModel.isLoading) ...[
-                    const SizedBox(height: 120),
-                    const Center(child: CircularProgressIndicator()),
-                  ] else if (_viewModel.errorMessage != null) ...[
-                    _StateCard(
+                ),
+                const SizedBox(height: 16),
+                if (_viewModel.isLoading) ...[
+                  const SizedBox(height: 120),
+                  const Center(child: CircularProgressIndicator()),
+                ] else if (_viewModel.errorMessage != null) ...[
+                  SectionCard(
+                    child: EmptyState(
                       title: 'Nao foi possivel carregar as despesas.',
                       message: _viewModel.errorMessage!,
                       actionLabel: 'Tentar novamente',
                       onAction: _viewModel.load,
                     ),
-                  ] else if (_viewModel.isEmpty) ...[
-                    const _StateCard(
+                  ),
+                ] else if (_viewModel.isEmpty) ...[
+                  const SectionCard(
+                    child: EmptyState(
                       title: 'Nenhuma despesa encontrada',
                       message:
                           'Crie a primeira despesa do household para iniciar a gestao pelo Flutter Web.',
                     ),
-                  ] else ...[
-                    Text(
-                      'Despesas do household atual',
-                      style: theme.textTheme.titleMedium,
+                  ),
+                ] else ...[
+                  Text(
+                    'Despesas do household atual',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  for (final expense in _viewModel.expenses) ...[
+                    _ExpenseCard(
+                      expense: expense,
+                      onTap: () => _openExpenseDetail(expense),
                     ),
-                    const SizedBox(height: 16),
-                    for (final expense in _viewModel.expenses) ...[
-                      _ExpenseCard(
-                        expense: expense,
-                        onTap: () => _openExpenseDetail(expense),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                    const SizedBox(height: 12),
                   ],
                 ],
-              ),
+              ],
             ),
           ),
         );
@@ -438,48 +417,6 @@ class _MetaChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Text(label),
-      ),
-    );
-  }
-}
-
-class _StateCard extends StatelessWidget {
-  const _StateCard({
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF65727B),
-              ),
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 16),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
-            ],
-          ],
-        ),
       ),
     );
   }

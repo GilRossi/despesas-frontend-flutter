@@ -4,7 +4,9 @@ import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
+import 'package:despesas_frontend/features/auth/domain/forgot_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
+import 'package:despesas_frontend/features/auth/domain/reset_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/session_store.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
@@ -15,6 +17,8 @@ import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart'
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_summary.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
@@ -47,22 +51,34 @@ class FakeAuthRepository implements AuthRepository {
     this.loginResult,
     this.refreshResult,
     this.changePasswordResult,
+    this.forgotPasswordResult,
+    this.resetPasswordResult,
     this.loginError,
     this.refreshError,
     this.changePasswordError,
+    this.forgotPasswordError,
+    this.resetPasswordError,
   });
 
   MobileSession? loginResult;
   MobileSession? refreshResult;
   ChangePasswordResult? changePasswordResult;
+  ForgotPasswordResult? forgotPasswordResult;
+  ResetPasswordResult? resetPasswordResult;
   Exception? loginError;
   Exception? refreshError;
   Exception? changePasswordError;
+  Exception? forgotPasswordError;
+  Exception? resetPasswordError;
   int refreshCalls = 0;
   int changePasswordCalls = 0;
+  int forgotPasswordCalls = 0;
+  int resetPasswordCalls = 0;
   String? lastCurrentPassword;
   String? lastNewPassword;
   String? lastNewPasswordConfirmation;
+  String? lastForgotEmail;
+  String? lastResetToken;
 
   @override
   Future<MobileSession> login({
@@ -102,6 +118,34 @@ class FakeAuthRepository implements AuthRepository {
           revokedRefreshTokens: 1,
           reauthenticationRequired: true,
         );
+  }
+
+  @override
+  Future<ForgotPasswordResult> forgotPassword({required String email}) async {
+    forgotPasswordCalls += 1;
+    lastForgotEmail = email;
+    if (forgotPasswordError != null) {
+      throw forgotPasswordError!;
+    }
+    return forgotPasswordResult ??
+        ForgotPasswordResult(maskedEmail: 'g***@example.com');
+  }
+
+  @override
+  Future<ResetPasswordResult> resetPassword({
+    required String token,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    resetPasswordCalls += 1;
+    lastResetToken = token;
+    lastNewPassword = newPassword;
+    lastNewPasswordConfirmation = newPasswordConfirmation;
+    if (resetPasswordError != null) {
+      throw resetPasswordError!;
+    }
+    return resetPasswordResult ??
+        const ResetPasswordResult(revokedRefreshTokens: 1, success: true);
   }
 }
 
@@ -276,6 +320,33 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw registerPaymentError!;
     }
     onRegisterPayment?.call(input);
+  }
+}
+
+class FakeDashboardRepository implements DashboardRepository {
+  FakeDashboardRepository({this.summary, this.error});
+
+  DashboardSummary? summary;
+  Exception? error;
+  int calls = 0;
+
+  @override
+  Future<DashboardSummary> fetchSummary() async {
+    calls += 1;
+    if (error != null) throw error!;
+    return summary ??
+        const DashboardSummary(
+          householdId: 1,
+          totalExpenses: 2,
+          totalAmount: 500.0,
+          paidAmount: 200.0,
+          remainingAmount: 300.0,
+          overdueCount: 1,
+          overdueAmount: 150.0,
+          openCount: 1,
+          openAmount: 150.0,
+          statuses: [],
+        );
   }
 }
 

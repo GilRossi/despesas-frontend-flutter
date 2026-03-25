@@ -2,7 +2,7 @@ import 'package:despesas_frontend/app/despesas_app.dart';
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
-import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
+import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,6 +31,7 @@ void main() {
         platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
+        dashboardRepository: FakeDashboardRepository(),
         autoRestoreSession: false,
       ),
     );
@@ -38,7 +39,7 @@ void main() {
     expect(find.byType(LoginScreen), findsOneWidget);
   });
 
-  testWidgets('auth gate shows expenses list when user is authenticated', (
+  testWidgets('auth gate shows dashboard when user is authenticated', (
     tester,
   ) async {
     final controller = SessionController(
@@ -60,12 +61,13 @@ void main() {
         platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
+        dashboardRepository: FakeDashboardRepository(),
         autoRestoreSession: false,
       ),
     );
     await tester.pump();
 
-    expect(find.byType(ExpensesListScreen), findsOneWidget);
+    expect(find.byType(DashboardScreen), findsOneWidget);
   });
 
   testWidgets('auth gate shows admin screen for platform admin', (tester) async {
@@ -94,6 +96,7 @@ void main() {
         platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
+        dashboardRepository: FakeDashboardRepository(),
         autoRestoreSession: false,
       ),
     );
