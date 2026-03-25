@@ -4,6 +4,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/app/splash_screen.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
@@ -24,6 +25,7 @@ class DespesasApp extends StatefulWidget {
     required this.platformAdminRepository,
     required this.reportsRepository,
     required this.reviewOperationsRepository,
+    required this.dashboardRepository,
     this.autoRestoreSession = true,
   });
 
@@ -35,6 +37,7 @@ class DespesasApp extends StatefulWidget {
   final PlatformAdminRepository platformAdminRepository;
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
+  final DashboardRepository dashboardRepository;
   final bool autoRestoreSession;
 
   @override
@@ -61,6 +64,7 @@ class _DespesasAppState extends State<DespesasApp> {
       platformAdminRepository: widget.platformAdminRepository,
       reportsRepository: widget.reportsRepository,
       reviewOperationsRepository: widget.reviewOperationsRepository,
+      dashboardRepository: widget.dashboardRepository,
       splashScreen: const SplashScreen(),
       loginScreenBuilder: () => LoginScreen(
         sessionController: widget.sessionController,

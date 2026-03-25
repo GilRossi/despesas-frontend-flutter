@@ -17,6 +17,8 @@ import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart'
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_summary.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
@@ -318,6 +320,33 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw registerPaymentError!;
     }
     onRegisterPayment?.call(input);
+  }
+}
+
+class FakeDashboardRepository implements DashboardRepository {
+  FakeDashboardRepository({this.summary, this.error});
+
+  DashboardSummary? summary;
+  Exception? error;
+  int calls = 0;
+
+  @override
+  Future<DashboardSummary> fetchSummary() async {
+    calls += 1;
+    if (error != null) throw error!;
+    return summary ??
+        const DashboardSummary(
+          householdId: 1,
+          totalExpenses: 2,
+          totalAmount: 500.0,
+          paidAmount: 200.0,
+          remainingAmount: 300.0,
+          overdueCount: 1,
+          overdueAmount: 150.0,
+          openCount: 1,
+          openAmount: 150.0,
+          statuses: [],
+        );
   }
 }
 

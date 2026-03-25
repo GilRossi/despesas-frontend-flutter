@@ -16,6 +16,7 @@ import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart'
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
@@ -39,6 +40,8 @@ import 'package:despesas_frontend/features/review_operations/domain/review_opera
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+
+import '../support/test_doubles.dart';
 
 void main() {
   group('App router', () {
@@ -78,7 +81,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.text('Gestao principal de despesas'), findsOneWidget);
+      expect(find.text('Dashboard'), findsOneWidget);
     });
   });
 }
@@ -89,6 +92,7 @@ class TestDeps {
     required this.sessionController,
     required this.expensesRepository,
     required this.financialAssistantRepository,
+    required this.dashboardRepository,
     required this.householdMembersRepository,
     required this.platformAdminRepository,
     required this.reportsRepository,
@@ -99,6 +103,7 @@ class TestDeps {
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
   final FinancialAssistantRepository financialAssistantRepository;
+  final DashboardRepository dashboardRepository;
   final HouseholdMembersRepository householdMembersRepository;
   final PlatformAdminRepository platformAdminRepository;
   final ReportsRepository reportsRepository;
@@ -121,6 +126,7 @@ class TestDeps {
       sessionController: sessionController,
       expensesRepository: FakeExpensesRepository(),
       financialAssistantRepository: FakeFinancialAssistantRepository(),
+      dashboardRepository: FakeDashboardRepository(),
       householdMembersRepository: FakeHouseholdMembersRepository(),
       platformAdminRepository: FakePlatformAdminRepository(),
       reportsRepository: FakeReportsRepository(),
@@ -133,6 +139,7 @@ class TestDeps {
       sessionController: sessionController,
       expensesRepository: expensesRepository,
       financialAssistantRepository: financialAssistantRepository,
+      dashboardRepository: dashboardRepository,
       householdMembersRepository: householdMembersRepository,
       platformAdminRepository: platformAdminRepository,
       reportsRepository: reportsRepository,

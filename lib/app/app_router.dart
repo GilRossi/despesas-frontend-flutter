@@ -3,9 +3,12 @@ import 'package:despesas_frontend/app/splash_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/forgot_password_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/reset_password_screen.dart';
+import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
+import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
@@ -22,6 +25,7 @@ GoRouter createAppRouter({
   required PlatformAdminRepository platformAdminRepository,
   required ReportsRepository reportsRepository,
   required ReviewOperationsRepository reviewOperationsRepository,
+  required DashboardRepository dashboardRepository,
   required Widget splashScreen,
   required Widget Function() loginScreenBuilder,
 }) {
@@ -91,15 +95,28 @@ GoRouter createAppRouter({
                 );
               }
 
-              return ExpensesListScreen(
+              return DashboardScreen(
+                dashboardRepository: dashboardRepository,
                 sessionController: sessionController,
-                expensesRepository: expensesRepository,
-                financialAssistantRepository: financialAssistantRepository,
-                householdMembersRepository: householdMembersRepository,
-                reportsRepository: reportsRepository,
-                reviewOperationsRepository: reviewOperationsRepository,
               );
             },
+          ),
+          GoRoute(
+            path: '/assistant',
+            builder: (context, state) => FinancialAssistantScreen(
+              financialAssistantRepository: financialAssistantRepository,
+            ),
+          ),
+          GoRoute(
+            path: '/expenses',
+            builder: (context, state) => ExpensesListScreen(
+              sessionController: sessionController,
+              expensesRepository: expensesRepository,
+              financialAssistantRepository: financialAssistantRepository,
+              householdMembersRepository: householdMembersRepository,
+              reportsRepository: reportsRepository,
+              reviewOperationsRepository: reviewOperationsRepository,
+            ),
           ),
         ],
       ),
