@@ -1,6 +1,4 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/app/splash_screen.dart';
-import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/forgot_password_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/reset_password_screen.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
@@ -60,11 +58,11 @@ GoRouter createAppRouter({
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (_, __) => splashScreen,
+        builder: (context, state) => splashScreen,
       ),
       GoRoute(
         path: '/login',
-        builder: (_, __) => loginScreenBuilder(),
+        builder: (context, state) => loginScreenBuilder(),
       ),
       GoRoute(
         path: '/forgot-password',
