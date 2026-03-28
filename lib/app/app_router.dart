@@ -12,6 +12,8 @@ import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
+import 'package:despesas_frontend/features/space_references/presentation/space_references_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,6 +26,7 @@ GoRouter createAppRouter({
   required ReportsRepository reportsRepository,
   required ReviewOperationsRepository reviewOperationsRepository,
   required DashboardRepository dashboardRepository,
+  required SpaceReferencesRepository spaceReferencesRepository,
   required Widget splashScreen,
   required Widget Function() loginScreenBuilder,
 }) {
@@ -37,6 +40,7 @@ GoRouter createAppRouter({
       final inForgot = state.matchedLocation == '/forgot-password';
       final inReset = state.matchedLocation == '/reset-password';
       final inAssistant = state.matchedLocation == '/assistant';
+      final inSpaceReferences = state.matchedLocation == '/space/references';
 
       if (status == SessionStatus.bootstrapping) {
         return inSplash ? null : '/splash';
@@ -51,7 +55,7 @@ GoRouter createAppRouter({
 
       // Authenticated
       if (sessionController.requiresOnboarding) {
-        return inAssistant ? null : '/assistant';
+        return inAssistant || inSpaceReferences ? null : '/assistant';
       }
 
       if (loggingIn || inSplash || inForgot || inReset) {
@@ -105,6 +109,17 @@ GoRouter createAppRouter({
             builder: (context, state) => FinancialAssistantScreen(
               financialAssistantRepository: financialAssistantRepository,
               sessionController: sessionController,
+              onStarterPrimaryActionRequested: (primaryActionKey) {
+                if (primaryActionKey == 'OPEN_CONFIGURE_SPACE') {
+                  context.go('/space/references');
+                }
+              },
+            ),
+          ),
+          GoRoute(
+            path: '/space/references',
+            builder: (context, state) => SpaceReferencesScreen(
+              spaceReferencesRepository: spaceReferencesRepository,
             ),
           ),
           GoRoute(

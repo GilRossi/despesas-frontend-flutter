@@ -11,6 +11,7 @@ import 'package:despesas_frontend/features/household_members/domain/household_me
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,6 +27,7 @@ class DespesasApp extends StatefulWidget {
     required this.reportsRepository,
     required this.reviewOperationsRepository,
     required this.dashboardRepository,
+    required this.spaceReferencesRepository,
     this.autoRestoreSession = true,
   });
 
@@ -38,6 +40,7 @@ class DespesasApp extends StatefulWidget {
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
   final DashboardRepository dashboardRepository;
+  final SpaceReferencesRepository spaceReferencesRepository;
   final bool autoRestoreSession;
 
   @override
@@ -65,6 +68,7 @@ class _DespesasAppState extends State<DespesasApp> {
       reportsRepository: widget.reportsRepository,
       reviewOperationsRepository: widget.reviewOperationsRepository,
       dashboardRepository: widget.dashboardRepository,
+      spaceReferencesRepository: widget.spaceReferencesRepository,
       splashScreen: const SplashScreen(),
       loginScreenBuilder: () => LoginScreen(
         sessionController: widget.sessionController,

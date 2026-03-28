@@ -33,6 +33,7 @@ void main() {
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
         dashboardRepository: FakeDashboardRepository(),
+        spaceReferencesRepository: FakeSpaceReferencesRepository(),
         autoRestoreSession: false,
       ),
     );
@@ -70,6 +71,7 @@ void main() {
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
         dashboardRepository: FakeDashboardRepository(),
+        spaceReferencesRepository: FakeSpaceReferencesRepository(),
         autoRestoreSession: false,
       ),
     );
@@ -107,6 +109,7 @@ void main() {
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
         dashboardRepository: FakeDashboardRepository(),
+        spaceReferencesRepository: FakeSpaceReferencesRepository(),
         autoRestoreSession: false,
       ),
     );
