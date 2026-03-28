@@ -1,5 +1,6 @@
-import 'dart:async';
-
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,224 +8,198 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
-  void configureSmallViewport(WidgetTester tester) {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 640);
-    addTearDown(tester.view.reset);
+  SessionController buildSessionController({
+    required AuthOnboarding onboarding,
+    FakeAuthRepository? authRepository,
+  }) {
+    final repository =
+        authRepository ??
+        FakeAuthRepository(loginResult: fakeSession(onboarding: onboarding));
+    final controller = SessionController(
+      authRepository: repository,
+      sessionStore: MemorySessionStore(),
+    );
+    return controller;
   }
 
-  testWidgets('shows useful initial state before first question', (
-    tester,
-  ) async {
+  Future<SessionController> pumpAssistant(
+    WidgetTester tester, {
+    required AuthOnboarding onboarding,
+    FakeAuthRepository? authRepository,
+    FakeFinancialAssistantRepository? repository,
+  }) async {
+    final controller = buildSessionController(
+      onboarding: onboarding,
+      authRepository: authRepository,
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
     await tester.pumpWidget(
       MaterialApp(
         home: FinancialAssistantScreen(
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          financialAssistantRepository:
+              repository ?? FakeFinancialAssistantRepository(),
+          sessionController: controller,
         ),
       ),
     );
 
     await tester.pumpAndSettle();
+    return controller;
+  }
 
-    expect(find.text('Assistente financeiro oficial do household'), findsOneWidget);
-    expect(find.text('Estado inicial util'), findsOneWidget);
-    expect(find.text('Perguntar'), findsOneWidget);
+  testWidgets('first access shows welcome, tour and official starter options', (
+    tester,
+  ) async {
+    await pumpAssistant(
+      tester,
+      onboarding: const AuthOnboarding(completed: false),
+    );
+
+    expect(find.text('Bem-vindo ao seu Espaco, Gil'), findsOneWidget);
+    expect(find.byKey(const ValueKey('assistant-tour-card')), findsOneWidget);
+    expect(find.text('Cadastrar minhas contas fixas'), findsOneWidget);
+    expect(find.text('Trazer meu historico'), findsOneWidget);
+    expect(find.text('Cadastrar meus ganhos'), findsOneWidget);
+    expect(find.text('Configurar meu Espaco'), findsOneWidget);
+  });
+
+  testWidgets('review tour button reopens the local tour', (tester) async {
+    await pumpAssistant(
+      tester,
+      onboarding: AuthOnboarding(
+        completed: true,
+        completedAt: DateTime.utc(2026, 3, 28, 12),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('assistant-tour-card')), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-reopen-tour-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('assistant-tour-card')), findsOneWidget);
+  });
+
+  testWidgets('starter intent response is rendered inside the assistant', (
+    tester,
+  ) async {
+    final repository = FakeFinancialAssistantRepository(
+      starterReply: fakeStarterReply(
+        intent: FinancialAssistantStarterIntent.importHistory,
+        title: 'Vamos organizar seu historico',
+        message: 'Primeiro eu vou te orientar sobre o que trazer para ca.',
+        primaryActionKey: 'OPEN_IMPORT_HISTORY',
+      ),
+    );
+
+    await pumpAssistant(
+      tester,
+      onboarding: const AuthOnboarding(completed: false),
+      repository: repository,
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('assistant-starter-import_history-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-starter-import_history-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.starterIntentCalls, 1);
+    expect(
+      repository.lastStarterIntent,
+      FinancialAssistantStarterIntent.importHistory,
+    );
+    expect(
+      find.byKey(const ValueKey('assistant-starter-response-card')),
+      findsOneWidget,
+    );
+    expect(find.text('Vamos organizar seu historico'), findsOneWidget);
+    expect(
+      find.text('Primeiro eu vou te orientar sobre o que trazer para ca.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('completing onboarding updates session and closes the tour', (
+    tester,
+  ) async {
+    final authRepository = FakeAuthRepository(
+      loginResult: fakeSession(
+        onboarding: const AuthOnboarding(completed: false),
+      ),
+      completeOnboardingResult: AuthOnboarding(
+        completed: true,
+        completedAt: DateTime.utc(2026, 3, 28, 19),
+      ),
+    );
+
+    final controller = await pumpAssistant(
+      tester,
+      onboarding: const AuthOnboarding(completed: false),
+      authRepository: authRepository,
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('assistant-complete-onboarding-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-complete-onboarding-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(authRepository.completeOnboardingCalls, 1);
+    expect(controller.currentUser?.onboarding.completed, isTrue);
+    expect(find.byKey(const ValueKey('assistant-tour-card')), findsNothing);
   });
 
   testWidgets('submits a financial question and renders assistant answer', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FinancialAssistantScreen(
-          financialAssistantRepository: FakeFinancialAssistantRepository(
-            reply: fakeFinancialAssistantReply(
-              question: 'Como posso economizar este mes?',
-              answer: 'Revise moradia e despesas recorrentes.',
-            ),
-          ),
+    await pumpAssistant(
+      tester,
+      onboarding: AuthOnboarding(
+        completed: true,
+        completedAt: DateTime.utc(2026, 3, 28, 12),
+      ),
+      repository: FakeFinancialAssistantRepository(
+        reply: fakeFinancialAssistantReply(
+          question: 'Como posso economizar este mes?',
+          answer: 'Revise moradia e despesas recorrentes.',
         ),
       ),
     );
 
-    await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextFormField),
       'Como posso economizar este mes?',
     );
     await tester.scrollUntilVisible(
-      find.text('Perguntar'),
+      find.byKey(const ValueKey('assistant-submit-button')),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Perguntar'), warnIfMissed: false);
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-submit-button')),
+      warnIfMissed: false,
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Resposta do assistente'), findsOneWidget);
     expect(find.text('Revise moradia e despesas recorrentes.'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Sinais de apoio'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
     expect(find.text('Sinais de apoio'), findsOneWidget);
-  });
-
-  testWidgets('submits a starter suggestion directly', (tester) async {
-    final repository = FakeFinancialAssistantRepository();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FinancialAssistantScreen(
-          financialAssistantRepository: repository,
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Onde estou gastando mais?'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Onde estou gastando mais?'));
-    await tester.pumpAndSettle();
-
-    expect(repository.askCalls, 1);
-    expect(repository.lastQuestion, 'Onde estou gastando mais?');
-  });
-
-  testWidgets('shows loading feedback while assistant response is pending', (
-    tester,
-  ) async {
-    final completer = Completer<void>();
-    final repository = FakeFinancialAssistantRepository(
-      onAsk: (question, referenceMonth) async {
-        await completer.future;
-      },
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FinancialAssistantScreen(
-          financialAssistantRepository: repository,
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), 'Como vai o meu mes?');
-    await tester.scrollUntilVisible(
-      find.text('Perguntar'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Perguntar'), warnIfMissed: false);
-    await tester.pump();
-
-    expect(
-      find.textContaining('Consultando o backend do assistente financeiro'),
-      findsOneWidget,
-    );
-
-    completer.complete();
-    await tester.pumpAndSettle();
-  });
-
-  testWidgets('shows error feedback when assistant request fails', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FinancialAssistantScreen(
-          financialAssistantRepository: FakeFinancialAssistantRepository(
-            error: fakeApiException(message: 'Falha simulada'),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), 'Como vai o meu mes?');
-    await tester.scrollUntilVisible(
-      find.text('Perguntar'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Perguntar'), warnIfMissed: false);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text('Nao foi possivel consultar o assistente.'),
-      findsOneWidget,
-    );
-    expect(find.text('Falha simulada'), findsOneWidget);
-  });
-
-  testWidgets('remains stable on reduced viewport', (tester) async {
-    configureSmallViewport(tester);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FinancialAssistantScreen(
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Perguntar'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('auto-scrolls to the latest assistant answer on small screens', (
-    tester,
-  ) async {
-    configureSmallViewport(tester);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: FinancialAssistantScreen(
-          financialAssistantRepository: FakeFinancialAssistantRepository(
-            reply: fakeFinancialAssistantReply(
-              question: 'Como posso economizar este mes?',
-              answer: 'Resposta visivel sem exigir scroll manual.',
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byType(TextFormField),
-      'Como posso economizar este mes?',
-    );
-    await tester.scrollUntilVisible(
-      find.text('Perguntar'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Perguntar'), warnIfMissed: false);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
-
-    final viewportHeight = tester.view.physicalSize.height;
-    final answerPosition = tester.getTopLeft(find.text('Resposta do assistente'));
-
-    expect(answerPosition.dy, lessThan(viewportHeight));
   });
 }

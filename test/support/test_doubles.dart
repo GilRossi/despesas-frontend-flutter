@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
@@ -22,6 +23,8 @@ import 'package:despesas_frontend/features/dashboard/domain/dashboard_summary.da
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_reply.dart';
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
@@ -53,11 +56,15 @@ class FakeAuthRepository implements AuthRepository {
     this.changePasswordResult,
     this.forgotPasswordResult,
     this.resetPasswordResult,
+    this.currentUserResult,
+    this.completeOnboardingResult,
     this.loginError,
     this.refreshError,
     this.changePasswordError,
     this.forgotPasswordError,
     this.resetPasswordError,
+    this.fetchCurrentUserError,
+    this.completeOnboardingError,
   });
 
   MobileSession? loginResult;
@@ -65,15 +72,21 @@ class FakeAuthRepository implements AuthRepository {
   ChangePasswordResult? changePasswordResult;
   ForgotPasswordResult? forgotPasswordResult;
   ResetPasswordResult? resetPasswordResult;
+  AuthUser? currentUserResult;
+  AuthOnboarding? completeOnboardingResult;
   Exception? loginError;
   Exception? refreshError;
   Exception? changePasswordError;
   Exception? forgotPasswordError;
   Exception? resetPasswordError;
+  Exception? fetchCurrentUserError;
+  Exception? completeOnboardingError;
   int refreshCalls = 0;
   int changePasswordCalls = 0;
   int forgotPasswordCalls = 0;
   int resetPasswordCalls = 0;
+  int fetchCurrentUserCalls = 0;
+  int completeOnboardingCalls = 0;
   String? lastCurrentPassword;
   String? lastNewPassword;
   String? lastNewPasswordConfirmation;
@@ -98,6 +111,28 @@ class FakeAuthRepository implements AuthRepository {
       throw refreshError!;
     }
     return refreshResult ?? fakeSession();
+  }
+
+  @override
+  Future<AuthUser> fetchCurrentUser() async {
+    fetchCurrentUserCalls += 1;
+    if (fetchCurrentUserError != null) {
+      throw fetchCurrentUserError!;
+    }
+    return currentUserResult ?? fakeSession().user;
+  }
+
+  @override
+  Future<AuthOnboarding> completeOnboarding() async {
+    completeOnboardingCalls += 1;
+    if (completeOnboardingError != null) {
+      throw completeOnboardingError!;
+    }
+    return completeOnboardingResult ??
+        AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        );
   }
 
   @override
@@ -471,14 +506,27 @@ class FakeReportsRepository implements ReportsRepository {
 }
 
 class FakeFinancialAssistantRepository implements FinancialAssistantRepository {
-  FakeFinancialAssistantRepository({this.reply, this.error, this.onAsk});
+  FakeFinancialAssistantRepository({
+    this.reply,
+    this.error,
+    this.starterReply,
+    this.starterError,
+    this.onAsk,
+    this.onSelectStarterIntent,
+  });
 
   FinancialAssistantReply? reply;
   Exception? error;
+  FinancialAssistantStarterReply? starterReply;
+  Exception? starterError;
   FutureOr<void> Function(String question, DateTime referenceMonth)? onAsk;
+  FutureOr<void> Function(FinancialAssistantStarterIntent intent)?
+  onSelectStarterIntent;
   int askCalls = 0;
+  int starterIntentCalls = 0;
   String? lastQuestion;
   DateTime? lastReferenceMonth;
+  FinancialAssistantStarterIntent? lastStarterIntent;
 
   @override
   Future<FinancialAssistantReply> askQuestion({
@@ -498,6 +546,19 @@ class FakeFinancialAssistantRepository implements FinancialAssistantRepository {
           mode: 'FALLBACK',
           intent: 'PERIOD_SUMMARY',
         );
+  }
+
+  @override
+  Future<FinancialAssistantStarterReply> fetchStarterIntent({
+    required FinancialAssistantStarterIntent intent,
+  }) async {
+    starterIntentCalls += 1;
+    lastStarterIntent = intent;
+    if (starterError != null) {
+      throw starterError!;
+    }
+    await onSelectStarterIntent?.call(intent);
+    return starterReply ?? fakeStarterReply(intent: intent);
   }
 }
 
@@ -616,6 +677,7 @@ MobileSession fakeSession({
   String email = 'gil@example.com',
   String role = 'OWNER',
   int? householdId = 10,
+  AuthOnboarding onboarding = const AuthOnboarding(completed: false),
 }) {
   final now = DateTime.utc(2026, 3, 21, 10);
   return MobileSession(
@@ -630,7 +692,25 @@ MobileSession fakeSession({
       email: email,
       name: name,
       role: role,
+      onboarding: onboarding,
     ),
+  );
+}
+
+FinancialAssistantStarterReply fakeStarterReply({
+  FinancialAssistantStarterIntent intent =
+      FinancialAssistantStarterIntent.fixedBills,
+  String kind = 'STARTER',
+  String title = 'Vamos organizar esse primeiro passo',
+  String message = 'Tudo certo. Esta e a proxima orientacao preparada.',
+  String primaryActionKey = 'OPEN_FLOW',
+}) {
+  return FinancialAssistantStarterReply(
+    intent: intent,
+    kind: kind,
+    title: title,
+    message: message,
+    primaryActionKey: primaryActionKey,
   );
 }
 

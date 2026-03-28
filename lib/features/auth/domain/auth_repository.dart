@@ -1,3 +1,5 @@
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/forgot_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
@@ -10,6 +12,10 @@ abstract interface class AuthRepository {
   });
 
   Future<MobileSession> refresh({required String refreshToken});
+
+  Future<AuthUser> fetchCurrentUser();
+
+  Future<AuthOnboarding> completeOnboarding();
 
   Future<ChangePasswordResult> changeOwnPassword({
     required String currentPassword,

@@ -1,8 +1,11 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_conversation_entry.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_view_model.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
@@ -17,9 +20,11 @@ class FinancialAssistantScreen extends StatefulWidget {
   const FinancialAssistantScreen({
     super.key,
     required this.financialAssistantRepository,
+    required this.sessionController,
   });
 
   final FinancialAssistantRepository financialAssistantRepository;
+  final SessionController sessionController;
 
   @override
   State<FinancialAssistantScreen> createState() =>
@@ -27,13 +32,6 @@ class FinancialAssistantScreen extends StatefulWidget {
 }
 
 class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
-  static const _suggestions = [
-    'Como posso economizar este mes?',
-    'Onde estou gastando mais?',
-    'Quais despesas parecem recorrentes?',
-    'Como este mes se compara ao anterior?',
-  ];
-
   late final FinancialAssistantViewModel _viewModel;
   final _formKey = GlobalKey<FormState>();
   final _questionController = TextEditingController();
@@ -45,6 +43,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
     super.initState();
     _viewModel = FinancialAssistantViewModel(
       financialAssistantRepository: widget.financialAssistantRepository,
+      sessionController: widget.sessionController,
     );
   }
 
@@ -102,11 +101,6 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
     }
   }
 
-  Future<void> _submitSuggestion(String suggestion) async {
-    _questionController.text = suggestion;
-    await _submit();
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -130,22 +124,62 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _HeroCard(
+                    firstName: _viewModel.firstName,
                     referenceMonth: _viewModel.referenceMonth,
                     isLoading: _viewModel.isLoading,
+                    isTourVisible: _viewModel.isTourVisible,
+                    showWelcome: _viewModel.showWelcome,
                     onPreviousMonth: _viewModel.goToPreviousMonth,
                     onNextMonth: _viewModel.goToNextMonth,
+                    onReopenTour: _viewModel.reopenTour,
                   ),
                   const SizedBox(height: 16),
+                  if (_viewModel.isTourVisible) ...[
+                    _TourCard(
+                      firstName: _viewModel.firstName,
+                      isCompletingOnboarding: _viewModel.isCompletingOnboarding,
+                      onDismiss: _viewModel.dismissTour,
+                      onComplete: _viewModel.completeOnboarding,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_viewModel.onboardingErrorMessage != null) ...[
+                    _InlineErrorCard(
+                      title: 'Nao foi possivel concluir a apresentacao.',
+                      message: _viewModel.onboardingErrorMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: _viewModel.completeOnboarding,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_viewModel.showOfficialStarterState) ...[
+                    _OfficialStarterStateCard(
+                      isLoading: _viewModel.isStarterLoading,
+                      reply: _viewModel.starterReply,
+                      options: _viewModel.starterOptions,
+                      onSelectStarterIntent: _viewModel.selectStarterIntent,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_viewModel.starterErrorMessage != null) ...[
+                    _InlineErrorCard(
+                      title: _viewModel.isUnauthorized
+                          ? 'Sessao expirada'
+                          : 'Nao foi possivel preparar essa proxima etapa.',
+                      message: _viewModel.starterErrorMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: _viewModel.retryStarterIntent,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _QuestionComposer(
                     formKey: _formKey,
                     controller: _questionController,
                     isLoading: _viewModel.isLoading,
-                    suggestions: _suggestions,
                     onSubmit: _submit,
-                    onSuggestionTap: _submitSuggestion,
                   ),
                   const SizedBox(height: 16),
-                  if (_viewModel.errorMessage != null)
+                  if (_viewModel.errorMessage != null) ...[
                     _InlineErrorCard(
                       title: _viewModel.isUnauthorized
                           ? 'Sessao expirada'
@@ -156,9 +190,9 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                           : 'Reenviar ultima pergunta',
                       onAction: _viewModel.retryLastQuestion,
                     ),
-                  if (_viewModel.errorMessage != null)
                     const SizedBox(height: 16),
-                  if (_viewModel.isLoading)
+                  ],
+                  if (_viewModel.isLoading) ...[
                     const Card(
                       child: Padding(
                         padding: EdgeInsets.all(20),
@@ -179,16 +213,15 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                         ),
                       ),
                     ),
-                  if (_viewModel.isLoading) const SizedBox(height: 16),
-                  if (!_viewModel.hasConversation && !_viewModel.isLoading)
-                    const _EmptyConversationCard(),
+                    const SizedBox(height: 16),
+                  ],
                   if (_viewModel.hasConversation)
                     for (
                       var index = 0;
                       index < _viewModel.entries.length;
                       index++
                     ) ...[
-                      Container(
+                      KeyedSubtree(
                         key: index == _viewModel.entries.length - 1
                             ? _latestEntryKey
                             : null,
@@ -210,16 +243,24 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
 
 class _HeroCard extends StatelessWidget {
   const _HeroCard({
+    required this.firstName,
     required this.referenceMonth,
     required this.isLoading,
+    required this.isTourVisible,
+    required this.showWelcome,
     required this.onPreviousMonth,
     required this.onNextMonth,
+    required this.onReopenTour,
   });
 
+  final String firstName;
   final DateTime referenceMonth;
   final bool isLoading;
+  final bool isTourVisible;
+  final bool showWelcome;
   final Future<void> Function() onPreviousMonth;
   final Future<void> Function() onNextMonth;
+  final VoidCallback onReopenTour;
 
   @override
   Widget build(BuildContext context) {
@@ -235,17 +276,21 @@ class _HeroCard extends StatelessWidget {
           spacing: 16,
           children: [
             SizedBox(
-              width: 480,
+              width: 520,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Assistente financeiro oficial do household',
+                    showWelcome
+                        ? 'Bem-vindo ao seu Espaco, $firstName'
+                        : 'Assistente financeiro do seu Espaco',
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Pergunte sobre gastos, comparacoes, recorrencias e economia. O household atual, a intencao e os dados financeiros sao resolvidos pelo backend.',
+                    showWelcome
+                        ? 'Voce chegou no ponto certo para comecar. O assistente te apresenta as primeiras escolhas e continua ao seu lado nas proximas conversas.'
+                        : 'Escolha uma proxima etapa ou pergunte direto sobre gastos, comparacoes e recorrencias. O contexto financeiro continua vindo do backend.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF65727B),
                     ),
@@ -266,10 +311,266 @@ class _HeroCard extends StatelessWidget {
                   onPressed: null,
                   child: Text(_formatMonthLabel(referenceMonth)),
                 ),
+                OutlinedButton.icon(
+                  key: const ValueKey('assistant-reopen-tour-button'),
+                  onPressed: isTourVisible ? null : onReopenTour,
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('Rever tour'),
+                ),
                 OutlinedButton(
                   onPressed: isLoading ? null : () => onNextMonth(),
                   child: const Text('Proximo mes'),
                 ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TourCard extends StatelessWidget {
+  const _TourCard({
+    required this.firstName,
+    required this.isCompletingOnboarding,
+    required this.onDismiss,
+    required this.onComplete,
+  });
+
+  final String firstName;
+  final bool isCompletingOnboarding;
+  final VoidCallback onDismiss;
+  final Future<void> Function() onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      key: const ValueKey('assistant-tour-card'),
+      color: const Color(0xFFFFF6E8),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Boas-vindas ao Espaco', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              '$firstName, este tour e curto e pratico. A ideia aqui e te mostrar por onde comecar sem te jogar numa tela fria.',
+            ),
+            const SizedBox(height: 16),
+            const _TourStep(
+              title: '1. Escolha o primeiro passo',
+              message:
+                  'As quatro opcoes abaixo representam os caminhos aprovados para o inicio do seu Espaco.',
+            ),
+            const SizedBox(height: 12),
+            const _TourStep(
+              title: '2. O assistente organiza a conversa',
+              message:
+                  'Ao tocar em uma opcao, o backend responde com a proxima orientacao estruturada sem executar nenhuma acao real ainda.',
+            ),
+            const SizedBox(height: 12),
+            const _TourStep(
+              title: '3. Depois disso, o fluxo segue normal',
+              message:
+                  'Quando voce concluir esta apresentacao, os proximos acessos deixam de abrir o tour automaticamente.',
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton(
+                  onPressed: isCompletingOnboarding ? null : onDismiss,
+                  child: const Text('Agora nao'),
+                ),
+                FilledButton.icon(
+                  key: const ValueKey('assistant-complete-onboarding-button'),
+                  onPressed: isCompletingOnboarding ? null : () => onComplete(),
+                  icon: isCompletingOnboarding
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_circle_outline),
+                  label: const Text('Concluir apresentacao'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TourStep extends StatelessWidget {
+  const _TourStep({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: Color(0xFFFFE4B7),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.auto_awesome, size: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 4),
+              Text(message),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OfficialStarterStateCard extends StatelessWidget {
+  const _OfficialStarterStateCard({
+    required this.isLoading,
+    required this.reply,
+    required this.options,
+    required this.onSelectStarterIntent,
+  });
+
+  final bool isLoading;
+  final FinancialAssistantStarterReply? reply;
+  final List<FinancialAssistantStarterIntent> options;
+  final Future<void> Function(FinancialAssistantStarterIntent intent)
+  onSelectStarterIntent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Comece pelo que faz mais sentido agora',
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Estas quatro opcoes formam o estado oficial de entrada do assistente neste bloco. Escolha uma e eu trago a proxima orientacao sem executar a acao real ainda.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF65727B),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final option in options)
+                  _StarterOptionButton(
+                    intent: option,
+                    isLoading: isLoading,
+                    onTap: onSelectStarterIntent,
+                  ),
+              ],
+            ),
+            if (reply != null) ...[
+              const SizedBox(height: 16),
+              _StarterReplyCard(reply: reply!),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StarterOptionButton extends StatelessWidget {
+  const _StarterOptionButton({
+    required this.intent,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final FinancialAssistantStarterIntent intent;
+  final bool isLoading;
+  final Future<void> Function(FinancialAssistantStarterIntent intent) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 260,
+      child: FilledButton.tonal(
+        key: ValueKey(
+          'assistant-starter-${intent.apiValue.toLowerCase()}-button',
+        ),
+        onPressed: isLoading ? null : () => onTap(intent),
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.all(16),
+          alignment: Alignment.centerLeft,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(intent.label),
+            const SizedBox(height: 6),
+            Text(
+              intent.description,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StarterReplyCard extends StatelessWidget {
+  const _StarterReplyCard({required this.reply});
+
+  final FinancialAssistantStarterReply reply;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: const ValueKey('assistant-starter-response-card'),
+      elevation: 0,
+      color: const Color(0xFFF2F7F4),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(reply.title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(reply.message),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MetaChip(label: reply.kind),
+                _MetaChip(label: _formatEnumLabel(reply.intent.apiValue)),
+                _MetaChip(label: _formatEnumLabel(reply.primaryActionKey)),
               ],
             ),
           ],
@@ -284,17 +585,13 @@ class _QuestionComposer extends StatelessWidget {
     required this.formKey,
     required this.controller,
     required this.isLoading,
-    required this.suggestions,
     required this.onSubmit,
-    required this.onSuggestionTap,
   });
 
   final GlobalKey<FormState> formKey;
   final TextEditingController controller;
   final bool isLoading;
-  final List<String> suggestions;
   final Future<void> Function() onSubmit;
-  final Future<void> Function(String suggestion) onSuggestionTap;
 
   @override
   Widget build(BuildContext context) {
@@ -306,10 +603,10 @@ class _QuestionComposer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pergunta financeira', style: theme.textTheme.titleMedium),
+            Text('Pergunte do seu jeito', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'Use perguntas curtas e objetivas. O cliente so envia a pergunta e o mes; o restante do contexto vem do backend.',
+              'Se preferir, escreva uma pergunta livre. O app envia apenas sua pergunta e o mes de referencia; o restante do contexto vem do backend.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF65727B),
               ),
@@ -341,20 +638,6 @@ class _QuestionComposer extends StatelessWidget {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final suggestion in suggestions)
-                        ActionChip(
-                          label: Text(suggestion),
-                          onPressed: isLoading
-                              ? null
-                              : () => onSuggestionTap(suggestion),
-                        ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
                   Align(
                     alignment: Alignment.centerRight,
@@ -366,34 +649,6 @@ class _QuestionComposer extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyConversationCard extends StatelessWidget {
-  const _EmptyConversationCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Estado inicial util', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              'Use as sugestoes para abrir o fluxo. O assistente responde apenas sobre o dominio financeiro do household autenticado e pode operar em modo AI ou fallback.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF65727B),
               ),
             ),
           ],

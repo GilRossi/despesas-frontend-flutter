@@ -36,6 +36,7 @@ GoRouter createAppRouter({
       final inSplash = state.matchedLocation == '/splash';
       final inForgot = state.matchedLocation == '/forgot-password';
       final inReset = state.matchedLocation == '/reset-password';
+      final inAssistant = state.matchedLocation == '/assistant';
 
       if (status == SessionStatus.bootstrapping) {
         return inSplash ? null : '/splash';
@@ -49,26 +50,26 @@ GoRouter createAppRouter({
       }
 
       // Authenticated
-      if (loggingIn || inSplash) {
+      if (sessionController.requiresOnboarding) {
+        return inAssistant ? null : '/assistant';
+      }
+
+      if (loggingIn || inSplash || inForgot || inReset) {
         return '/';
       }
 
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => splashScreen,
-      ),
+      GoRoute(path: '/splash', builder: (context, state) => splashScreen),
       GoRoute(
         path: '/login',
         builder: (context, state) => loginScreenBuilder(),
       ),
       GoRoute(
         path: '/forgot-password',
-        builder: (context, state) => ForgotPasswordScreen(
-          sessionController: sessionController,
-        ),
+        builder: (context, state) =>
+            ForgotPasswordScreen(sessionController: sessionController),
       ),
       GoRoute(
         path: '/reset-password',
@@ -103,6 +104,7 @@ GoRouter createAppRouter({
             path: '/assistant',
             builder: (context, state) => FinancialAssistantScreen(
               financialAssistantRepository: financialAssistantRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(
