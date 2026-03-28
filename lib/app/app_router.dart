@@ -5,6 +5,8 @@ import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository
 import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
+import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
@@ -22,6 +24,7 @@ import 'package:go_router/go_router.dart';
 GoRouter createAppRouter({
   required SessionController sessionController,
   required ExpensesRepository expensesRepository,
+  required FixedBillsRepository fixedBillsRepository,
   required FinancialAssistantRepository financialAssistantRepository,
   required HouseholdMembersRepository householdMembersRepository,
   required IncomesRepository incomesRepository,
@@ -43,6 +46,7 @@ GoRouter createAppRouter({
       final inForgot = state.matchedLocation == '/forgot-password';
       final inReset = state.matchedLocation == '/reset-password';
       final inAssistant = state.matchedLocation == '/assistant';
+      final inFixedBillsNew = state.matchedLocation == '/fixed-bills/new';
       final inIncomeNew = state.matchedLocation == '/incomes/new';
       final inSpaceReferences = state.matchedLocation == '/space/references';
 
@@ -59,7 +63,10 @@ GoRouter createAppRouter({
 
       // Authenticated
       if (sessionController.requiresOnboarding) {
-        return inAssistant || inIncomeNew || inSpaceReferences
+        return inAssistant ||
+                inFixedBillsNew ||
+                inIncomeNew ||
+                inSpaceReferences
             ? null
             : '/assistant';
       }
@@ -116,6 +123,9 @@ GoRouter createAppRouter({
               financialAssistantRepository: financialAssistantRepository,
               sessionController: sessionController,
               onStarterPrimaryActionRequested: (primaryActionKey) {
+                if (primaryActionKey == 'OPEN_FIXED_BILLS') {
+                  context.go('/fixed-bills/new');
+                }
                 if (primaryActionKey == 'OPEN_REGISTER_INCOME') {
                   context.go('/incomes/new');
                 }
@@ -123,6 +133,14 @@ GoRouter createAppRouter({
                   context.go('/space/references');
                 }
               },
+            ),
+          ),
+          GoRoute(
+            path: '/fixed-bills/new',
+            builder: (context, state) => FixedBillFormScreen(
+              fixedBillsRepository: fixedBillsRepository,
+              expensesRepository: expensesRepository,
+              spaceReferencesRepository: spaceReferencesRepository,
             ),
           ),
           GoRoute(

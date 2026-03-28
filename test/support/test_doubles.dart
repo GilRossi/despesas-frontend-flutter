@@ -25,6 +25,11 @@ import 'package:despesas_frontend/features/financial_assistant/domain/financial_
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_reply.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/create_fixed_bill_input.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_frequency.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_record.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_reference.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
@@ -652,6 +657,47 @@ class FakeIncomesRepository implements IncomesRepository {
   }
 }
 
+class FakeFixedBillsRepository implements FixedBillsRepository {
+  FakeFixedBillsRepository({
+    this.createResult,
+    this.createError,
+    this.onCreate,
+  });
+
+  FixedBillRecord? createResult;
+  Exception? createError;
+  FutureOr<void> Function(CreateFixedBillInput input)? onCreate;
+  int createCalls = 0;
+  CreateFixedBillInput? lastCreatedInput;
+
+  @override
+  Future<FixedBillRecord> createFixedBill(CreateFixedBillInput input) async {
+    createCalls += 1;
+    lastCreatedInput = input;
+    if (createError != null) {
+      throw createError!;
+    }
+
+    await onCreate?.call(input);
+    return createResult ??
+        fakeFixedBillRecord(
+          description: input.description.trim(),
+          amount: input.amount,
+          firstDueDate: input.firstDueDate,
+          frequency: input.frequency,
+          context: input.context,
+          category: fakeFixedBillReference(id: input.categoryId, name: 'Casa'),
+          subcategory: fakeFixedBillReference(
+            id: input.subcategoryId,
+            name: 'Internet',
+          ),
+          spaceReference: input.spaceReferenceId == null
+              ? null
+              : fakeFixedBillReference(id: input.spaceReferenceId!),
+        );
+  }
+}
+
 class FakePlatformAdminRepository implements PlatformAdminRepository {
   FakePlatformAdminRepository({
     this.result,
@@ -884,6 +930,42 @@ IncomeRecord fakeIncomeRecord({
     amount: amount,
     receivedOn: receivedOn ?? DateTime.utc(2026, 3, 28),
     spaceReference: spaceReference,
+    createdAt: createdAt ?? DateTime.utc(2026, 3, 28, 12),
+  );
+}
+
+FixedBillReference fakeFixedBillReference({
+  int id = 1,
+  String name = 'Projeto Acme',
+}) {
+  return FixedBillReference(id: id, name: name);
+}
+
+FixedBillRecord fakeFixedBillRecord({
+  int id = 1,
+  String description = 'Internet fibra',
+  double amount = 129.9,
+  DateTime? firstDueDate,
+  FixedBillFrequency frequency = FixedBillFrequency.monthly,
+  String context = 'CASA',
+  FixedBillReference? category,
+  FixedBillReference? subcategory,
+  FixedBillReference? spaceReference,
+  bool active = true,
+  DateTime? createdAt,
+}) {
+  return FixedBillRecord(
+    id: id,
+    description: description,
+    amount: amount,
+    firstDueDate: firstDueDate ?? DateTime.utc(2026, 4, 5),
+    frequency: frequency,
+    context: context,
+    category: category ?? fakeFixedBillReference(id: 1, name: 'Casa'),
+    subcategory:
+        subcategory ?? fakeFixedBillReference(id: 11, name: 'Internet'),
+    spaceReference: spaceReference,
+    active: active,
     createdAt: createdAt ?? DateTime.utc(2026, 3, 28, 12),
   );
 }

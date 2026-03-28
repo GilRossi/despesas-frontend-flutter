@@ -27,6 +27,7 @@ void main() {
     required AuthOnboarding onboarding,
     FakeAuthRepository? authRepository,
     FakeFinancialAssistantRepository? repository,
+    ValueChanged<String>? onStarterPrimaryActionRequested,
   }) async {
     final controller = buildSessionController(
       onboarding: onboarding,
@@ -40,6 +41,7 @@ void main() {
           financialAssistantRepository:
               repository ?? FakeFinancialAssistantRepository(),
           sessionController: controller,
+          onStarterPrimaryActionRequested: onStarterPrimaryActionRequested,
         ),
       ),
     );
@@ -127,6 +129,53 @@ void main() {
       find.text('Primeiro eu vou te orientar sobre o que trazer para ca.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('starter primary action repassa OPEN_FIXED_BILLS para o shell', (
+    tester,
+  ) async {
+    String? requestedAction;
+
+    await pumpAssistant(
+      tester,
+      onboarding: const AuthOnboarding(completed: false),
+      repository: FakeFinancialAssistantRepository(
+        starterReply: fakeStarterReply(
+          intent: FinancialAssistantStarterIntent.fixedBills,
+          title: 'Vamos registrar sua conta fixa',
+          message: 'Revise a base antes de confirmar.',
+          primaryActionKey: 'OPEN_FIXED_BILLS',
+        ),
+      ),
+      onStarterPrimaryActionRequested: (actionKey) {
+        requestedAction = actionKey;
+      },
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('assistant-starter-fixed_bills-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-starter-fixed_bills-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('assistant-starter-primary-action')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-starter-primary-action')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(requestedAction, 'OPEN_FIXED_BILLS');
   });
 
   testWidgets('completing onboarding updates session and closes the tour', (
