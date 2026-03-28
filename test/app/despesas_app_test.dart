@@ -1,6 +1,7 @@
 import 'package:despesas_frontend/app/despesas_app.dart';
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
@@ -43,7 +44,14 @@ void main() {
     tester,
   ) async {
     final controller = SessionController(
-      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: AuthOnboarding(
+            completed: true,
+            completedAt: DateTime.utc(2026, 3, 28, 12),
+          ),
+        ),
+      ),
       sessionStore: MemorySessionStore(),
     );
     await controller.login(email: 'gil@example.com', password: 'Senha123!');
@@ -70,7 +78,9 @@ void main() {
     expect(find.byType(DashboardScreen), findsOneWidget);
   });
 
-  testWidgets('auth gate shows admin screen for platform admin', (tester) async {
+  testWidgets('auth gate shows admin screen for platform admin', (
+    tester,
+  ) async {
     final controller = SessionController(
       authRepository: FakeAuthRepository(
         loginResult: fakeSession(

@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/network/despesas_api_client.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/forgot_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/mobile_session.dart';
@@ -41,6 +43,34 @@ class HttpAuthRepository implements AuthRepository {
     );
 
     return _parseSessionResponse(response);
+  }
+
+  @override
+  Future<AuthUser> fetchCurrentUser() async {
+    final response = await _apiClient.get(
+      '/api/v1/auth/me',
+      headers: _authorizationHeaders(),
+    );
+
+    final data = _parseDataMap(
+      response,
+      fallbackMessage: 'Resposta invalida da sessao atual.',
+    );
+    return AuthUser.fromJson(data);
+  }
+
+  @override
+  Future<AuthOnboarding> completeOnboarding() async {
+    final response = await _apiClient.postJson(
+      '/api/v1/onboarding/complete',
+      headers: _authorizationHeaders(),
+    );
+
+    final data = _parseDataMap(
+      response,
+      fallbackMessage: 'Resposta invalida da conclusao do onboarding.',
+    );
+    return AuthOnboarding.fromJson(data);
   }
 
   @override
@@ -96,7 +126,10 @@ class HttpAuthRepository implements AuthRepository {
       );
     }
     final resetToken = decoded['resetToken'] as String?;
-    return ForgotPasswordResult(maskedEmail: maskedEmail, resetToken: resetToken);
+    return ForgotPasswordResult(
+      maskedEmail: maskedEmail,
+      resetToken: resetToken,
+    );
   }
 
   @override
@@ -141,6 +174,19 @@ class HttpAuthRepository implements AuthRepository {
       fallbackMessage: 'Resposta de autenticacao invalida.',
     );
     return MobileSession.fromJson(data);
+  }
+
+  Map<String, String> _authorizationHeaders() {
+    final accessToken = _accessTokenProvider?.call();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw const ApiException(
+        statusCode: 401,
+        code: 'SESSION_UNAVAILABLE',
+        message: 'A sessao nao esta disponivel.',
+      );
+    }
+
+    return {'Authorization': 'Bearer $accessToken'};
   }
 
   Map<String, dynamic> _parseDataMap(

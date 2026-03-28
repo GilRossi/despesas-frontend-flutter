@@ -1,4 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/test_doubles.dart';
@@ -120,4 +122,81 @@ void main() {
     expect(authRepository.lastNewPassword, 'SenhaNova456');
     expect(result.reauthenticationRequired, isTrue);
   });
+
+  test(
+    'requiresOnboarding is true for authenticated household users',
+    () async {
+      final controller = SessionController(
+        authRepository: FakeAuthRepository(
+          loginResult: fakeSession(
+            onboarding: const AuthOnboarding(completed: false),
+          ),
+        ),
+        sessionStore: MemorySessionStore(),
+      );
+
+      await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+      expect(controller.requiresOnboarding, isTrue);
+    },
+  );
+
+  test('completeOnboarding updates the local session state', () async {
+    final authRepository = FakeAuthRepository(
+      loginResult: fakeSession(
+        onboarding: const AuthOnboarding(completed: false),
+      ),
+      completeOnboardingResult: AuthOnboarding(
+        completed: true,
+        completedAt: DateTime.utc(2026, 3, 28, 14),
+      ),
+      currentUserResult: const AuthUser(
+        userId: 1,
+        householdId: 10,
+        email: 'gil@example.com',
+        name: 'Gil Rossi',
+        role: 'OWNER',
+        onboarding: AuthOnboarding(completed: true),
+      ),
+    );
+    final controller = SessionController(
+      authRepository: authRepository,
+      sessionStore: MemorySessionStore(),
+    );
+
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+    final onboarding = await controller.completeOnboarding();
+
+    expect(authRepository.completeOnboardingCalls, 1);
+    expect(authRepository.fetchCurrentUserCalls, 1);
+    expect(onboarding.completed, isTrue);
+    expect(controller.currentUser?.onboarding.completed, isTrue);
+    expect(controller.requiresOnboarding, isFalse);
+  });
+
+  test(
+    'completeOnboarding keeps authoritative state when auth/me fails',
+    () async {
+      final authRepository = FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+        completeOnboardingResult: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 15),
+        ),
+        fetchCurrentUserError: Exception('temporary failure'),
+      );
+      final controller = SessionController(
+        authRepository: authRepository,
+        sessionStore: MemorySessionStore(),
+      );
+
+      await controller.login(email: 'gil@example.com', password: 'Senha123!');
+      await controller.completeOnboarding();
+
+      expect(controller.currentUser?.onboarding.completed, isTrue);
+      expect(controller.currentUser?.onboarding.completedAt, isNotNull);
+    },
+  );
 }

@@ -31,4 +31,23 @@ class MobileSession {
       user: AuthUser.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
+
+  MobileSession copyWith({
+    String? tokenType,
+    String? accessToken,
+    DateTime? accessTokenExpiresAt,
+    String? refreshToken,
+    DateTime? refreshTokenExpiresAt,
+    AuthUser? user,
+  }) {
+    return MobileSession(
+      tokenType: tokenType ?? this.tokenType,
+      accessToken: accessToken ?? this.accessToken,
+      accessTokenExpiresAt: accessTokenExpiresAt ?? this.accessTokenExpiresAt,
+      refreshToken: refreshToken ?? this.refreshToken,
+      refreshTokenExpiresAt:
+          refreshTokenExpiresAt ?? this.refreshTokenExpiresAt,
+      user: user ?? this.user,
+    );
+  }
 }

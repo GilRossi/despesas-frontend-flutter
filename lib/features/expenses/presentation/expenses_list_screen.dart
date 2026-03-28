@@ -109,6 +109,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       MaterialPageRoute(
         builder: (_) => FinancialAssistantScreen(
           financialAssistantRepository: widget.financialAssistantRepository,
+          sessionController: widget.sessionController,
         ),
       ),
     );
@@ -270,7 +271,9 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                         ),
                       if (canReviewOperations)
                         OutlinedButton.icon(
-                          key: const ValueKey('expenses-review-operations-button'),
+                          key: const ValueKey(
+                            'expenses-review-operations-button',
+                          ),
                           onPressed: _openReviewOperations,
                           icon: const Icon(Icons.fact_check_outlined),
                           label: const Text('Review operations'),

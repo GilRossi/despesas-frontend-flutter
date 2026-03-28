@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:despesas_frontend/core/network/authorized_request_executor.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_repository.dart';
+import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_user.dart';
 import 'package:despesas_frontend/features/auth/domain/change_password_result.dart';
 import 'package:despesas_frontend/features/auth/domain/forgot_password_result.dart';
@@ -33,6 +34,17 @@ class SessionController extends ChangeNotifier implements SessionManager {
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
   AuthUser? get currentUser => _session?.user;
+  bool get hasAuthenticatedUser => _session != null;
+  bool get requiresOnboarding {
+    final user = currentUser;
+    if (user == null) {
+      return false;
+    }
+    if (user.householdId == null || user.role == 'PLATFORM_ADMIN') {
+      return false;
+    }
+    return user.needsOnboarding;
+  }
 
   @override
   String? get accessToken => _session?.accessToken;
@@ -105,6 +117,37 @@ class SessionController extends ChangeNotifier implements SessionManager {
 
   Future<void> logout() async {
     await clearSession();
+  }
+
+  Future<AuthOnboarding> completeOnboarding() async {
+    final session = _session;
+    final currentUser = session?.user;
+    if (session == null || currentUser == null) {
+      throw const ApiException(
+        statusCode: 401,
+        code: 'SESSION_UNAVAILABLE',
+        message: 'A sessao nao esta disponivel.',
+      );
+    }
+
+    final onboarding = await _authRepository.completeOnboarding();
+    var nextUser = currentUser.copyWith(onboarding: onboarding);
+
+    try {
+      nextUser = await _authRepository.fetchCurrentUser();
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) {
+        rethrow;
+      }
+    } catch (_) {
+      // Preserve the authoritative onboarding state already returned.
+    }
+
+    _session = session.copyWith(
+      user: nextUser.copyWith(onboarding: onboarding),
+    );
+    notifyListeners();
+    return onboarding;
   }
 
   Future<ChangePasswordResult> changeOwnPassword({
