@@ -48,6 +48,13 @@ import 'package:despesas_frontend/features/review_operations/domain/email_ingest
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_item.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_summary.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
+import 'package:despesas_frontend/features/space_references/domain/create_space_reference_input.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_create_result.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_create_result_type.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_item.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_type.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_type_group.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({
@@ -670,6 +677,86 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
   }
 }
 
+class FakeSpaceReferencesRepository implements SpaceReferencesRepository {
+  FakeSpaceReferencesRepository({
+    this.references,
+    this.listError,
+    this.createError,
+    this.createResult,
+    this.onCreate,
+  });
+
+  List<SpaceReferenceItem>? references;
+  Exception? listError;
+  Exception? createError;
+  SpaceReferenceCreateResult? createResult;
+  FutureOr<void> Function(CreateSpaceReferenceInput input)? onCreate;
+  int listCalls = 0;
+  int createCalls = 0;
+  SpaceReferenceTypeGroup? lastTypeGroup;
+  SpaceReferenceType? lastType;
+  String? lastQuery;
+  CreateSpaceReferenceInput? lastCreatedInput;
+
+  @override
+  Future<List<SpaceReferenceItem>> listReferences({
+    SpaceReferenceTypeGroup? typeGroup,
+    SpaceReferenceType? type,
+    String? query,
+  }) async {
+    listCalls += 1;
+    lastTypeGroup = typeGroup;
+    lastType = type;
+    lastQuery = query;
+    if (listError != null) {
+      throw listError!;
+    }
+
+    final normalizedQuery = (query ?? '').trim().toLowerCase();
+    return (references ?? [fakeSpaceReferenceItem()]).where((reference) {
+      if (typeGroup != null && reference.typeGroup != typeGroup) {
+        return false;
+      }
+      if (type != null && reference.type != type) {
+        return false;
+      }
+      if (normalizedQuery.isEmpty) {
+        return true;
+      }
+      return reference.name.toLowerCase().contains(normalizedQuery);
+    }).toList();
+  }
+
+  @override
+  Future<SpaceReferenceCreateResult> createReference(
+    CreateSpaceReferenceInput input,
+  ) async {
+    createCalls += 1;
+    lastCreatedInput = input;
+    if (createError != null) {
+      throw createError!;
+    }
+
+    await onCreate?.call(input);
+    final result =
+        createResult ??
+        SpaceReferenceCreateResult(
+          result: SpaceReferenceCreateResultType.created,
+          reference: fakeSpaceReferenceItem(
+            id: 99,
+            type: input.type,
+            name: input.name.trim(),
+          ),
+        );
+
+    if (result.reference != null) {
+      references = [...?references, result.reference!];
+    }
+
+    return result;
+  }
+}
+
 MobileSession fakeSession({
   String accessToken = 'access-token',
   String refreshToken = 'refresh-token',
@@ -711,6 +798,34 @@ FinancialAssistantStarterReply fakeStarterReply({
     title: title,
     message: message,
     primaryActionKey: primaryActionKey,
+  );
+}
+
+SpaceReferenceItem fakeSpaceReferenceItem({
+  int id = 1,
+  SpaceReferenceType type = SpaceReferenceType.cliente,
+  String name = 'Projeto Acme',
+}) {
+  return SpaceReferenceItem(
+    id: id,
+    type: type,
+    typeGroup: type.group,
+    name: name,
+  );
+}
+
+SpaceReferenceCreateResult fakeSpaceReferenceCreateResult({
+  SpaceReferenceCreateResultType result =
+      SpaceReferenceCreateResultType.created,
+  SpaceReferenceItem? reference,
+  SpaceReferenceItem? suggestedReference,
+  String? message,
+}) {
+  return SpaceReferenceCreateResult(
+    result: result,
+    reference: reference,
+    suggestedReference: suggestedReference,
+    message: message,
   );
 }
 

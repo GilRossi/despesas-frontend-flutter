@@ -12,6 +12,7 @@ import 'package:despesas_frontend/features/household_members/data/http_household
 import 'package:despesas_frontend/features/platform_admin/data/http_platform_admin_repository.dart';
 import 'package:despesas_frontend/features/reports/data/http_reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/data/http_review_operations_repository.dart';
+import 'package:despesas_frontend/features/space_references/data/http_space_references_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -39,7 +40,9 @@ void main() {
     apiClient: apiClient,
     sessionManager: sessionController,
   );
-  final dashboardRepository = HttpDashboardRepository(authorizedRequestExecutor);
+  final dashboardRepository = HttpDashboardRepository(
+    authorizedRequestExecutor,
+  );
   final expensesRepository = HttpExpensesRepository(authorizedRequestExecutor);
   final financialAssistantRepository = HttpFinancialAssistantRepository(
     authorizedRequestExecutor,
@@ -54,6 +57,9 @@ void main() {
   final reviewOperationsRepository = HttpReviewOperationsRepository(
     authorizedRequestExecutor,
   );
+  final spaceReferencesRepository = HttpSpaceReferencesRepository(
+    authorizedRequestExecutor,
+  );
 
   runApp(
     DespesasApp(
@@ -66,6 +72,7 @@ void main() {
       reportsRepository: reportsRepository,
       reviewOperationsRepository: reviewOperationsRepository,
       dashboardRepository: dashboardRepository,
+      spaceReferencesRepository: spaceReferencesRepository,
     ),
   );
 }

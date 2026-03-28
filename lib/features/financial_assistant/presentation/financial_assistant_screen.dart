@@ -21,10 +21,12 @@ class FinancialAssistantScreen extends StatefulWidget {
     super.key,
     required this.financialAssistantRepository,
     required this.sessionController,
+    this.onStarterPrimaryActionRequested,
   });
 
   final FinancialAssistantRepository financialAssistantRepository;
   final SessionController sessionController;
+  final void Function(String primaryActionKey)? onStarterPrimaryActionRequested;
 
   @override
   State<FinancialAssistantScreen> createState() =>
@@ -158,6 +160,8 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                       reply: _viewModel.starterReply,
                       options: _viewModel.starterOptions,
                       onSelectStarterIntent: _viewModel.selectStarterIntent,
+                      onPrimaryActionRequested:
+                          widget.onStarterPrimaryActionRequested,
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -451,6 +455,7 @@ class _OfficialStarterStateCard extends StatelessWidget {
     required this.reply,
     required this.options,
     required this.onSelectStarterIntent,
+    required this.onPrimaryActionRequested,
   });
 
   final bool isLoading;
@@ -458,6 +463,7 @@ class _OfficialStarterStateCard extends StatelessWidget {
   final List<FinancialAssistantStarterIntent> options;
   final Future<void> Function(FinancialAssistantStarterIntent intent)
   onSelectStarterIntent;
+  final void Function(String primaryActionKey)? onPrimaryActionRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -495,7 +501,10 @@ class _OfficialStarterStateCard extends StatelessWidget {
             ),
             if (reply != null) ...[
               const SizedBox(height: 16),
-              _StarterReplyCard(reply: reply!),
+              _StarterReplyCard(
+                reply: reply!,
+                onPrimaryActionRequested: onPrimaryActionRequested,
+              ),
             ],
           ],
         ),
@@ -545,12 +554,27 @@ class _StarterOptionButton extends StatelessWidget {
 }
 
 class _StarterReplyCard extends StatelessWidget {
-  const _StarterReplyCard({required this.reply});
+  const _StarterReplyCard({
+    required this.reply,
+    required this.onPrimaryActionRequested,
+  });
 
   final FinancialAssistantStarterReply reply;
+  final void Function(String primaryActionKey)? onPrimaryActionRequested;
+
+  String? get _primaryActionLabel {
+    switch (reply.primaryActionKey) {
+      case 'OPEN_CONFIGURE_SPACE':
+        return 'Abrir referencias do Espaco';
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final primaryActionLabel = _primaryActionLabel;
+
     return Card(
       key: const ValueKey('assistant-starter-response-card'),
       elevation: 0,
@@ -573,6 +597,17 @@ class _StarterReplyCard extends StatelessWidget {
                 _MetaChip(label: _formatEnumLabel(reply.primaryActionKey)),
               ],
             ),
+            if (primaryActionLabel != null &&
+                onPrimaryActionRequested != null) ...[
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                key: const ValueKey('assistant-starter-primary-action'),
+                onPressed: () =>
+                    onPrimaryActionRequested!(reply.primaryActionKey),
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(primaryActionLabel),
+              ),
+            ],
           ],
         ),
       ),

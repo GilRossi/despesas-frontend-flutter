@@ -5,8 +5,10 @@ import 'package:despesas_frontend/app/app_theme.dart';
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
+import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import '../support/test_doubles.dart';
 
@@ -25,25 +27,40 @@ void main() {
       );
     });
 
-    Future<void> pumpRouter(
+    Future<GoRouter> pumpRouter(
       WidgetTester tester, {
       required Widget login,
+      FakeFinancialAssistantRepository? financialAssistantRepository,
+      FakeSpaceReferencesRepository? spaceReferencesRepository,
     }) async {
       final router = createAppRouter(
         sessionController: sessionController,
         expensesRepository: FakeExpensesRepository(),
-        financialAssistantRepository: FakeFinancialAssistantRepository(),
+        financialAssistantRepository:
+            financialAssistantRepository ?? FakeFinancialAssistantRepository(),
         dashboardRepository: FakeDashboardRepository(),
         householdMembersRepository: FakeHouseholdMembersRepository(),
         platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
+        spaceReferencesRepository:
+            spaceReferencesRepository ?? FakeSpaceReferencesRepository(),
         splashScreen: const Placeholder(),
         loginScreenBuilder: () => login,
       );
 
       await tester.pumpWidget(
         MaterialApp.router(theme: buildAppTheme(), routerConfig: router),
+      );
+      await tester.pumpAndSettle();
+      return router;
+    }
+
+    Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+      await tester.scrollUntilVisible(
+        finder,
+        240,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
     }
@@ -56,6 +73,28 @@ void main() {
       await pumpRouter(tester, login: const Text('login'));
 
       expect(find.text('login'), findsOneWidget);
+    });
+
+    testWidgets('authenticated users can open /space/references', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/space/references');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Referencias do seu Espaco'), findsOneWidget);
     });
 
     testWidgets('first access users are redirected to assistant', (
@@ -129,6 +168,62 @@ void main() {
         await pumpRouter(tester, login: const Text('login'));
 
         expect(find.text('login'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'OPEN_CONFIGURE_SPACE leva o assistente para o fluxo real de referencias',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          financialAssistantRepository: FakeFinancialAssistantRepository(
+            starterReply: fakeStarterReply(
+              intent: FinancialAssistantStarterIntent.configureSpace,
+              title: 'Vamos organizar seu Espaco',
+              message: 'Primeiro, escolha ou crie uma referencia base.',
+              primaryActionKey: 'OPEN_CONFIGURE_SPACE',
+            ),
+          ),
+          spaceReferencesRepository: FakeSpaceReferencesRepository(
+            references: [fakeSpaceReferenceItem(name: 'Projeto Acme')],
+          ),
+        );
+
+        await scrollTo(
+          tester,
+          find.byKey(
+            const ValueKey('assistant-starter-configure_space-button'),
+          ),
+        );
+        await tester.tap(
+          find.byKey(
+            const ValueKey('assistant-starter-configure_space-button'),
+          ),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+        await scrollTo(
+          tester,
+          find.byKey(const ValueKey('assistant-starter-primary-action')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('assistant-starter-primary-action')),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Referencias do seu Espaco'), findsOneWidget);
+        expect(find.text('Projeto Acme'), findsOneWidget);
       },
     );
   });
