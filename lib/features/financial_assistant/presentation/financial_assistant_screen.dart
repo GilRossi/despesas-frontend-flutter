@@ -564,6 +564,8 @@ class _StarterReplyCard extends StatelessWidget {
 
   String? get _primaryActionLabel {
     switch (reply.primaryActionKey) {
+      case 'OPEN_REGISTER_INCOME':
+        return 'Abrir cadastro de ganhos';
       case 'OPEN_CONFIGURE_SPACE':
         return 'Abrir referencias do Espaco';
       default:

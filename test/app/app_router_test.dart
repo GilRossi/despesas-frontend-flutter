@@ -6,6 +6,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
+import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -31,6 +32,7 @@ void main() {
       WidgetTester tester, {
       required Widget login,
       FakeFinancialAssistantRepository? financialAssistantRepository,
+      FakeIncomesRepository? incomesRepository,
       FakeSpaceReferencesRepository? spaceReferencesRepository,
     }) async {
       final router = createAppRouter(
@@ -40,6 +42,7 @@ void main() {
             financialAssistantRepository ?? FakeFinancialAssistantRepository(),
         dashboardRepository: FakeDashboardRepository(),
         householdMembersRepository: FakeHouseholdMembersRepository(),
+        incomesRepository: incomesRepository ?? FakeIncomesRepository(),
         platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: FakeReportsRepository(),
         reviewOperationsRepository: FakeReviewOperationsRepository(),
@@ -95,6 +98,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Referencias do seu Espaco'), findsOneWidget);
+    });
+
+    testWidgets('authenticated users can open /incomes/new', (tester) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/incomes/new');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncomeFormScreen), findsOneWidget);
+      expect(find.text('Cadastrar meus ganhos'), findsWidgets);
     });
 
     testWidgets('first access users are redirected to assistant', (
@@ -224,6 +248,63 @@ void main() {
 
         expect(find.text('Referencias do seu Espaco'), findsOneWidget);
         expect(find.text('Projeto Acme'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'OPEN_REGISTER_INCOME leva o assistente para o fluxo real de ganhos',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          financialAssistantRepository: FakeFinancialAssistantRepository(
+            starterReply: fakeStarterReply(
+              intent: FinancialAssistantStarterIntent.registerIncome,
+              title: 'Vamos registrar seus ganhos',
+              message: 'Primeiro, confirme o essencial antes de gravar.',
+              primaryActionKey: 'OPEN_REGISTER_INCOME',
+            ),
+          ),
+          incomesRepository: FakeIncomesRepository(),
+          spaceReferencesRepository: FakeSpaceReferencesRepository(
+            references: [fakeSpaceReferenceItem(name: 'Projeto Acme')],
+          ),
+        );
+
+        await scrollTo(
+          tester,
+          find.byKey(
+            const ValueKey('assistant-starter-register_income-button'),
+          ),
+        );
+        await tester.tap(
+          find.byKey(
+            const ValueKey('assistant-starter-register_income-button'),
+          ),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+        await scrollTo(
+          tester,
+          find.byKey(const ValueKey('assistant-starter-primary-action')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('assistant-starter-primary-action')),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(IncomeFormScreen), findsOneWidget);
+        expect(find.text('Revise antes de confirmar.'), findsNothing);
       },
     );
   });
