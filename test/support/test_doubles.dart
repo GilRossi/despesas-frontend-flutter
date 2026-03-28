@@ -28,6 +28,10 @@ import 'package:despesas_frontend/features/financial_assistant/domain/financial_
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/incomes/domain/create_income_input.dart';
+import 'package:despesas_frontend/features/incomes/domain/income_record.dart';
+import 'package:despesas_frontend/features/incomes/domain/income_reference.dart';
+import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_input.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_result.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/create_household_owner_input.dart';
@@ -618,6 +622,36 @@ class FakeHouseholdMembersRepository implements HouseholdMembersRepository {
   }
 }
 
+class FakeIncomesRepository implements IncomesRepository {
+  FakeIncomesRepository({this.createResult, this.createError, this.onCreate});
+
+  IncomeRecord? createResult;
+  Exception? createError;
+  FutureOr<void> Function(CreateIncomeInput input)? onCreate;
+  int createCalls = 0;
+  CreateIncomeInput? lastCreatedInput;
+
+  @override
+  Future<IncomeRecord> createIncome(CreateIncomeInput input) async {
+    createCalls += 1;
+    lastCreatedInput = input;
+    if (createError != null) {
+      throw createError!;
+    }
+
+    await onCreate?.call(input);
+    return createResult ??
+        fakeIncomeRecord(
+          description: input.description.trim(),
+          amount: input.amount,
+          receivedOn: input.receivedOn,
+          spaceReference: input.spaceReferenceId == null
+              ? null
+              : fakeIncomeReference(id: input.spaceReferenceId!),
+        );
+  }
+}
+
 class FakePlatformAdminRepository implements PlatformAdminRepository {
   FakePlatformAdminRepository({
     this.result,
@@ -826,6 +860,31 @@ SpaceReferenceCreateResult fakeSpaceReferenceCreateResult({
     reference: reference,
     suggestedReference: suggestedReference,
     message: message,
+  );
+}
+
+IncomeReference fakeIncomeReference({
+  int id = 1,
+  String name = 'Projeto Acme',
+}) {
+  return IncomeReference(id: id, name: name);
+}
+
+IncomeRecord fakeIncomeRecord({
+  int id = 1,
+  String description = 'Freelance de marco',
+  double amount = 1800,
+  DateTime? receivedOn,
+  IncomeReference? spaceReference,
+  DateTime? createdAt,
+}) {
+  return IncomeRecord(
+    id: id,
+    description: description,
+    amount: amount,
+    receivedOn: receivedOn ?? DateTime.utc(2026, 3, 28),
+    spaceReference: spaceReference,
+    createdAt: createdAt ?? DateTime.utc(2026, 3, 28, 12),
   );
 }
 

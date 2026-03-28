@@ -8,6 +8,8 @@ import 'package:despesas_frontend/features/expenses/presentation/expenses_list_s
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
+import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
@@ -22,6 +24,7 @@ GoRouter createAppRouter({
   required ExpensesRepository expensesRepository,
   required FinancialAssistantRepository financialAssistantRepository,
   required HouseholdMembersRepository householdMembersRepository,
+  required IncomesRepository incomesRepository,
   required PlatformAdminRepository platformAdminRepository,
   required ReportsRepository reportsRepository,
   required ReviewOperationsRepository reviewOperationsRepository,
@@ -40,6 +43,7 @@ GoRouter createAppRouter({
       final inForgot = state.matchedLocation == '/forgot-password';
       final inReset = state.matchedLocation == '/reset-password';
       final inAssistant = state.matchedLocation == '/assistant';
+      final inIncomeNew = state.matchedLocation == '/incomes/new';
       final inSpaceReferences = state.matchedLocation == '/space/references';
 
       if (status == SessionStatus.bootstrapping) {
@@ -55,7 +59,9 @@ GoRouter createAppRouter({
 
       // Authenticated
       if (sessionController.requiresOnboarding) {
-        return inAssistant || inSpaceReferences ? null : '/assistant';
+        return inAssistant || inIncomeNew || inSpaceReferences
+            ? null
+            : '/assistant';
       }
 
       if (loggingIn || inSplash || inForgot || inReset) {
@@ -110,10 +116,20 @@ GoRouter createAppRouter({
               financialAssistantRepository: financialAssistantRepository,
               sessionController: sessionController,
               onStarterPrimaryActionRequested: (primaryActionKey) {
+                if (primaryActionKey == 'OPEN_REGISTER_INCOME') {
+                  context.go('/incomes/new');
+                }
                 if (primaryActionKey == 'OPEN_CONFIGURE_SPACE') {
                   context.go('/space/references');
                 }
               },
+            ),
+          ),
+          GoRoute(
+            path: '/incomes/new',
+            builder: (context, state) => IncomeFormScreen(
+              incomesRepository: incomesRepository,
+              spaceReferencesRepository: spaceReferencesRepository,
             ),
           ),
           GoRoute(

@@ -8,6 +8,7 @@ import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
@@ -23,6 +24,7 @@ class DespesasApp extends StatefulWidget {
     required this.expensesRepository,
     required this.financialAssistantRepository,
     required this.householdMembersRepository,
+    required this.incomesRepository,
     required this.platformAdminRepository,
     required this.reportsRepository,
     required this.reviewOperationsRepository,
@@ -36,6 +38,7 @@ class DespesasApp extends StatefulWidget {
   final ExpensesRepository expensesRepository;
   final FinancialAssistantRepository financialAssistantRepository;
   final HouseholdMembersRepository householdMembersRepository;
+  final IncomesRepository incomesRepository;
   final PlatformAdminRepository platformAdminRepository;
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
@@ -64,6 +67,7 @@ class _DespesasAppState extends State<DespesasApp> {
       expensesRepository: widget.expensesRepository,
       financialAssistantRepository: widget.financialAssistantRepository,
       householdMembersRepository: widget.householdMembersRepository,
+      incomesRepository: widget.incomesRepository,
       platformAdminRepository: widget.platformAdminRepository,
       reportsRepository: widget.reportsRepository,
       reviewOperationsRepository: widget.reviewOperationsRepository,
