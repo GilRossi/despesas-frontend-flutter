@@ -40,15 +40,74 @@ jobs:
             --dart-define=APP_ENV=prod \
             --dart-define=API_BASE_URL=https://app.rossicompany.com.br
 
-      - name: Setup deploy SSH
+      - name: Validate deploy secrets presence
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          mkdir -p ~/.ssh
+          if [ -n "${VPS_HOST:-}" ]; then
+            echo "VPS_HOST present: yes"
+          else
+            echo "VPS_HOST present: no"
+            exit 1
+          fi
+
+          if [ -n "${VPS_SSH_KEY:-}" ]; then
+            echo "VPS_SSH_KEY present: yes"
+          else
+            echo "VPS_SSH_KEY present: no"
+            exit 1
+          fi
+
+      - name: Create deploy SSH directory
+        run: mkdir -p ~/.ssh
+
+      - name: Write deploy SSH key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          umask 077
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Secure deploy SSH key
+        run: chmod 600 ~/.ssh/deploy_key
+
+      - name: Validate deploy host resolution
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          if getent ahosts "$VPS_HOST" >/dev/null 2>&1; then
+            echo "VPS_HOST resolves: yes"
+          else
+            echo "VPS_HOST resolves: no"
+            exit 1
+          fi
+
+      - name: Validate deploy host port 22 connectivity
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          if timeout 10 bash -c 'cat < /dev/null > /dev/tcp/$1/22' _ "$VPS_HOST" 2>/dev/null; then
+            echo "VPS_HOST port 22 reachable: yes"
+          else
+            echo "VPS_HOST port 22 reachable: no"
+            exit 1
+          fi
+
+      - name: Capture deploy host SSH key
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+
+          if ssh-keyscan -T 10 -H "$VPS_HOST" >"$tmpdir/known_host_entry" 2>"$tmpdir/ssh-keyscan.stderr" && [ -s "$tmpdir/known_host_entry" ]; then
+            cat "$tmpdir/known_host_entry" >> ~/.ssh/known_hosts
+            echo "ssh-keyscan succeeded: yes"
+          else
+            echo "ssh-keyscan succeeded: no"
+            exit 1
+          fi
 
       - name: Deploy web build to VPS
         env:
