@@ -87,12 +87,26 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          if timeout 10 bash -c 'cat < /dev/null > /dev/tcp/$1/22' _ "$VPS_HOST" 2>/dev/null; then
-            echo "VPS_HOST port 22 reachable: yes"
-          else
+          max_attempts=5
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "Port 22 connectivity attempt ${attempt}/${max_attempts}"
+
+            if timeout 10 bash -c 'cat < /dev/null > /dev/tcp/$1/22' _ "$VPS_HOST" 2>/dev/null; then
+              echo "VPS_HOST port 22 reachable: yes"
+              exit 0
+            fi
+
             echo "VPS_HOST port 22 reachable: no"
-            exit 1
-          fi
+
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              sleep_seconds=$((attempt * 5))
+              echo "Waiting ${sleep_seconds}s before next connectivity retry"
+              sleep "$sleep_seconds"
+            fi
+          done
+
+          exit 1
 
       - name: Capture deploy host SSH key
         env:
@@ -101,13 +115,29 @@ jobs:
           tmpdir="$(mktemp -d)"
           trap 'rm -rf "$tmpdir"' EXIT
 
-          if ssh-keyscan -T 10 -H "$VPS_HOST" >"$tmpdir/known_host_entry" 2>"$tmpdir/ssh-keyscan.stderr" && [ -s "$tmpdir/known_host_entry" ]; then
-            cat "$tmpdir/known_host_entry" >> ~/.ssh/known_hosts
-            echo "ssh-keyscan succeeded: yes"
-          else
+          max_attempts=5
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "SSH keyscan attempt ${attempt}/${max_attempts}"
+            : >"$tmpdir/known_host_entry"
+            : >"$tmpdir/ssh-keyscan.stderr"
+
+            if timeout 15 ssh-keyscan -T 10 -H "$VPS_HOST" >"$tmpdir/known_host_entry" 2>"$tmpdir/ssh-keyscan.stderr" && [ -s "$tmpdir/known_host_entry" ]; then
+              cat "$tmpdir/known_host_entry" >> ~/.ssh/known_hosts
+              echo "ssh-keyscan succeeded: yes"
+              exit 0
+            fi
+
             echo "ssh-keyscan succeeded: no"
-            exit 1
-          fi
+
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              sleep_seconds=$((attempt * 5))
+              echo "Waiting ${sleep_seconds}s before next ssh-keyscan retry"
+              sleep "$sleep_seconds"
+            fi
+          done
+
+          exit 1
 
       - name: Deploy web build to VPS
         env:
