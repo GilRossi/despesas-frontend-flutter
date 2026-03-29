@@ -381,29 +381,21 @@ class FakeExpensesRepository implements ExpensesRepository {
 }
 
 class FakeDashboardRepository implements DashboardRepository {
-  FakeDashboardRepository({this.summary, this.error});
+  FakeDashboardRepository({this.summary, this.error, this.onFetch});
 
   DashboardSummary? summary;
   Exception? error;
+  Future<DashboardSummary> Function()? onFetch;
   int calls = 0;
 
   @override
-  Future<DashboardSummary> fetchSummary() async {
+  Future<DashboardSummary> fetchDashboard() async {
     calls += 1;
+    if (onFetch != null) {
+      return onFetch!.call();
+    }
     if (error != null) throw error!;
-    return summary ??
-        const DashboardSummary(
-          householdId: 1,
-          totalExpenses: 2,
-          totalAmount: 500.0,
-          paidAmount: 200.0,
-          remainingAmount: 300.0,
-          overdueCount: 1,
-          overdueAmount: 150.0,
-          openCount: 1,
-          openAmount: 150.0,
-          statuses: [],
-        );
+    return summary ?? fakeDashboardSummary();
   }
 }
 
@@ -906,6 +898,175 @@ MobileSession fakeSession({
       role: role,
       onboarding: onboarding,
     ),
+  );
+}
+
+DashboardSummary fakeDashboardSummary({
+  String role = 'OWNER',
+  DashboardAssistantCard? assistantCard,
+  DashboardMonthOverview? monthOverview,
+  DashboardCategorySpending? categorySpending,
+  DashboardHouseholdSummary? householdSummary,
+  DashboardQuickActions? quickActions,
+  DashboardActionNeeded? actionNeeded,
+  DashboardRecentActivity? recentActivity,
+}) {
+  final isOwner = role == 'OWNER';
+  return DashboardSummary(
+    role: role,
+    summaryMain: const DashboardSummaryMain(
+      referenceMonth: '2026-03',
+      totalOpenAmount: 320,
+      totalOverdueAmount: 120,
+      paidThisMonthAmount: 540,
+      openCount: 2,
+      overdueCount: 1,
+    ),
+    actionNeeded:
+        actionNeeded ??
+        DashboardActionNeeded(
+          overdueCount: 1,
+          overdueAmount: 120,
+          openCount: 2,
+          openAmount: 320,
+          items: [
+            DashboardActionItem(
+              expenseId: 10,
+              description: 'Internet',
+              dueDate: DateTime.utc(2026, 3, 10),
+              status: 'VENCIDA',
+              amount: 120,
+              route: '/expenses',
+            ),
+            DashboardActionItem(
+              expenseId: 11,
+              description: 'Mercado',
+              dueDate: DateTime.utc(2026, 3, 20),
+              status: 'PREVISTA',
+              amount: 200,
+              route: '/expenses',
+            ),
+          ],
+        ),
+    recentActivity:
+        recentActivity ??
+        DashboardRecentActivity(
+          items: [
+            DashboardRecentActivityItem(
+              type: 'PAYMENT_RECORDED',
+              title: 'Pagamento registrado',
+              subtitle: 'Aluguel',
+              amount: 500,
+              occurredAt: DateTime.utc(2026, 3, 21, 12),
+              route: '/expenses',
+            ),
+            DashboardRecentActivityItem(
+              type: 'EXPENSE_CREATED',
+              title: 'Despesa adicionada',
+              subtitle: 'Mercado',
+              amount: 200,
+              occurredAt: DateTime.utc(2026, 3, 21, 9),
+              route: '/expenses',
+            ),
+          ],
+        ),
+    assistantCard:
+        assistantCard ??
+        const DashboardAssistantCard(
+          title: 'Assistente financeiro',
+          message: 'Revise a categoria que mais pesa e siga para a próxima ação.',
+          primaryActionKey: 'OPEN_ASSISTANT',
+          route: '/assistant',
+        ),
+    monthOverview:
+        isOwner
+            ? monthOverview ??
+                const DashboardMonthOverview(
+                  referenceMonth: '2026-03',
+                  totalAmount: 860,
+                  paidAmount: 540,
+                  remainingAmount: 320,
+                  monthComparison: ReportMonthComparison(
+                    currentMonth: '2026-03',
+                    currentTotal: 860,
+                    previousMonth: '2026-02',
+                    previousTotal: 700,
+                    deltaAmount: 160,
+                    deltaPercentage: 22.86,
+                  ),
+                  highestSpendingCategory: DashboardHighestSpendingCategory(
+                    categoryId: 1,
+                    categoryName: 'Moradia',
+                    totalAmount: 540,
+                    sharePercentage: 62.79,
+                  ),
+                )
+            : null,
+    categorySpending:
+        isOwner
+            ? categorySpending ??
+                const DashboardCategorySpending(
+                  items: [
+                    ReportCategoryTotal(
+                      categoryId: 1,
+                      categoryName: 'Moradia',
+                      totalAmount: 540,
+                      expensesCount: 2,
+                      sharePercentage: 62.79,
+                    ),
+                    ReportCategoryTotal(
+                      categoryId: 2,
+                      categoryName: 'Alimentação',
+                      totalAmount: 320,
+                      expensesCount: 2,
+                      sharePercentage: 37.21,
+                    ),
+                  ],
+                )
+            : null,
+    householdSummary:
+        isOwner
+            ? householdSummary ??
+                const DashboardHouseholdSummary(
+                  membersCount: 3,
+                  ownersCount: 1,
+                  membersOnlyCount: 2,
+                  spaceReferencesCount: 4,
+                  referencesByGroup: [
+                    DashboardReferenceGroupSummary(
+                      group: SpaceReferenceTypeGroup.residencial,
+                      count: 2,
+                    ),
+                    DashboardReferenceGroupSummary(
+                      group: SpaceReferenceTypeGroup.comercialTrabalho,
+                      count: 2,
+                    ),
+                  ],
+                )
+            : null,
+    quickActions:
+        isOwner
+            ? null
+            : quickActions ??
+                const DashboardQuickActions(
+                  items: [
+                    DashboardQuickActionItem(
+                      key: 'OPEN_EXPENSES',
+                      label: 'Ver despesas',
+                      route: '/expenses',
+                    ),
+                    DashboardQuickActionItem(
+                      key: 'OPEN_ASSISTANT',
+                      label: 'Abrir assistente',
+                      route: '/assistant',
+                    ),
+                    DashboardQuickActionItem(
+                      key: 'OPEN_REPORTS',
+                      label: 'Ver relatorios',
+                      route: '/reports',
+                    ),
+                  ],
+                ),
   );
 }
 
