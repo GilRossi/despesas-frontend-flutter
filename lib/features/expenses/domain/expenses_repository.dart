@@ -15,7 +15,7 @@ abstract interface class ExpensesRepository {
 
   Future<List<CatalogOption>> listCatalogOptions();
 
-  Future<void> createExpense(SaveExpenseInput input);
+  Future<ExpenseSummary> createExpense(SaveExpenseInput input);
 
   Future<void> updateExpense({
     required int expenseId,

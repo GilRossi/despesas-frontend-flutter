@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_reference.dart';
@@ -195,22 +196,25 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       notes: _notesController.text,
     );
 
-    final success = _isEditing
+    final createdExpense = _isEditing
+        ? null
+        : await _viewModel.createExpense(input);
+    final updated = _isEditing
         ? await _viewModel.updateExpense(
             expenseId: _initialExpense!.id,
             input: input,
           )
-        : await _viewModel.createExpense(input);
+        : createdExpense != null;
 
-    if (!mounted || !success) {
+    if (!mounted || !updated) {
       return;
     }
 
-    if (widget.standalone && !_isEditing) {
+    if (widget.standalone && !_isEditing && createdExpense != null) {
       setState(() {
         _successState = _ExpenseCreateSuccessState(
-          description: input.description,
-          amount: input.amount,
+          description: createdExpense.description,
+          amount: createdExpense.amount,
         );
       });
       return;
@@ -243,11 +247,18 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         ? 'Lancar despesa do dia'
         : 'Nova despesa';
 
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: SafeArea(
-        top: false,
-        child: ListenableBuilder(
+    return RoutePopScope<Object?>(
+      fallbackRoute: '/expenses',
+      child: Scaffold(
+        appBar: AppBar(
+          leading: RouteBackButton(
+            fallbackRoute: widget.standalone ? '/expenses' : '/expenses',
+          ),
+          title: Text(title),
+        ),
+        body: SafeArea(
+          top: false,
+          child: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
             if (successState != null) {
@@ -544,6 +555,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               ),
             );
           },
+          ),
         ),
       ),
     );

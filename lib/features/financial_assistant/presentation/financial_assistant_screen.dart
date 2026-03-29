@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_conversation_entry.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
@@ -108,9 +109,14 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Assistente financeiro')),
-          body: SafeArea(
+        return RoutePopScope<Object?>(
+          fallbackRoute: '/',
+          child: Scaffold(
+            appBar: AppBar(
+              leading: const RouteBackButton(fallbackRoute: '/'),
+              title: const Text('Assistente financeiro'),
+            ),
+            body: SafeArea(
             top: false,
             child: ResponsiveScrollBody(
               controller: _scrollController,
@@ -236,6 +242,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                       const SizedBox(height: 16),
                     ],
                 ],
+              ),
               ),
             ),
           ),

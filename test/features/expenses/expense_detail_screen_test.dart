@@ -2,6 +2,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../support/test_doubles.dart';
 
@@ -191,6 +192,29 @@ void main() {
       find.text('Nenhum pagamento registrado para esta despesa.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('not found and error states expose a clear exit action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpenseDetailScreen(
+          expenseId: 1,
+          expensesRepository: FakeExpensesRepository(
+            detailError: fakeApiException(
+              statusCode: 404,
+              message: 'Despesa nao encontrada',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Despesa nao encontrada'), findsOneWidget);
+    expect(find.text('Voltar às despesas'), findsOneWidget);
   });
 
   testWidgets('shows paid off message without payment form action', (
@@ -419,5 +443,43 @@ void main() {
     expect(repository.lastDeletedExpenseId, 1);
     expect(result?.shouldReload, isTrue);
     expect(result?.message, 'Despesa excluida com sucesso.');
+  });
+
+  testWidgets('deletes expense opened as root route and redirects safely', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(description: 'Internet Fibra'),
+    );
+    final router = GoRouter(
+      initialLocation: '/expenses/1',
+      routes: [
+        GoRoute(
+          path: '/expenses',
+          builder: (context, state) => const Scaffold(
+            body: Text('expenses-root-page'),
+          ),
+        ),
+        GoRoute(
+          path: '/expenses/:expenseId',
+          builder: (context, state) => ExpenseDetailScreen(
+            expenseId: int.parse(state.pathParameters['expenseId']!),
+            expensesRepository: repository,
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Excluir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Excluir'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteCalls, 1);
+    expect(find.text('expenses-root-page'), findsOneWidget);
   });
 }

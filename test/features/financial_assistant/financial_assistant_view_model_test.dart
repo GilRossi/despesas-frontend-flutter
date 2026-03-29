@@ -142,4 +142,143 @@ void main() {
     expect(viewModel.isTourVisible, isFalse);
     expect(sessionController.currentUser?.onboarding.completed, isTrue);
   });
+
+  test('submitQuestion exposes a generic error message when the API fails', () async {
+    final viewModel = FinancialAssistantViewModel(
+      financialAssistantRepository: FakeFinancialAssistantRepository(
+        error: Exception('boom'),
+      ),
+      sessionController: buildSessionController(),
+    );
+
+    await viewModel.submitQuestion('Como posso economizar este mes?');
+
+    expect(viewModel.errorMessage, 'Nao foi possivel consultar o assistente financeiro.');
+    expect(viewModel.isLoading, isFalse);
+    expect(viewModel.entries, isEmpty);
+  });
+
+  test('selectStarterIntent exposes a generic error message when the API fails', () async {
+    final viewModel = FinancialAssistantViewModel(
+      financialAssistantRepository: FakeFinancialAssistantRepository(
+        starterError: Exception('boom'),
+      ),
+      sessionController: buildSessionController(
+        authRepository: FakeAuthRepository(
+          loginResult: fakeSession(
+            onboarding: const AuthOnboarding(completed: false),
+          ),
+        ),
+      ),
+    );
+
+    await viewModel.selectStarterIntent(
+      FinancialAssistantStarterIntent.fixedBills,
+    );
+
+    expect(
+      viewModel.starterErrorMessage,
+      'Nao foi possivel preparar essa proxima etapa agora.',
+    );
+    expect(viewModel.isStarterLoading, isFalse);
+  });
+
+  test('retry methods do nothing when no previous attempt exists', () async {
+    final viewModel = FinancialAssistantViewModel(
+      financialAssistantRepository: FakeFinancialAssistantRepository(),
+      sessionController: buildSessionController(),
+    );
+
+    await viewModel.retryLastQuestion();
+    await viewModel.retryStarterIntent();
+
+    expect(viewModel.entries, isEmpty);
+    expect(viewModel.starterReply, isNull);
+  });
+
+  test('tour controls and month navigation keep internal state coherent', () async {
+    final authRepository = FakeAuthRepository(
+      loginResult: fakeSession(
+        name: '',
+        onboarding: const AuthOnboarding(completed: false),
+      ),
+    );
+    final sessionController = buildSessionController(
+      authRepository: authRepository,
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final viewModel = FinancialAssistantViewModel(
+      financialAssistantRepository: FakeFinancialAssistantRepository(),
+      sessionController: sessionController,
+      initialReferenceMonth: DateTime(2026, 3, 18),
+    );
+
+    expect(viewModel.firstName, 'voce');
+    expect(viewModel.isTourVisible, isTrue);
+
+    viewModel.dismissTour();
+    expect(viewModel.isTourVisible, isFalse);
+
+    viewModel.reopenTour();
+    expect(viewModel.isTourVisible, isTrue);
+
+    await viewModel.goToPreviousMonth();
+    expect(viewModel.referenceMonth, DateTime(2026, 2));
+
+    await viewModel.goToNextMonth();
+    expect(viewModel.referenceMonth, DateTime(2026, 3));
+  });
+
+  test('completeOnboarding exposes API errors and no-op when onboarding is done', () async {
+    final authRepository = FakeAuthRepository(
+      loginResult: fakeSession(
+        onboarding: const AuthOnboarding(completed: false),
+      ),
+      completeOnboardingError: const ApiException(
+        statusCode: 422,
+        message: 'Falha simulada',
+      ),
+    );
+    final sessionController = buildSessionController(
+      authRepository: authRepository,
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final viewModel = FinancialAssistantViewModel(
+      financialAssistantRepository: FakeFinancialAssistantRepository(),
+      sessionController: sessionController,
+    );
+
+    await viewModel.completeOnboarding();
+
+    expect(viewModel.onboardingErrorMessage, 'Falha simulada');
+    expect(viewModel.isCompletingOnboarding, isFalse);
+
+    final completedAuthRepository = FakeAuthRepository(
+      loginResult: fakeSession(
+        onboarding: const AuthOnboarding(completed: true),
+      ),
+    );
+    final completedController = buildSessionController(
+      authRepository: completedAuthRepository,
+    );
+    await completedController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final completedViewModel = FinancialAssistantViewModel(
+      financialAssistantRepository: FakeFinancialAssistantRepository(),
+      sessionController: completedController,
+    );
+
+    await completedViewModel.completeOnboarding();
+
+    expect(completedAuthRepository.completeOnboardingCalls, 0);
+    expect(completedViewModel.isTourVisible, isFalse);
+  });
 }

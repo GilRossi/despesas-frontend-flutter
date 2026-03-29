@@ -88,7 +88,7 @@ class HttpExpensesRepository implements ExpensesRepository {
   }
 
   @override
-  Future<void> createExpense(SaveExpenseInput input) async {
+  Future<ExpenseSummary> createExpense(SaveExpenseInput input) async {
     final response = await _authorizedRequestExecutor.run((headers) {
       return _authorizedRequestExecutor.apiClient.postJson(
         '/api/v1/expenses',
@@ -100,6 +100,10 @@ class HttpExpensesRepository implements ExpensesRepository {
     if (response.statusCode >= 400) {
       throw ApiException.fromResponse(response);
     }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = decoded['data'] as Map<String, dynamic>;
+    return ExpenseSummary.fromJson(data);
   }
 
   @override

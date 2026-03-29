@@ -1,10 +1,12 @@
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_summary.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_screen.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_flow_result.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ReviewOperationsListScreen extends StatefulWidget {
   const ReviewOperationsListScreen({
@@ -38,12 +40,11 @@ class _ReviewOperationsListScreenState
   }
 
   Future<void> _openDetail(EmailIngestionReviewSummary review) async {
-    final result = await Navigator.of(context).push<ReviewOperationsFlowResult>(
-      MaterialPageRoute(
-        builder: (_) => ReviewOperationDetailScreen(
-          ingestionId: review.ingestionId,
-          reviewOperationsRepository: widget.reviewOperationsRepository,
-        ),
+    final result = await _pushOrNavigate<ReviewOperationsFlowResult>(
+      '/review-operations/${review.ingestionId}',
+      fallbackBuilder: () => ReviewOperationDetailScreen(
+        ingestionId: review.ingestionId,
+        reviewOperationsRepository: widget.reviewOperationsRepository,
       ),
     );
 
@@ -64,6 +65,19 @@ class _ReviewOperationsListScreenState
     ).showSnackBar(SnackBar(content: Text(result.message!)));
   }
 
+  Future<T?> _pushOrNavigate<T>(
+    String route, {
+    required Widget Function() fallbackBuilder,
+  }) async {
+    try {
+      return await context.push<T>(route);
+    } catch (_) {
+      return Navigator.of(context).push<T>(
+        MaterialPageRoute(builder: (_) => fallbackBuilder()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -72,7 +86,10 @@ class _ReviewOperationsListScreenState
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Review operations')),
+          appBar: AppBar(
+            leading: const RouteBackButton(fallbackRoute: '/expenses'),
+            title: const Text('Review operations'),
+          ),
           body: SafeArea(
             top: false,
             child: RefreshIndicator(

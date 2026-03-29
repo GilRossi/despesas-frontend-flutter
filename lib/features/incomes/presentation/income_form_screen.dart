@@ -2,6 +2,7 @@ import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart'
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/primary_action_bar.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/summary_header.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/incomes/domain/create_income_input.dart';
@@ -166,7 +167,10 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
     final keyboardBottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cadastrar meus ganhos')),
+      appBar: AppBar(
+        leading: const RouteBackButton(fallbackRoute: '/assistant'),
+        title: const Text('Cadastrar meus ganhos'),
+      ),
       body: SafeArea(
         top: false,
         child: ListenableBuilder(

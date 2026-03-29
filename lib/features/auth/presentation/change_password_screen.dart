@@ -1,6 +1,7 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:flutter/material.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -108,7 +109,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final user = widget.sessionController.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Seguranca da conta')),
+      appBar: AppBar(
+        leading: const RouteBackButton(fallbackRoute: '/expenses'),
+        title: const Text('Seguranca da conta'),
+      ),
       body: SafeArea(
         child: ResponsiveScrollBody(
           maxWidth: 560,

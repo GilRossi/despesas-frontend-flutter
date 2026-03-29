@@ -1,9 +1,11 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/auth/presentation/forgot_password_screen.dart';
+import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/reset_password_screen.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
@@ -14,6 +16,7 @@ import 'package:despesas_frontend/features/financial_assistant/presentation/fina
 import 'package:despesas_frontend/features/history_imports/domain/history_imports_repository.dart';
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
 import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
@@ -21,6 +24,8 @@ import 'package:despesas_frontend/features/platform_admin/presentation/platform_
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
+import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_screen.dart';
+import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:despesas_frontend/features/space_references/presentation/space_references_screen.dart';
 import 'package:flutter/material.dart';
@@ -147,6 +152,17 @@ GoRouter createAppRouter({
             ),
           ),
           GoRoute(
+            path: '/household-members',
+            builder: (context, state) => HouseholdMembersScreen(
+              householdMembersRepository: householdMembersRepository,
+            ),
+          ),
+          GoRoute(
+            path: '/change-password',
+            builder: (context, state) =>
+                ChangePasswordScreen(sessionController: sessionController),
+          ),
+          GoRoute(
             path: '/history/import',
             builder: (context, state) => HistoryImportFormScreen(
               historyImportsRepository: historyImportsRepository,
@@ -208,6 +224,52 @@ GoRouter createAppRouter({
               return ExpensePaymentScreen(
                 expenseId: expenseId,
                 expensesRepository: expensesRepository,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/expenses/:expenseId',
+            builder: (context, state) {
+              final expenseId = int.tryParse(
+                state.pathParameters['expenseId'] ?? '',
+              );
+              if (expenseId == null) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Nao foi possivel abrir esta despesa.'),
+                  ),
+                );
+              }
+
+              return ExpenseDetailScreen(
+                expenseId: expenseId,
+                expensesRepository: expensesRepository,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/review-operations',
+            builder: (context, state) => ReviewOperationsListScreen(
+              reviewOperationsRepository: reviewOperationsRepository,
+            ),
+          ),
+          GoRoute(
+            path: '/review-operations/:ingestionId',
+            builder: (context, state) {
+              final ingestionId = int.tryParse(
+                state.pathParameters['ingestionId'] ?? '',
+              );
+              if (ingestionId == null) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Nao foi possivel abrir esta review.'),
+                  ),
+                );
+              }
+
+              return ReviewOperationDetailScreen(
+                ingestionId: ingestionId,
+                reviewOperationsRepository: reviewOperationsRepository,
               );
             },
           ),

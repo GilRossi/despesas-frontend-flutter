@@ -290,6 +290,7 @@ class FakeExpensesRepository implements ExpensesRepository {
   Exception? updateError;
   Exception? deleteError;
   Exception? registerPaymentError;
+  ExpenseSummary? createResult;
   void Function(SaveExpenseInput input)? onCreate;
   Future<void> Function(SaveExpenseInput input)? onCreateAsync;
   void Function(int expenseId, SaveExpenseInput input)? onUpdate;
@@ -341,7 +342,7 @@ class FakeExpensesRepository implements ExpensesRepository {
   }
 
   @override
-  Future<void> createExpense(SaveExpenseInput input) async {
+  Future<ExpenseSummary> createExpense(SaveExpenseInput input) async {
     createCalls += 1;
     lastCreatedInput = input;
     if (createError != null) {
@@ -351,6 +352,13 @@ class FakeExpensesRepository implements ExpensesRepository {
     if (onCreateAsync != null) {
       await onCreateAsync!(input);
     }
+    return createResult ??
+        fakeExpense(
+          description: input.description.trim(),
+          amount: input.amount,
+          dueDate: input.dueDate,
+          context: input.context,
+        );
   }
 
   @override
@@ -1264,6 +1272,8 @@ ExpenseSummary fakeExpense({
   int id = 1,
   String description = 'Internet Fibra',
   double amount = 129.9,
+  DateTime? dueDate,
+  String context = 'CASA',
   String category = 'Casa',
   String subcategory = 'Internet',
   String status = 'ABERTA',
@@ -1272,8 +1282,8 @@ ExpenseSummary fakeExpense({
     id: id,
     description: description,
     amount: amount,
-    dueDate: DateTime.utc(2026, 3, 25),
-    context: 'CASA',
+    dueDate: dueDate ?? DateTime.utc(2026, 3, 25),
+    context: context,
     category: ExpenseReference(id: 1, name: category),
     subcategory: ExpenseReference(id: 2, name: subcategory),
     status: status,

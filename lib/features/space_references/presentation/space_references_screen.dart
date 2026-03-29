@@ -5,7 +5,9 @@ import 'package:despesas_frontend/features/space_references/domain/space_referen
 import 'package:despesas_frontend/features/space_references/domain/space_reference_type_group.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:despesas_frontend/features/space_references/presentation/space_references_view_model.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class SpaceReferencesScreen extends StatefulWidget {
   const SpaceReferencesScreen({
@@ -104,8 +106,21 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
       builder: (context, _) {
         final duplicateSuggestion = _viewModel.lastCreateResult;
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Referencias do seu Espaco')),
+        return RoutePopScope<Object?>(
+          fallbackRoute: '/assistant',
+          child: Scaffold(
+            appBar: AppBar(
+              leading: const RouteBackButton(fallbackRoute: '/assistant'),
+              title: const Text('Referencias do seu Espaco'),
+              actions: [
+              TextButton.icon(
+                key: const ValueKey('space-references-back-to-assistant'),
+                onPressed: () => context.go('/assistant'),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Assistente'),
+              ),
+            ],
+          ),
           body: SafeArea(
             top: false,
             child: RefreshIndicator(
@@ -381,6 +396,7 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),

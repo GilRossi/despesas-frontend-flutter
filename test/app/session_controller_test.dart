@@ -104,6 +104,59 @@ void main() {
     },
   );
 
+  test('refreshSession clears the session when the refresh token is invalid', () async {
+      final authRepository = FakeAuthRepository(refreshError: Exception('401'));
+      final sessionStore = MemorySessionStore()..refreshToken = 'persisted';
+      final controller = SessionController(
+        authRepository: authRepository,
+        sessionStore: sessionStore,
+      );
+
+      final refreshed = await controller.refreshSession();
+
+      expect(refreshed, isFalse);
+      expect(controller.status, SessionStatus.unauthenticated);
+      expect(sessionStore.refreshToken, isNull);
+      expect(sessionStore.cleared, isTrue);
+    });
+
+  test('login surfaces backend failure and resets to unauthenticated', () async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(
+        loginError: Exception('invalid credentials'),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+
+    final success = await controller.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+
+    expect(success, isFalse);
+    expect(controller.status, SessionStatus.unauthenticated);
+    expect(controller.errorMessage, 'Nao foi possivel fazer login agora.');
+    expect(controller.isSubmitting, isFalse);
+  });
+
+  test('logout clears the stored refresh token and session state', () async {
+    final sessionStore = MemorySessionStore()..refreshToken = 'persisted';
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(refreshToken: 'stored'),
+      ),
+      sessionStore: sessionStore,
+    );
+
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+    await controller.logout();
+
+    expect(controller.status, SessionStatus.unauthenticated);
+    expect(controller.currentUser, isNull);
+    expect(sessionStore.refreshToken, isNull);
+    expect(sessionStore.cleared, isTrue);
+  });
+
   test('changeOwnPassword delegates to auth repository', () async {
     final authRepository = FakeAuthRepository();
     final controller = SessionController(

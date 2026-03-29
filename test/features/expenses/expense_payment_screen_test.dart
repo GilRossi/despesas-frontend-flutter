@@ -27,6 +27,11 @@ void main() {
               const Scaffold(body: Text('expenses-page')),
         ),
         GoRoute(
+          path: '/assistant',
+          builder: (context, state) =>
+              const Scaffold(body: Text('assistant-page')),
+        ),
+        GoRoute(
           path: '/expenses/:expenseId/pay',
           builder: (context, state) => ExpensePaymentScreen(
             expenseId: int.parse(state.pathParameters['expenseId']!),
@@ -257,10 +262,61 @@ void main() {
     await pumpPaymentFlow(tester, repository: repository);
 
     expect(find.text('Despesa nao encontrada'), findsOneWidget);
+    expect(find.text('Ver despesas'), findsOneWidget);
+    expect(find.text('Voltar ao dashboard'), findsOneWidget);
     expect(
       find.textContaining('Nao foi possivel abrir este pagamento'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('not found state can return to expenses list', (tester) async {
+    final repository = FakeExpensesRepository(
+      detailError: fakeApiException(
+        statusCode: 404,
+        message: 'Despesa nao encontrada',
+      ),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.tap(find.text('Ver despesas'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('expenses-page'), findsOneWidget);
+  });
+
+  testWidgets('already paid state keeps exit actions visible', (tester) async {
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 129.9,
+        remainingAmount: 0,
+        paymentsCount: 2,
+      ),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    expect(find.text('Despesa ja quitada'), findsOneWidget);
+    expect(find.text('Ver despesas'), findsOneWidget);
+    expect(find.text('Voltar ao dashboard'), findsOneWidget);
+  });
+
+  testWidgets('already paid state can return to dashboard', (tester) async {
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 129.9,
+        remainingAmount: 0,
+        paymentsCount: 2,
+      ),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.tap(find.text('Voltar ao dashboard'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('dashboard-page'), findsOneWidget);
   });
 
   testWidgets('shows retry state when loading the payment flow fails', (
