@@ -9,6 +9,7 @@ import 'package:despesas_frontend/features/financial_assistant/domain/financial_
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
+import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -171,6 +172,27 @@ void main() {
 
       expect(find.byType(IncomeFormScreen), findsOneWidget);
       expect(find.text('Cadastrar meus ganhos'), findsWidgets);
+    });
+
+    testWidgets('authenticated users can open /reports', (tester) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/reports');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ReportsScreen), findsOneWidget);
+      expect(find.text('Leitura clara do mes financeiro'), findsOneWidget);
     });
 
     testWidgets('first access users are redirected to assistant', (

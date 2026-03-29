@@ -11,10 +11,10 @@ class HttpDashboardRepository implements DashboardRepository {
   final AuthorizedRequestExecutor _executor;
 
   @override
-  Future<DashboardSummary> fetchSummary() async {
+  Future<DashboardSummary> fetchDashboard() async {
     final response = await _executor.run(
       (headers) => _executor.apiClient.get(
-        '/api/v1/dashboard/summary',
+        '/api/v1/dashboard',
         headers: headers,
       ),
     );
@@ -27,7 +27,7 @@ class HttpDashboardRepository implements DashboardRepository {
       throw const ApiException(
         statusCode: 500,
         code: 'INVALID_RESPONSE',
-        message: 'Resposta invalida do resumo do dashboard.',
+        message: 'Resposta invalida do dashboard.',
       );
     }
     return DashboardSummary.fromJson(data);

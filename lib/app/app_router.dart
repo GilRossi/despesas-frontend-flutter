@@ -17,6 +17,7 @@ import 'package:despesas_frontend/features/incomes/presentation/income_form_scre
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
+import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:despesas_frontend/features/space_references/presentation/space_references_screen.dart';
@@ -181,6 +182,11 @@ GoRouter createAppRouter({
               reportsRepository: reportsRepository,
               reviewOperationsRepository: reviewOperationsRepository,
             ),
+          ),
+          GoRoute(
+            path: '/reports',
+            builder: (context, state) =>
+                ReportsScreen(reportsRepository: reportsRepository),
           ),
         ],
       ),
