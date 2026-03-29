@@ -9,6 +9,8 @@ import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_reposi
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_imports_repository.dart';
+import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
 import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
@@ -26,6 +28,7 @@ GoRouter createAppRouter({
   required ExpensesRepository expensesRepository,
   required FixedBillsRepository fixedBillsRepository,
   required FinancialAssistantRepository financialAssistantRepository,
+  required HistoryImportsRepository historyImportsRepository,
   required HouseholdMembersRepository householdMembersRepository,
   required IncomesRepository incomesRepository,
   required PlatformAdminRepository platformAdminRepository,
@@ -47,6 +50,7 @@ GoRouter createAppRouter({
       final inReset = state.matchedLocation == '/reset-password';
       final inAssistant = state.matchedLocation == '/assistant';
       final inFixedBillsNew = state.matchedLocation == '/fixed-bills/new';
+      final inHistoryImport = state.matchedLocation == '/history/import';
       final inIncomeNew = state.matchedLocation == '/incomes/new';
       final inSpaceReferences = state.matchedLocation == '/space/references';
 
@@ -65,6 +69,7 @@ GoRouter createAppRouter({
       if (sessionController.requiresOnboarding) {
         return inAssistant ||
                 inFixedBillsNew ||
+                inHistoryImport ||
                 inIncomeNew ||
                 inSpaceReferences
             ? null
@@ -123,6 +128,9 @@ GoRouter createAppRouter({
               financialAssistantRepository: financialAssistantRepository,
               sessionController: sessionController,
               onStarterPrimaryActionRequested: (primaryActionKey) {
+                if (primaryActionKey == 'OPEN_IMPORT_HISTORY') {
+                  context.go('/history/import');
+                }
                 if (primaryActionKey == 'OPEN_FIXED_BILLS') {
                   context.go('/fixed-bills/new');
                 }
@@ -133,6 +141,13 @@ GoRouter createAppRouter({
                   context.go('/space/references');
                 }
               },
+            ),
+          ),
+          GoRoute(
+            path: '/history/import',
+            builder: (context, state) => HistoryImportFormScreen(
+              historyImportsRepository: historyImportsRepository,
+              expensesRepository: expensesRepository,
             ),
           ),
           GoRoute(

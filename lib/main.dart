@@ -9,6 +9,7 @@ import 'package:despesas_frontend/features/expenses/data/http_expenses_repositor
 import 'package:despesas_frontend/features/fixed_bills/data/http_fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/data/http_financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/dashboard/data/http_dashboard_repository.dart';
+import 'package:despesas_frontend/features/history_imports/data/http_history_imports_repository.dart';
 import 'package:despesas_frontend/features/household_members/data/http_household_members_repository.dart';
 import 'package:despesas_frontend/features/incomes/data/http_incomes_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/data/http_platform_admin_repository.dart';
@@ -52,6 +53,9 @@ void main() {
   final financialAssistantRepository = HttpFinancialAssistantRepository(
     authorizedRequestExecutor,
   );
+  final historyImportsRepository = HttpHistoryImportsRepository(
+    authorizedRequestExecutor,
+  );
   final householdMembersRepository = HttpHouseholdMembersRepository(
     authorizedRequestExecutor,
   );
@@ -74,6 +78,7 @@ void main() {
       expensesRepository: expensesRepository,
       fixedBillsRepository: fixedBillsRepository,
       financialAssistantRepository: financialAssistantRepository,
+      historyImportsRepository: historyImportsRepository,
       householdMembersRepository: householdMembersRepository,
       incomesRepository: incomesRepository,
       platformAdminRepository: platformAdminRepository,

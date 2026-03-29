@@ -8,6 +8,7 @@ import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_imports_repository.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
 import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
@@ -25,6 +26,7 @@ class DespesasApp extends StatefulWidget {
     required this.expensesRepository,
     required this.fixedBillsRepository,
     required this.financialAssistantRepository,
+    required this.historyImportsRepository,
     required this.householdMembersRepository,
     required this.incomesRepository,
     required this.platformAdminRepository,
@@ -40,6 +42,7 @@ class DespesasApp extends StatefulWidget {
   final ExpensesRepository expensesRepository;
   final FixedBillsRepository fixedBillsRepository;
   final FinancialAssistantRepository financialAssistantRepository;
+  final HistoryImportsRepository historyImportsRepository;
   final HouseholdMembersRepository householdMembersRepository;
   final IncomesRepository incomesRepository;
   final PlatformAdminRepository platformAdminRepository;
@@ -70,6 +73,7 @@ class _DespesasAppState extends State<DespesasApp> {
       expensesRepository: widget.expensesRepository,
       fixedBillsRepository: widget.fixedBillsRepository,
       financialAssistantRepository: widget.financialAssistantRepository,
+      historyImportsRepository: widget.historyImportsRepository,
       householdMembersRepository: widget.householdMembersRepository,
       incomesRepository: widget.incomesRepository,
       platformAdminRepository: widget.platformAdminRepository,

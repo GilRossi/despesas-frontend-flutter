@@ -7,6 +7,7 @@ import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
+import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,6 +35,7 @@ void main() {
       required Widget login,
       FakeFinancialAssistantRepository? financialAssistantRepository,
       FakeFixedBillsRepository? fixedBillsRepository,
+      FakeHistoryImportsRepository? historyImportsRepository,
       FakeIncomesRepository? incomesRepository,
       FakeSpaceReferencesRepository? spaceReferencesRepository,
     }) async {
@@ -44,6 +46,8 @@ void main() {
             fixedBillsRepository ?? FakeFixedBillsRepository(),
         financialAssistantRepository:
             financialAssistantRepository ?? FakeFinancialAssistantRepository(),
+        historyImportsRepository:
+            historyImportsRepository ?? FakeHistoryImportsRepository(),
         dashboardRepository: FakeDashboardRepository(),
         householdMembersRepository: FakeHouseholdMembersRepository(),
         incomesRepository: incomesRepository ?? FakeIncomesRepository(),
@@ -125,6 +129,27 @@ void main() {
 
       expect(find.byType(FixedBillFormScreen), findsOneWidget);
       expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+    });
+
+    testWidgets('authenticated users can open /history/import', (tester) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/history/import');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HistoryImportFormScreen), findsOneWidget);
+      expect(find.text('Trazer meu historico'), findsWidgets);
     });
 
     testWidgets('authenticated users can open /incomes/new', (tester) async {
@@ -219,6 +244,56 @@ void main() {
         await pumpRouter(tester, login: const Text('login'));
 
         expect(find.text('login'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'OPEN_IMPORT_HISTORY leva o assistente para o fluxo real de historico',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          financialAssistantRepository: FakeFinancialAssistantRepository(
+            starterReply: fakeStarterReply(
+              intent: FinancialAssistantStarterIntent.importHistory,
+              title: 'Vamos trazer seu historico',
+              message: 'Primeiro monte o lote e revise antes de confirmar.',
+              primaryActionKey: 'OPEN_IMPORT_HISTORY',
+            ),
+          ),
+          historyImportsRepository: FakeHistoryImportsRepository(),
+        );
+
+        await scrollTo(
+          tester,
+          find.byKey(const ValueKey('assistant-starter-import_history-button')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('assistant-starter-import_history-button')),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+        await scrollTo(
+          tester,
+          find.byKey(const ValueKey('assistant-starter-primary-action')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('assistant-starter-primary-action')),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HistoryImportFormScreen), findsOneWidget);
+        expect(find.text('Revise antes de confirmar.'), findsNothing);
       },
     );
 
