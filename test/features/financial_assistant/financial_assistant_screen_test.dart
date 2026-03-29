@@ -178,6 +178,54 @@ void main() {
     expect(requestedAction, 'OPEN_FIXED_BILLS');
   });
 
+  testWidgets(
+    'starter primary action repassa OPEN_IMPORT_HISTORY para o shell',
+    (tester) async {
+      String? requestedAction;
+
+      await pumpAssistant(
+        tester,
+        onboarding: const AuthOnboarding(completed: false),
+        repository: FakeFinancialAssistantRepository(
+          starterReply: fakeStarterReply(
+            intent: FinancialAssistantStarterIntent.importHistory,
+            title: 'Vamos trazer seu historico',
+            message: 'Monte o lote antes de confirmar.',
+            primaryActionKey: 'OPEN_IMPORT_HISTORY',
+          ),
+        ),
+        onStarterPrimaryActionRequested: (actionKey) {
+          requestedAction = actionKey;
+        },
+      );
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('assistant-starter-import_history-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('assistant-starter-import_history-button')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('assistant-starter-primary-action')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('assistant-starter-primary-action')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(requestedAction, 'OPEN_IMPORT_HISTORY');
+    },
+  );
+
   testWidgets('completing onboarding updates session and closes the tour', (
     tester,
   ) async {

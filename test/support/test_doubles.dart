@@ -33,6 +33,12 @@ import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_reposi
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
+import 'package:despesas_frontend/features/history_imports/domain/create_history_import_input.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_import_entry_input.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_import_entry_record.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_import_payment_method.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_import_result.dart';
+import 'package:despesas_frontend/features/history_imports/domain/history_imports_repository.dart';
 import 'package:despesas_frontend/features/incomes/domain/create_income_input.dart';
 import 'package:despesas_frontend/features/incomes/domain/income_record.dart';
 import 'package:despesas_frontend/features/incomes/domain/income_reference.dart';
@@ -698,6 +704,45 @@ class FakeFixedBillsRepository implements FixedBillsRepository {
   }
 }
 
+class FakeHistoryImportsRepository implements HistoryImportsRepository {
+  FakeHistoryImportsRepository({
+    this.importResult,
+    this.importError,
+    this.onImport,
+  });
+
+  HistoryImportResult? importResult;
+  Exception? importError;
+  FutureOr<void> Function(CreateHistoryImportInput input)? onImport;
+  int importCalls = 0;
+  CreateHistoryImportInput? lastImportInput;
+
+  @override
+  Future<HistoryImportResult> importHistory(
+    CreateHistoryImportInput input,
+  ) async {
+    importCalls += 1;
+    lastImportInput = input;
+    if (importError != null) {
+      throw importError!;
+    }
+
+    await onImport?.call(input);
+    return importResult ??
+        fakeHistoryImportResult(
+          importedCount: input.entries.length,
+          entries: [
+            for (final entry in input.entries)
+              fakeHistoryImportEntryRecord(
+                description: entry.description.trim(),
+                amount: entry.amount,
+                date: entry.date,
+              ),
+          ],
+        );
+  }
+}
+
 class FakePlatformAdminRepository implements PlatformAdminRepository {
   FakePlatformAdminRepository({
     this.result,
@@ -967,6 +1012,64 @@ FixedBillRecord fakeFixedBillRecord({
     spaceReference: spaceReference,
     active: active,
     createdAt: createdAt ?? DateTime.utc(2026, 3, 28, 12),
+  );
+}
+
+HistoryImportEntryRecord fakeHistoryImportEntryRecord({
+  int expenseId = 1,
+  int paymentId = 101,
+  String description = 'Mercado de fevereiro',
+  double amount = 189.9,
+  DateTime? date,
+  String status = 'PAGA',
+}) {
+  return HistoryImportEntryRecord(
+    expenseId: expenseId,
+    paymentId: paymentId,
+    description: description,
+    amount: amount,
+    date: date ?? DateTime.utc(2026, 2, 14),
+    status: status,
+  );
+}
+
+HistoryImportResult fakeHistoryImportResult({
+  int importedCount = 1,
+  List<HistoryImportEntryRecord>? entries,
+}) {
+  return HistoryImportResult(
+    importedCount: importedCount,
+    entries: entries ?? [fakeHistoryImportEntryRecord()],
+  );
+}
+
+HistoryImportEntryInput fakeHistoryImportEntryInput({
+  String description = 'Mercado de fevereiro',
+  double amount = 189.9,
+  DateTime? date,
+  String context = 'CASA',
+  int categoryId = 1,
+  int subcategoryId = 11,
+  String? notes,
+}) {
+  return HistoryImportEntryInput(
+    description: description,
+    amount: amount,
+    date: date ?? DateTime.utc(2026, 2, 14),
+    context: context,
+    categoryId: categoryId,
+    subcategoryId: subcategoryId,
+    notes: notes,
+  );
+}
+
+CreateHistoryImportInput fakeCreateHistoryImportInput({
+  List<HistoryImportEntryInput>? entries,
+  HistoryImportPaymentMethod paymentMethod = HistoryImportPaymentMethod.pix,
+}) {
+  return CreateHistoryImportInput(
+    entries: entries ?? [fakeHistoryImportEntryInput()],
+    paymentMethod: paymentMethod,
   );
 }
 

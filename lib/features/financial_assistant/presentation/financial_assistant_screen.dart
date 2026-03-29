@@ -564,6 +564,8 @@ class _StarterReplyCard extends StatelessWidget {
 
   String? get _primaryActionLabel {
     switch (reply.primaryActionKey) {
+      case 'OPEN_IMPORT_HISTORY':
+        return 'Abrir importacao de historico';
       case 'OPEN_FIXED_BILLS':
         return 'Abrir cadastro de contas fixas';
       case 'OPEN_REGISTER_INCOME':
