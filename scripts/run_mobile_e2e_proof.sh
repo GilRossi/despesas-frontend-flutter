@@ -162,12 +162,28 @@ run_phase() {
     --target=integration_test/mobile_companion_proof_test.dart \
     -d "${device_id}" \
     --no-dds \
+    --use-application-binary="${android_apk}" \
     --dart-define-from-file="${define_file}" \
     --dart-define="PROOF_PHASE=${phase}" | tee -a "${driver_log}"
 }
 
 cd "${repo_root}"
 flutter pub get
+
+echo "Construindo APK de prova com defines do mobile e2e..."
+flutter build apk --debug \
+  --dart-define-from-file="${define_file}"
+
+android_apk="${PROOF_ANDROID_APK:-${repo_root}/build/app/outputs/flutter-apk/app-debug.apk}"
+if [[ ! -f "${android_apk}" ]]; then
+  alt_android_apk="${repo_root}/build/app/outputs/apk/debug/app-debug.apk"
+  if [[ -f "${alt_android_apk}" ]]; then
+    android_apk="${alt_android_apk}"
+  else
+    echo "APK precompilado nao encontrado. Defina PROOF_ANDROID_APK ou gere um debug APK primeiro." >&2
+    exit 1
+  fi
+fi
 
 : > "${driver_log}"
 run_phase "login-flow" "mobile_login_flow_response"

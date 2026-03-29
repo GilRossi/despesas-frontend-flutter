@@ -27,4 +27,32 @@ void main() {
 
     expect(viewModel.errorMessage, 'Falha simulada');
   });
+
+  test('load exposes a generic message when reports fail unexpectedly', () async {
+    final viewModel = ReportsViewModel(
+      reportsRepository: FakeReportsRepository(error: Exception('boom')),
+    );
+
+    await viewModel.load(showLoading: false);
+
+    expect(viewModel.errorMessage, 'Nao foi possivel carregar os relatorios.');
+    expect(viewModel.isLoading, isFalse);
+  });
+
+  test('navigation helpers reload the report for the expected month', () async {
+    final repository = FakeReportsRepository(snapshot: fakeReportsSnapshot());
+    final viewModel = ReportsViewModel(reportsRepository: repository);
+
+    await viewModel.load(
+      referenceMonth: DateTime(2026, 3, 1),
+      comparePrevious: true,
+    );
+    await viewModel.goToPreviousMonth();
+    await viewModel.goToNextMonth();
+    await viewModel.setComparePrevious(false);
+
+    expect(repository.loadCalls, 4);
+    expect(viewModel.referenceMonth, DateTime(2026, 3));
+    expect(viewModel.comparePrevious, isFalse);
+  });
 }

@@ -1,9 +1,11 @@
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_item.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_view_model.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_flow_result.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ReviewOperationDetailScreen extends StatefulWidget {
   const ReviewOperationDetailScreen({
@@ -91,7 +93,10 @@ class _ReviewOperationDetailScreenState
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Detalhe da review')),
+          appBar: AppBar(
+            leading: const RouteBackButton(fallbackRoute: '/review-operations'),
+            title: const Text('Detalhe da review'),
+          ),
           body: SafeArea(
             top: false,
             child: Builder(
@@ -101,10 +106,12 @@ class _ReviewOperationDetailScreenState
                 }
 
                 if (_viewModel.isNotFound) {
-                  return const _StateCard(
+                  return _StateCard(
                     title: 'Pendencia nao encontrada',
                     message:
                         'Esse item pode ter sido resolvido ou nao pertence ao household atual.',
+                    actionLabel: 'Voltar às revisoes',
+                    onAction: () => context.go('/review-operations'),
                   );
                 }
 

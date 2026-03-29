@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
@@ -41,7 +42,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Relatorios')),
+          appBar: AppBar(
+            leading: const RouteBackButton(fallbackRoute: '/'),
+            title: const Text('Relatorios'),
+          ),
           body: SafeArea(
             top: false,
             child: Builder(

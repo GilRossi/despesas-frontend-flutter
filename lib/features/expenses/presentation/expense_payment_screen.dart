@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
@@ -79,10 +80,13 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      title: 'Registrar pagamento',
-      subtitle: 'Quitar uma despesa existente com rapidez',
-      body: ListenableBuilder(
+    return RoutePopScope<Object?>(
+      fallbackRoute: '/expenses',
+      child: AppScaffold(
+        title: 'Registrar pagamento',
+        subtitle: 'Quitar uma despesa existente com rapidez',
+        leading: const RouteBackButton(fallbackRoute: '/expenses'),
+        body: ListenableBuilder(
         listenable: _viewModel,
         builder: (context, _) {
           final successState = _successState;
@@ -99,10 +103,14 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
           }
 
           if (_viewModel.isNotFound) {
-            return const _PaymentStateCard(
+            return _PaymentStateCard(
               title: 'Despesa nao encontrada',
               message:
                   'Nao foi possivel abrir este pagamento porque a despesa nao existe ou nao pertence ao household atual.',
+              primaryActionLabel: 'Ver despesas',
+              onPrimaryAction: _openExpenses,
+              secondaryActionLabel: 'Voltar ao dashboard',
+              onSecondaryAction: _openDashboard,
             );
           }
 
@@ -110,8 +118,10 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
             return _PaymentStateCard(
               title: 'Nao foi possivel abrir o fluxo de pagamento.',
               message: _viewModel.errorMessage!,
-              actionLabel: 'Tentar novamente',
-              onAction: _reload,
+              primaryActionLabel: 'Tentar novamente',
+              onPrimaryAction: _reload,
+              secondaryActionLabel: 'Voltar ao dashboard',
+              onSecondaryAction: _openDashboard,
             );
           }
 
@@ -128,10 +138,14 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
                 children: [
                   _ExpensePaymentSummaryCard(expense: expense),
                   const SizedBox(height: 16),
-                  const _PaymentStateCard(
+                  _PaymentStateCard(
                     title: 'Despesa ja quitada',
                     message:
                         'Nao existe saldo pendente para registrar. Se precisar, acompanhe o historico na gestao de despesas.',
+                    primaryActionLabel: 'Ver despesas',
+                    onPrimaryAction: _openExpenses,
+                    secondaryActionLabel: 'Voltar ao dashboard',
+                    onSecondaryAction: _openDashboard,
                   ),
                 ],
               ),
@@ -156,6 +170,7 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
             ),
           );
         },
+        ),
       ),
     );
   }
@@ -320,42 +335,62 @@ class _PaymentStateCard extends StatelessWidget {
   const _PaymentStateCard({
     required this.title,
     required this.message,
-    this.actionLabel,
-    this.onAction,
+    this.primaryActionLabel,
+    this.onPrimaryAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
   });
 
   final String title;
   final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
+  final String? primaryActionLabel;
+  final VoidCallback? onPrimaryAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ResponsiveScrollBody(
-      maxWidth: 560,
-      centerVertically: true,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: theme.textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF65727B),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleLarge),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF65727B),
+                  ),
                 ),
-              ),
-              if (actionLabel != null && onAction != null) ...[
-                const SizedBox(height: 16),
-                FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                if (primaryActionLabel != null && onPrimaryAction != null) ...[
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      FilledButton(
+                        onPressed: onPrimaryAction,
+                        child: Text(primaryActionLabel!),
+                      ),
+                      if (secondaryActionLabel != null &&
+                          onSecondaryAction != null)
+                        OutlinedButton(
+                          onPressed: onSecondaryAction,
+                          child: Text(secondaryActionLabel!),
+                        ),
+                    ],
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

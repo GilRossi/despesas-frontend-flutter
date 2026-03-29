@@ -3,6 +3,7 @@ import 'package:despesas_frontend/features/space_references/domain/space_referen
 import 'package:despesas_frontend/features/space_references/presentation/space_references_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../support/test_doubles.dart';
 
@@ -57,6 +58,72 @@ void main() {
     expect(find.text('Projeto Acme'), findsOneWidget);
     expect(find.text('Casa da Praia'), findsOneWidget);
     expect(find.text('Criar nova referencia'), findsOneWidget);
+  });
+
+  testWidgets('filtrar e limpar filtros reabre a listagem original', (
+    tester,
+  ) async {
+    final repository = FakeSpaceReferencesRepository(
+      references: [
+        fakeSpaceReferenceItem(name: 'Projeto Horizonte'),
+        fakeSpaceReferenceItem(
+          id: 2,
+          type: SpaceReferenceType.casa,
+          name: 'Casa da Praia',
+        ),
+      ],
+    );
+
+    await pumpScreen(tester, repository: repository);
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('space-references-search-field')),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('space-references-search-field')),
+      'Horizonte',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('space-references-apply-filters')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.lastQuery, 'Horizonte');
+    expect(find.text('Projeto Horizonte'), findsOneWidget);
+    expect(find.text('Casa da Praia'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('space-references-clear-filters')));
+    await tester.pumpAndSettle();
+
+    expect(repository.lastQuery, isEmpty);
+    expect(find.text('Projeto Horizonte'), findsWidgets);
+    expect(find.text('Casa da Praia'), findsWidgets);
+  });
+
+  testWidgets('mostra erro de carregamento e permite tentar novamente', (
+    tester,
+  ) async {
+    final repository = FakeSpaceReferencesRepository(
+      listError: fakeApiException(message: 'Falha ao carregar referencias.'),
+    );
+
+    await pumpScreen(tester, repository: repository);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    expect(repository.listCalls, 1);
+    expect(tester.takeException(), isNull);
+
+    await scrollTo(tester, find.text('Tentar novamente'));
+    expect(find.text('Tentar novamente'), findsOneWidget);
+
+    repository.listError = null;
+    await tester.tap(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
+
+    expect(repository.listCalls, 2);
+    expect(find.text('Criar nova referencia'), findsWidgets);
   });
 
   testWidgets('criacao guiada minima trata CREATED e atualiza a selecao', (
@@ -136,4 +203,39 @@ void main() {
       expect(find.text('Projeto Acme'), findsWidgets);
     },
   );
+
+  testWidgets('header action returns to the assistant flow', (tester) async {
+    final router = GoRouter(
+      initialLocation: '/space/references',
+      routes: [
+        GoRoute(
+          path: '/assistant',
+          builder: (context, state) =>
+              const Scaffold(body: Text('assistant-page')),
+        ),
+        GoRoute(
+          path: '/space/references',
+          builder: (context, state) => SpaceReferencesScreen(
+            spaceReferencesRepository: FakeSpaceReferencesRepository(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('space-references-back-to-assistant')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('space-references-back-to-assistant')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('assistant-page'), findsOneWidget);
+  });
 }

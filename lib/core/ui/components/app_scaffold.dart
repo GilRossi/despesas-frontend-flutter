@@ -7,6 +7,7 @@ class AppScaffold extends StatelessWidget {
     required this.body,
     this.title,
     this.subtitle,
+    this.leading,
     this.actions,
     this.floatingActionButton,
     this.padding = const EdgeInsets.all(20),
@@ -15,6 +16,7 @@ class AppScaffold extends StatelessWidget {
   final Widget body;
   final String? title;
   final String? subtitle;
+  final Widget? leading;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final EdgeInsetsGeometry padding;
@@ -28,10 +30,11 @@ class AppScaffold extends StatelessWidget {
       appBar: hasHeader
           ? AppBar(
               titleSpacing: 0,
+              leading: leading,
               title: SummaryHeader(title: title, subtitle: subtitle),
               actions: actions,
             )
-          : AppBar(actions: actions),
+          : AppBar(leading: leading, actions: actions),
       floatingActionButton: floatingActionButton,
       body: SafeArea(
         child: Padding(

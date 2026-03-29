@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
@@ -79,7 +80,10 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Membros do household')),
+          appBar: AppBar(
+            leading: const RouteBackButton(fallbackRoute: '/expenses'),
+            title: const Text('Membros do household'),
+          ),
           body: SafeArea(
             top: false,
             child: RefreshIndicator(

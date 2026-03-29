@@ -70,6 +70,80 @@ void main() {
     expect(result?.message, 'Despesa criada com sucesso.');
   });
 
+  testWidgets('editing an expense updates it and returns reload result', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        id: 7,
+        description: 'Plano antigo',
+        amount: 89.9,
+        notes: 'Antiga observacao',
+      ),
+    );
+    Future<ExpenseFlowResult?>? resultFuture;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () {
+                    resultFuture = Navigator.of(context)
+                        .push<ExpenseFlowResult>(
+                          MaterialPageRoute(
+                            builder: (_) => ExpenseFormScreen(
+                              expensesRepository: repository,
+                              initialExpense: fakeExpenseDetail(
+                                id: 7,
+                                description: 'Plano antigo',
+                                amount: 89.9,
+                                notes: 'Antiga observacao',
+                              ),
+                            ),
+                          ),
+                        );
+                  },
+                  child: const Text('Abrir'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-description-field')),
+      'Plano atualizado',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-amount-field')),
+      '99,90',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
+    await tester.pumpAndSettle();
+
+    final result = await resultFuture;
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedExpenseId, 7);
+    expect(repository.lastUpdatedInput?.description, 'Plano atualizado');
+    expect(repository.lastUpdatedInput?.amount, 99.9);
+    expect(result?.shouldReload, isTrue);
+    expect(result?.message, 'Despesa atualizada com sucesso.');
+  });
+
   testWidgets('standalone flow shows success state with clear CTAs', (
     tester,
   ) async {

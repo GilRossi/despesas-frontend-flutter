@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/empty_state.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
@@ -19,6 +20,7 @@ import 'package:despesas_frontend/features/reports/presentation/reports_screen.d
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ExpensesListScreen extends StatefulWidget {
   const ExpensesListScreen({
@@ -64,73 +66,67 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   }
 
   Future<void> _openCreateExpense() async {
-    final result = await Navigator.of(context).push<ExpenseFlowResult>(
-      MaterialPageRoute(
-        builder: (_) =>
-            ExpenseFormScreen(expensesRepository: widget.expensesRepository),
+    final result = await _pushOrNavigate<ExpenseFlowResult>(
+      '/expenses/new',
+      fallbackBuilder: () => ExpenseFormScreen(
+        expensesRepository: widget.expensesRepository,
       ),
     );
     await _handleFlowResult(result);
   }
 
   Future<void> _openExpenseDetail(ExpenseSummary expense) async {
-    final result = await Navigator.of(context).push<ExpenseFlowResult>(
-      MaterialPageRoute(
-        builder: (_) => ExpenseDetailScreen(
-          expenseId: expense.id,
-          expensesRepository: widget.expensesRepository,
-        ),
+    final result = await _pushOrNavigate<ExpenseFlowResult>(
+      '/expenses/${expense.id}',
+      fallbackBuilder: () => ExpenseDetailScreen(
+        expenseId: expense.id,
+        expensesRepository: widget.expensesRepository,
       ),
     );
     await _handleFlowResult(result);
   }
 
   Future<void> _openReviewOperations() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ReviewOperationsListScreen(
-          reviewOperationsRepository: widget.reviewOperationsRepository,
-        ),
+    await _goOrPush(
+      '/review-operations',
+      fallbackBuilder: () => ReviewOperationsListScreen(
+        reviewOperationsRepository: widget.reviewOperationsRepository,
       ),
     );
   }
 
   Future<void> _openReports() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
-            ReportsScreen(reportsRepository: widget.reportsRepository),
-      ),
+    await _goOrPush(
+      '/reports',
+      fallbackBuilder: () =>
+          ReportsScreen(reportsRepository: widget.reportsRepository),
     );
   }
 
   Future<void> _openFinancialAssistant() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => FinancialAssistantScreen(
-          financialAssistantRepository: widget.financialAssistantRepository,
-          sessionController: widget.sessionController,
-        ),
+    await _goOrPush(
+      '/assistant',
+      fallbackBuilder: () => FinancialAssistantScreen(
+        financialAssistantRepository: widget.financialAssistantRepository,
+        sessionController: widget.sessionController,
       ),
     );
   }
 
   Future<void> _openHouseholdMembers() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => HouseholdMembersScreen(
-          householdMembersRepository: widget.householdMembersRepository,
-        ),
+    await _goOrPush(
+      '/household-members',
+      fallbackBuilder: () => HouseholdMembersScreen(
+        householdMembersRepository: widget.householdMembersRepository,
       ),
     );
   }
 
   Future<void> _openChangePassword() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
-            ChangePasswordScreen(sessionController: widget.sessionController),
-      ),
+    await _goOrPush(
+      '/change-password',
+      fallbackBuilder: () =>
+          ChangePasswordScreen(sessionController: widget.sessionController),
     );
   }
 
@@ -152,6 +148,33 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     ).showSnackBar(SnackBar(content: Text(result.message!)));
   }
 
+  Future<T?> _pushOrNavigate<T>(
+    String route, {
+    required Widget Function() fallbackBuilder,
+  }) async {
+    try {
+      return await context.push<T>(route);
+    } catch (_) {
+      return Navigator.of(context).push<T>(
+        MaterialPageRoute(builder: (_) => fallbackBuilder()),
+      );
+    }
+  }
+
+  Future<void> _goOrPush(
+    String route, {
+    required Widget Function() fallbackBuilder,
+  }) async {
+    try {
+      context.go(route);
+      return;
+    } catch (_) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => fallbackBuilder()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -165,6 +188,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
         return AppScaffold(
           title: 'Despesas',
           subtitle: user?.name,
+          leading: const RouteBackButton(fallbackRoute: '/'),
           actions: [
             IconButton(
               tooltip: 'Assistente financeiro',

@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
+import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 import 'package:flutter/foundation.dart';
@@ -43,7 +44,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> createExpense(SaveExpenseInput input) async {
+  Future<ExpenseSummary?> createExpense(SaveExpenseInput input) async {
     return _submit(() => _expensesRepository.createExpense(input));
   }
 
@@ -51,10 +52,11 @@ class ExpenseFormViewModel extends ChangeNotifier {
     required int expenseId,
     required SaveExpenseInput input,
   }) async {
-    return _submit(
-      () =>
-          _expensesRepository.updateExpense(expenseId: expenseId, input: input),
-    );
+    final result = await _submit<bool>(() async {
+      await _expensesRepository.updateExpense(expenseId: expenseId, input: input);
+      return true;
+    });
+    return result ?? false;
   }
 
   void clearFieldError(String field) {
@@ -66,22 +68,21 @@ class ExpenseFormViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> _submit(Future<void> Function() action) async {
+  Future<T?> _submit<T>(Future<T> Function() action) async {
     _isSubmitting = true;
     _submitErrorMessage = null;
     _fieldErrors = const {};
     notifyListeners();
 
     try {
-      await action();
-      return true;
+      return await action();
     } on ApiException catch (error) {
       _submitErrorMessage = error.message;
       _fieldErrors = error.fieldErrors;
-      return false;
+      return null;
     } catch (_) {
       _submitErrorMessage = 'Nao foi possivel salvar a despesa.';
-      return false;
+      return null;
     } finally {
       _isSubmitting = false;
       notifyListeners();

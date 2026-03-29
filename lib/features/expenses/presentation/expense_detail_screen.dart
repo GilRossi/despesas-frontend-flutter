@@ -10,6 +10,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_flow_re
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_form_card.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ExpenseDetailScreen extends StatefulWidget {
   const ExpenseDetailScreen({
@@ -46,7 +47,17 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   }
 
   void _close() {
-    Navigator.of(context).pop(_resultOnClose);
+    try {
+      final navigator = Navigator.maybeOf(context);
+      if (navigator != null && navigator.canPop()) {
+        navigator.pop(_resultOnClose);
+        return;
+      }
+    } catch (_) {}
+
+    try {
+      context.go('/expenses');
+    } catch (_) {}
   }
 
   Future<void> _openEditExpense(ExpenseDetail expense) async {
@@ -112,11 +123,10 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop(
-        const ExpenseFlowResult.reload(
-          message: 'Despesa excluida com sucesso.',
-        ),
+      _resultOnClose = const ExpenseFlowResult.reload(
+        message: 'Despesa excluida com sucesso.',
       );
+      _close();
     } on ApiException catch (error) {
       if (!mounted) {
         return;
@@ -206,10 +216,12 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                   }
 
                   if (_viewModel.isNotFound) {
-                    return const _DetailStateCard(
+                    return _DetailStateCard(
                       title: 'Despesa nao encontrada',
                       message:
                           'Esse lancamento pode ter sido removido ou nao pertence ao household atual.',
+                      primaryActionLabel: 'Voltar às despesas',
+                      onPrimaryAction: _close,
                     );
                   }
 
@@ -217,8 +229,10 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                     return _DetailStateCard(
                       title: 'Nao foi possivel carregar a despesa.',
                       message: _viewModel.errorMessage!,
-                      actionLabel: 'Tentar novamente',
-                      onAction: _viewModel.load,
+                      primaryActionLabel: 'Tentar novamente',
+                      onPrimaryAction: _viewModel.load,
+                      secondaryActionLabel: 'Voltar às despesas',
+                      onSecondaryAction: _close,
                     );
                   }
 
@@ -228,6 +242,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                   return _DetailContent(
                     expense: expense,
+                    showPaymentForm: expense.remainingAmount > 0,
                     isSubmittingPayment: _viewModel.isSubmittingPayment,
                     paymentErrorMessage: _viewModel.paymentErrorMessage,
                     onSubmitPayment: _handleSubmitPayment,
@@ -245,12 +260,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 class _DetailContent extends StatelessWidget {
   const _DetailContent({
     required this.expense,
+    required this.showPaymentForm,
     required this.isSubmittingPayment,
     required this.paymentErrorMessage,
     required this.onSubmitPayment,
   });
 
   final ExpenseDetail expense;
+  final bool showPaymentForm;
   final bool isSubmittingPayment;
   final String? paymentErrorMessage;
   final Future<bool> Function(CreateExpensePaymentInput input) onSubmitPayment;
@@ -332,12 +349,35 @@ class _DetailContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ExpensePaymentFormCard(
-            expense: expense,
-            isSubmitting: isSubmittingPayment,
-            errorMessage: paymentErrorMessage,
-            onSubmit: onSubmitPayment,
-          ),
+          if (showPaymentForm)
+            ExpensePaymentFormCard(
+              expense: expense,
+              isSubmitting: isSubmittingPayment,
+              errorMessage: paymentErrorMessage,
+              onSubmit: onSubmitPayment,
+            )
+          else
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Esta despesa ja foi quitada.',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Nao existe saldo pendente para um novo pagamento. Use o historico abaixo para conferir o que ja foi registrado.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF65727B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           Card(
             child: Padding(
@@ -506,14 +546,18 @@ class _DetailStateCard extends StatelessWidget {
   const _DetailStateCard({
     required this.title,
     required this.message,
-    this.actionLabel,
-    this.onAction,
+    this.primaryActionLabel,
+    this.onPrimaryAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
   });
 
   final String title;
   final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
+  final String? primaryActionLabel;
+  final VoidCallback? onPrimaryAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
 
   @override
   Widget build(BuildContext context) {
@@ -538,9 +582,24 @@ class _DetailStateCard extends StatelessWidget {
                   color: const Color(0xFF65727B),
                 ),
               ),
-              if (actionLabel != null && onAction != null) ...[
+              if (primaryActionLabel != null && onPrimaryAction != null) ...[
                 const SizedBox(height: 16),
-                FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    FilledButton(
+                      onPressed: onPrimaryAction,
+                      child: Text(primaryActionLabel!),
+                    ),
+                    if (secondaryActionLabel != null &&
+                        onSecondaryAction != null)
+                      OutlinedButton(
+                        onPressed: onSecondaryAction,
+                        child: Text(secondaryActionLabel!),
+                      ),
+                  ],
+                ),
               ],
             ],
           ),

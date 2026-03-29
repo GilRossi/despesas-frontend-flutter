@@ -9,6 +9,151 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  HttpAuthRepository buildRepository({
+    required http.Client client,
+    String? accessToken,
+  }) {
+    return HttpAuthRepository(
+      DespesasApiClient(
+        baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+        httpClient: client,
+      ),
+      accessTokenProvider: accessToken == null ? null : () => accessToken,
+    );
+  }
+
+  test('login carrega a sessao com contrato auth/login', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'tokenType': 'Bearer',
+            'accessToken': 'access-token',
+            'accessTokenExpiresAt': '2026-03-29T12:00:00Z',
+            'refreshToken': 'refresh-token',
+            'refreshTokenExpiresAt': '2026-04-29T12:00:00Z',
+            'user': {
+              'userId': 1,
+              'householdId': 10,
+              'email': 'gil@example.com',
+              'name': 'Gil Rossi',
+              'role': 'OWNER',
+            },
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    final repository = buildRepository(client: client);
+    final session = await repository.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/auth/login',
+    );
+    expect(session.accessToken, 'access-token');
+    expect(session.user.name, 'Gil Rossi');
+  });
+
+  test('refresh carrega a sessao com contrato auth/refresh', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'tokenType': 'Bearer',
+            'accessToken': 'fresh-access-token',
+            'accessTokenExpiresAt': '2026-03-29T12:00:00Z',
+            'refreshToken': 'fresh-refresh-token',
+            'refreshTokenExpiresAt': '2026-04-29T12:00:00Z',
+            'user': {
+              'userId': 1,
+              'householdId': 10,
+              'email': 'gil@example.com',
+              'name': 'Gil Rossi',
+              'role': 'OWNER',
+            },
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    final repository = buildRepository(client: client);
+    final session = await repository.refresh(refreshToken: 'refresh-token');
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/auth/refresh',
+    );
+    expect(session.accessToken, 'fresh-access-token');
+  });
+
+  test('forgotPassword interpreta a resposta mascarada', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'maskedEmail': 'g***@example.com',
+          'resetToken': 'token-123',
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    final repository = buildRepository(client: client);
+    final result = await repository.forgotPassword(email: 'gil@example.com');
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/auth/forgot-password',
+    );
+    expect(result.maskedEmail, 'g***@example.com');
+    expect(result.resetToken, 'token-123');
+  });
+
+  test('resetPassword interpreta o contrato de redefinicao', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'revokedRefreshTokens': 3,
+            'success': true,
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+
+    final repository = buildRepository(client: client);
+    final result = await repository.resetPassword(
+      token: 'token-123',
+      newPassword: 'SenhaNova456',
+      newPasswordConfirmation: 'SenhaNova456',
+    );
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/auth/reset-password',
+    );
+    expect(result.revokedRefreshTokens, 3);
+    expect(result.success, isTrue);
+  });
+
   test('fetchCurrentUser carrega onboarding do contrato auth/me', () async {
     late http.Request capturedRequest;
     final client = MockClient((request) async {
@@ -31,13 +176,9 @@ void main() {
         headers: {'content-type': 'application/json'},
       );
     });
-    final apiClient = DespesasApiClient(
-      baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
-      httpClient: client,
-    );
-    final repository = HttpAuthRepository(
-      apiClient,
-      accessTokenProvider: () => 'token-de-teste',
+    final repository = buildRepository(
+      client: client,
+      accessToken: 'token-de-teste',
     );
 
     final user = await repository.fetchCurrentUser();
@@ -65,13 +206,9 @@ void main() {
           headers: {'content-type': 'application/json'},
         );
       });
-      final apiClient = DespesasApiClient(
-        baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
-        httpClient: client,
-      );
-      final repository = HttpAuthRepository(
-        apiClient,
-        accessTokenProvider: () => 'token-de-teste',
+      final repository = buildRepository(
+        client: client,
+        accessToken: 'token-de-teste',
       );
 
       final onboarding = await repository.completeOnboarding();
@@ -107,13 +244,9 @@ void main() {
           headers: {'content-type': 'application/json'},
         );
       });
-      final apiClient = DespesasApiClient(
-        baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
-        httpClient: client,
-      );
-      final repository = HttpAuthRepository(
-        apiClient,
-        accessTokenProvider: () => 'token-de-teste',
+      final repository = buildRepository(
+        client: client,
+        accessToken: 'token-de-teste',
       );
 
       final result = await repository.changeOwnPassword(
@@ -138,11 +271,7 @@ void main() {
       final client = MockClient((request) async {
         throw StateError('nao deveria bater na rede sem token');
       });
-      final apiClient = DespesasApiClient(
-        baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
-        httpClient: client,
-      );
-      final repository = HttpAuthRepository(apiClient);
+      final repository = buildRepository(client: client);
 
       await expectLater(
         repository.changeOwnPassword(
@@ -167,11 +296,7 @@ void main() {
       final client = MockClient((request) async {
         throw StateError('nao deveria bater na rede sem token');
       });
-      final apiClient = DespesasApiClient(
-        baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
-        httpClient: client,
-      );
-      final repository = HttpAuthRepository(apiClient);
+      final repository = buildRepository(client: client);
 
       await expectLater(
         repository.completeOnboarding(),

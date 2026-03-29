@@ -1,6 +1,7 @@
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/summary_header.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
@@ -255,7 +256,10 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
     final keyboardBottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Trazer meu historico')),
+      appBar: AppBar(
+        leading: const RouteBackButton(fallbackRoute: '/assistant'),
+        title: const Text('Trazer meu historico'),
+      ),
       body: SafeArea(
         top: false,
         child: ListenableBuilder(

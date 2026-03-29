@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_input.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_result.dart';
@@ -7,6 +8,7 @@ import 'package:despesas_frontend/features/platform_admin/domain/create_househol
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_household.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class PlatformAdminScreen extends StatefulWidget {
   const PlatformAdminScreen({
@@ -169,12 +171,17 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
   }
 
   Future<void> _openChangePassword() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) =>
-            ChangePasswordScreen(sessionController: widget.sessionController),
-      ),
-    );
+    try {
+      context.go('/change-password');
+      return;
+    } catch (_) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) =>
+              ChangePasswordScreen(sessionController: widget.sessionController),
+        ),
+      );
+    }
   }
 
   @override
@@ -184,6 +191,7 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const RouteBackButton(fallbackRoute: '/'),
         title: const Text('Provisionamento administrativo'),
         actions: [
           IconButton(
