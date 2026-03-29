@@ -6,6 +6,7 @@ import 'package:despesas_frontend/core/network/despesas_api_client.dart';
 import 'package:despesas_frontend/features/auth/data/http_auth_repository.dart';
 import 'package:despesas_frontend/features/auth/data/secure_session_store.dart';
 import 'package:despesas_frontend/features/expenses/data/http_expenses_repository.dart';
+import 'package:despesas_frontend/features/fixed_bills/data/http_fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/data/http_financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/dashboard/data/http_dashboard_repository.dart';
 import 'package:despesas_frontend/features/household_members/data/http_household_members_repository.dart';
@@ -45,6 +46,9 @@ void main() {
     authorizedRequestExecutor,
   );
   final expensesRepository = HttpExpensesRepository(authorizedRequestExecutor);
+  final fixedBillsRepository = HttpFixedBillsRepository(
+    authorizedRequestExecutor,
+  );
   final financialAssistantRepository = HttpFinancialAssistantRepository(
     authorizedRequestExecutor,
   );
@@ -68,6 +72,7 @@ void main() {
       environment: environment,
       sessionController: sessionController,
       expensesRepository: expensesRepository,
+      fixedBillsRepository: fixedBillsRepository,
       financialAssistantRepository: financialAssistantRepository,
       householdMembersRepository: householdMembersRepository,
       incomesRepository: incomesRepository,

@@ -6,6 +6,7 @@ import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
 import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dart';
@@ -22,6 +23,7 @@ class DespesasApp extends StatefulWidget {
     required this.environment,
     required this.sessionController,
     required this.expensesRepository,
+    required this.fixedBillsRepository,
     required this.financialAssistantRepository,
     required this.householdMembersRepository,
     required this.incomesRepository,
@@ -36,6 +38,7 @@ class DespesasApp extends StatefulWidget {
   final AppEnvironment environment;
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
+  final FixedBillsRepository fixedBillsRepository;
   final FinancialAssistantRepository financialAssistantRepository;
   final HouseholdMembersRepository householdMembersRepository;
   final IncomesRepository incomesRepository;
@@ -65,6 +68,7 @@ class _DespesasAppState extends State<DespesasApp> {
     _router = createAppRouter(
       sessionController: widget.sessionController,
       expensesRepository: widget.expensesRepository,
+      fixedBillsRepository: widget.fixedBillsRepository,
       financialAssistantRepository: widget.financialAssistantRepository,
       householdMembersRepository: widget.householdMembersRepository,
       incomesRepository: widget.incomesRepository,
