@@ -64,6 +64,12 @@ void main() {
               const Scaffold(body: Text('new-expense-page')),
         ),
         GoRoute(
+          path: '/expenses/:expenseId/pay',
+          builder: (context, state) => Scaffold(
+            body: Text('pay-page-${state.pathParameters['expenseId']}'),
+          ),
+        ),
+        GoRoute(
           path: '/reports',
           builder: (context, state) =>
               const Scaffold(body: Text('reports-page')),
@@ -259,6 +265,33 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('reports-page'), findsOneWidget);
+  });
+
+  testWidgets('item de precisa da sua ação leva para pagamento direto', (
+    tester,
+  ) async {
+    final repository = FakeDashboardRepository(
+      summary: fakeDashboardSummary(role: 'OWNER'),
+    );
+    final sessionController = buildSessionController(role: 'OWNER');
+
+    await pumpDashboard(
+      tester,
+      repository: repository,
+      sessionController: sessionController,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Internet'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Internet'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('pay-page-10'), findsOneWidget);
   });
 
   testWidgets('mostra loading enquanto o dashboard ainda nao chegou', (

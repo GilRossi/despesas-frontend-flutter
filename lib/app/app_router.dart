@@ -5,6 +5,7 @@ import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository
 import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
@@ -190,6 +191,25 @@ GoRouter createAppRouter({
               expensesRepository: expensesRepository,
               standalone: true,
             ),
+          ),
+          GoRoute(
+            path: '/expenses/:expenseId/pay',
+            builder: (context, state) {
+              final expenseId = int.tryParse(
+                state.pathParameters['expenseId'] ?? '',
+              );
+              if (expenseId == null) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Nao foi possivel abrir este pagamento.'),
+                  ),
+                );
+              }
+              return ExpensePaymentScreen(
+                expenseId: expenseId,
+                expensesRepository: expensesRepository,
+              );
+            },
           ),
           GoRoute(
             path: '/reports',

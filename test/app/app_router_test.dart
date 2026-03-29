@@ -6,6 +6,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
@@ -218,6 +219,32 @@ void main() {
       expect(find.byType(ExpenseFormScreen), findsOneWidget);
       expect(find.text('Lancar despesa do dia'), findsOneWidget);
       expect(find.text('Ver despesas'), findsOneWidget);
+    });
+
+    testWidgets('authenticated users can open /expenses/:expenseId/pay', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/expenses/7/pay');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpensePaymentScreen), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('expense-payment-submit-button')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('first access users are redirected to assistant', (

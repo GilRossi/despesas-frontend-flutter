@@ -1,0 +1,244 @@
+import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../support/test_doubles.dart';
+
+void main() {
+  Future<void> pumpPaymentFlow(
+    WidgetTester tester, {
+    required FakeExpensesRepository repository,
+    String initialLocation = '/expenses/1/pay',
+  }) async {
+    final router = GoRouter(
+      initialLocation: initialLocation,
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) =>
+              const Scaffold(body: Text('dashboard-page')),
+        ),
+        GoRoute(
+          path: '/expenses',
+          builder: (context, state) =>
+              const Scaffold(body: Text('expenses-page')),
+        ),
+        GoRoute(
+          path: '/expenses/:expenseId/pay',
+          builder: (context, state) => ExpensePaymentScreen(
+            expenseId: int.parse(state.pathParameters['expenseId']!),
+            expensesRepository: repository,
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('prefills amount with remaining balance and submits quickly', (
+    tester,
+  ) async {
+    late final FakeExpensesRepository repository;
+    repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 40,
+        remainingAmount: 89.9,
+        paymentsCount: 1,
+      ),
+      onRegisterPayment: (input) {
+        repository.detailResult = fakeExpenseDetail(
+          paidAmount: 129.9,
+          remainingAmount: 0,
+          paymentsCount: 2,
+          payments: [
+            fakeExpensePayment(id: 9, amount: input.amount, notes: input.notes),
+            fakeExpensePayment(),
+          ],
+        );
+      },
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    final amountField = tester.widget<TextFormField>(
+      find.byKey(const ValueKey('expense-payment-amount-field')),
+    );
+    expect(amountField.controller?.text, '89,90');
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(repository.registerPaymentCalls, 1);
+    expect(repository.lastPaymentInput?.amount, 89.9);
+    expect(find.text('Despesa quitada com sucesso'), findsOneWidget);
+  });
+
+  testWidgets('allows editing the amount up to the remaining balance', (
+    tester,
+  ) async {
+    late final FakeExpensesRepository repository;
+    repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 40,
+        remainingAmount: 89.9,
+        paymentsCount: 1,
+      ),
+      onRegisterPayment: (input) {
+        repository.detailResult = fakeExpenseDetail(
+          paidAmount: 89.9,
+          remainingAmount: 40,
+          paymentsCount: 2,
+          payments: [
+            fakeExpensePayment(id: 9, amount: input.amount, notes: input.notes),
+            fakeExpensePayment(),
+          ],
+        );
+      },
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-payment-amount-field')),
+      '49,90',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(repository.lastPaymentInput?.amount, 49.9);
+    expect(find.text('Pagamento registrado com sucesso'), findsOneWidget);
+    expect(find.textContaining('Restam R\$ 40,00 em aberto.'), findsOneWidget);
+  });
+
+  testWidgets('shows validation when amount exceeds remaining balance', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 40,
+        remainingAmount: 20,
+        paymentsCount: 1,
+      ),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-payment-amount-field')),
+      '25',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('O valor nao pode ser maior que o saldo restante.'),
+      findsOneWidget,
+    );
+    expect(repository.registerPaymentCalls, 0);
+  });
+
+  testWidgets('success CTA can return to expenses management', (tester) async {
+    late final FakeExpensesRepository repository;
+    repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 40,
+        remainingAmount: 89.9,
+        paymentsCount: 1,
+      ),
+      onRegisterPayment: (input) {
+        repository.detailResult = fakeExpenseDetail(
+          paidAmount: 129.9,
+          remainingAmount: 0,
+          paymentsCount: 2,
+        );
+      },
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-success-open-expenses')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('expenses-page'), findsOneWidget);
+  });
+
+  testWidgets('success CTA can return to dashboard', (tester) async {
+    late final FakeExpensesRepository repository;
+    repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(
+        paidAmount: 40,
+        remainingAmount: 89.9,
+        paymentsCount: 1,
+      ),
+      onRegisterPayment: (input) {
+        repository.detailResult = fakeExpenseDetail(
+          paidAmount: 129.9,
+          remainingAmount: 0,
+          paymentsCount: 2,
+        );
+      },
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-success-open-dashboard')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('dashboard-page'), findsOneWidget);
+  });
+}

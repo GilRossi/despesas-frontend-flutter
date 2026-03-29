@@ -941,7 +941,7 @@ DashboardSummary fakeDashboardSummary({
               dueDate: DateTime.utc(2026, 3, 10),
               status: 'VENCIDA',
               amount: 120,
-              route: '/expenses',
+              route: '/expenses/10/pay',
             ),
             DashboardActionItem(
               expenseId: 11,
@@ -949,7 +949,7 @@ DashboardSummary fakeDashboardSummary({
               dueDate: DateTime.utc(2026, 3, 20),
               status: 'PREVISTA',
               amount: 200,
-              route: '/expenses',
+              route: '/expenses/11/pay',
             ),
           ],
         ),
