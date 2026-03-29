@@ -59,6 +59,11 @@ void main() {
               const Scaffold(body: Text('expenses-page')),
         ),
         GoRoute(
+          path: '/expenses/new',
+          builder: (context, state) =>
+              const Scaffold(body: Text('new-expense-page')),
+        ),
+        GoRoute(
           path: '/reports',
           builder: (context, state) =>
               const Scaffold(body: Text('reports-page')),
@@ -85,11 +90,30 @@ void main() {
     expect(find.text('Resumo principal'), findsOneWidget);
     expect(find.text('Precisa da sua ação'), findsOneWidget);
     expect(find.text('Atividade recente'), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-open-assistant-button')), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-owner-month-overview-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-owner-category-spending-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-owner-household-summary-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-member-quick-actions-card')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-open-assistant-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-owner-month-overview-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-owner-category-spending-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-owner-household-summary-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-member-quick-actions-card')),
+      findsNothing,
+    );
     expect(repository.calls, 1);
   });
 
@@ -109,11 +133,30 @@ void main() {
     expect(find.text('Resumo principal'), findsOneWidget);
     expect(find.text('Precisa da sua ação'), findsOneWidget);
     expect(find.text('Atividade recente'), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-member-quick-actions-card')), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-quick-action-OPEN_REPORTS')), findsOneWidget);
-    expect(find.byKey(const ValueKey('dashboard-owner-month-overview-card')), findsNothing);
-    expect(find.byKey(const ValueKey('dashboard-owner-category-spending-card')), findsNothing);
-    expect(find.byKey(const ValueKey('dashboard-owner-household-summary-card')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-member-quick-actions-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-quick-action-OPEN_REPORTS')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-owner-month-overview-card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-owner-category-spending-card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-owner-household-summary-card')),
+      findsNothing,
+    );
   });
 
   testWidgets('card do assistente leva para /assistant', (tester) async {
@@ -136,10 +179,58 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('dashboard-open-assistant-button')));
+    await tester.tap(
+      find.byKey(const ValueKey('dashboard-open-assistant-button')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('assistant-page'), findsOneWidget);
+  });
+
+  testWidgets('CTA de lancar despesa leva para /expenses/new para OWNER', (
+    tester,
+  ) async {
+    final repository = FakeDashboardRepository(
+      summary: fakeDashboardSummary(role: 'OWNER'),
+    );
+    final sessionController = buildSessionController(role: 'OWNER');
+
+    await pumpDashboard(
+      tester,
+      repository: repository,
+      sessionController: sessionController,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('new-expense-page'), findsOneWidget);
+  });
+
+  testWidgets('CTA de lancar despesa leva para /expenses/new para MEMBER', (
+    tester,
+  ) async {
+    final repository = FakeDashboardRepository(
+      summary: fakeDashboardSummary(role: 'MEMBER'),
+    );
+    final sessionController = buildSessionController(role: 'MEMBER');
+
+    await pumpDashboard(
+      tester,
+      repository: repository,
+      sessionController: sessionController,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('new-expense-page'), findsOneWidget);
   });
 
   testWidgets('quick action de reports leva para /reports', (tester) async {
@@ -162,7 +253,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('dashboard-quick-action-OPEN_REPORTS')));
+    await tester.tap(
+      find.byKey(const ValueKey('dashboard-quick-action-OPEN_REPORTS')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('reports-page'), findsOneWidget);

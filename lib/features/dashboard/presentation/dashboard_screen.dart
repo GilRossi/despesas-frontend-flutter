@@ -69,6 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   _DashboardHero(
                     dashboard: dashboard,
+                    onNewExpenseTap: () => context.go('/expenses/new'),
                     onAssistantTap: () =>
                         context.go(dashboard.assistantCard.route),
                   ),
@@ -205,10 +206,12 @@ class _DashboardErrorState extends StatelessWidget {
 class _DashboardHero extends StatelessWidget {
   const _DashboardHero({
     required this.dashboard,
+    required this.onNewExpenseTap,
     required this.onAssistantTap,
   });
 
   final DashboardSummary dashboard;
+  final VoidCallback onNewExpenseTap;
   final VoidCallback onAssistantTap;
 
   @override
@@ -261,11 +264,23 @@ class _DashboardHero extends StatelessWidget {
               ],
             ),
           ),
-          FilledButton.tonalIcon(
-            key: const ValueKey('dashboard-hero-assistant-button'),
-            onPressed: onAssistantTap,
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text('Abrir assistente'),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.icon(
+                key: const ValueKey('dashboard-hero-new-expense-button'),
+                onPressed: onNewExpenseTap,
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Lancar despesa'),
+              ),
+              FilledButton.tonalIcon(
+                key: const ValueKey('dashboard-hero-assistant-button'),
+                onPressed: onAssistantTap,
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Abrir assistente'),
+              ),
+            ],
           ),
         ],
       ),
@@ -371,7 +386,8 @@ class _ActionNeededCard extends StatelessWidget {
               children: [
                 for (final item in actionNeeded.items) ...[
                   _ActionItemTile(item: item),
-                  if (item != actionNeeded.items.last) const Divider(height: 16),
+                  if (item != actionNeeded.items.last)
+                    const Divider(height: 16),
                 ],
               ],
             ),
@@ -663,9 +679,7 @@ class _HouseholdSummaryCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   for (final item in householdSummary!.referencesByGroup)
-                    Chip(
-                      label: Text('${item.group.label}: ${item.count}'),
-                    ),
+                    Chip(label: Text('${item.group.label}: ${item.count}')),
                 ],
               ),
           ],
@@ -761,7 +775,8 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = accentColor ??
+    final color =
+        accentColor ??
         (highlight ? theme.colorScheme.primary : const Color(0xFF101828));
 
     return Container(

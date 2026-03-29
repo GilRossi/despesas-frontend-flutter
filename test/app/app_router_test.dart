@@ -254,6 +254,34 @@ void main() {
       await pumpRouter(tester, login: const Text('login'));
 
       expect(find.text('Dashboard'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('dashboard home CTA leva para /expenses/new', (tester) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      await pumpRouter(tester, login: const Text('login'));
+
+      await tester.tap(
+        find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpenseFormScreen), findsOneWidget);
+      expect(find.text('Lancar despesa do dia'), findsOneWidget);
     });
 
     testWidgets('platform admin is not forced into onboarding gate', (
