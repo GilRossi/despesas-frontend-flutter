@@ -7,16 +7,19 @@ import 'package:despesas_frontend/features/expenses/domain/save_expense_input.da
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ExpenseFormScreen extends StatefulWidget {
   const ExpenseFormScreen({
     super.key,
     required this.expensesRepository,
     this.initialExpense,
+    this.standalone = false,
   });
 
   final ExpensesRepository expensesRepository;
   final ExpenseDetail? initialExpense;
+  final bool standalone;
 
   bool get isEditing => initialExpense != null;
 
@@ -46,6 +49,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   late String _context;
   int? _selectedCategoryId;
   int? _selectedSubcategoryId;
+  _ExpenseCreateSuccessState? _successState;
 
   bool get _isEditing => widget.isEditing;
 
@@ -202,6 +206,16 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return;
     }
 
+    if (widget.standalone && !_isEditing) {
+      setState(() {
+        _successState = _ExpenseCreateSuccessState(
+          description: input.description,
+          amount: input.amount,
+        );
+      });
+      return;
+    }
+
     Navigator.of(context).pop(
       ExpenseFlowResult.reload(
         message: _isEditing
@@ -211,19 +225,39 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     );
   }
 
+  void _startAnotherExpense() {
+    setState(() {
+      _successState = null;
+      _seedInitialValues();
+      _syncCatalogSelection();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final successState = _successState;
+    final title = _isEditing
+        ? 'Editar despesa'
+        : widget.standalone
+        ? 'Lancar despesa do dia'
+        : 'Nova despesa';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Editar despesa' : 'Nova despesa'),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: SafeArea(
         top: false,
         child: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
+            if (successState != null) {
+              return _ExpenseFormSuccessState(
+                successState: successState,
+                onCreateAnother: _startAnotherExpense,
+                onOpenExpenses: () => context.go('/expenses'),
+              );
+            }
+
             if (_viewModel.isLoadingCatalog && !_viewModel.hasCatalogOptions) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -264,6 +298,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         Text(
                           _isEditing
                               ? 'Atualize os dados principais da despesa.'
+                              : widget.standalone
+                              ? 'Preencha o essencial para registrar a despesa do dia e seguir em frente.'
                               : 'Cadastre uma nova despesa para o household atual.',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: const Color(0xFF58616A),
@@ -467,8 +503,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                               child: OutlinedButton(
                                 onPressed: _viewModel.isSubmitting
                                     ? null
-                                    : () => Navigator.of(context).maybePop(),
-                                child: const Text('Cancelar'),
+                                    : () => widget.standalone
+                                          ? context.go('/expenses')
+                                          : Navigator.of(context).maybePop(),
+                                child: Text(
+                                  widget.standalone
+                                      ? 'Ver despesas'
+                                      : 'Cancelar',
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -532,6 +574,90 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         .replaceAll('.', '')
         .replaceAll(',', '.');
     return double.tryParse(normalized);
+  }
+}
+
+class _ExpenseCreateSuccessState {
+  const _ExpenseCreateSuccessState({
+    required this.description,
+    required this.amount,
+  });
+
+  final String description;
+  final double amount;
+}
+
+class _ExpenseFormSuccessState extends StatelessWidget {
+  const _ExpenseFormSuccessState({
+    required this.successState,
+    required this.onCreateAnother,
+    required this.onOpenExpenses,
+  });
+
+  final _ExpenseCreateSuccessState successState;
+  final VoidCallback onCreateAnother;
+  final VoidCallback onOpenExpenses;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ResponsiveScrollBody(
+      maxWidth: 560,
+      padding: const EdgeInsets.all(20),
+      centerVertically: true,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                color: theme.colorScheme.primary,
+                size: 32,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Despesa lancada com sucesso',
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '"${successState.description}" entrou no household por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')}.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF65727B),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Se quiser, voce ja pode registrar a proxima sem voltar para a lista.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF65727B),
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                key: const ValueKey(
+                  'expense-form-success-create-another-button',
+                ),
+                onPressed: onCreateAnother,
+                child: const Text('Lancar outra'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                key: const ValueKey(
+                  'expense-form-success-open-expenses-button',
+                ),
+                onPressed: onOpenExpenses,
+                child: const Text('Ver despesas'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
