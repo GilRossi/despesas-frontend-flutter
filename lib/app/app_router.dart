@@ -4,6 +4,7 @@ import 'package:despesas_frontend/features/auth/presentation/reset_password_scre
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
@@ -181,6 +182,13 @@ GoRouter createAppRouter({
               householdMembersRepository: householdMembersRepository,
               reportsRepository: reportsRepository,
               reviewOperationsRepository: reviewOperationsRepository,
+            ),
+          ),
+          GoRoute(
+            path: '/expenses/new',
+            builder: (context, state) => ExpenseFormScreen(
+              expensesRepository: expensesRepository,
+              standalone: true,
             ),
           ),
           GoRoute(
