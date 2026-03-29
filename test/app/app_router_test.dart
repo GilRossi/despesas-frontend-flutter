@@ -35,22 +35,24 @@ void main() {
     Future<GoRouter> pumpRouter(
       WidgetTester tester, {
       required Widget login,
+      FakeExpensesRepository? expensesRepository,
       FakeFinancialAssistantRepository? financialAssistantRepository,
       FakeFixedBillsRepository? fixedBillsRepository,
       FakeHistoryImportsRepository? historyImportsRepository,
       FakeIncomesRepository? incomesRepository,
       FakeSpaceReferencesRepository? spaceReferencesRepository,
+      FakeDashboardRepository? dashboardRepository,
     }) async {
       final router = createAppRouter(
         sessionController: sessionController,
-        expensesRepository: FakeExpensesRepository(),
+        expensesRepository: expensesRepository ?? FakeExpensesRepository(),
         fixedBillsRepository:
             fixedBillsRepository ?? FakeFixedBillsRepository(),
         financialAssistantRepository:
             financialAssistantRepository ?? FakeFinancialAssistantRepository(),
         historyImportsRepository:
             historyImportsRepository ?? FakeHistoryImportsRepository(),
-        dashboardRepository: FakeDashboardRepository(),
+        dashboardRepository: dashboardRepository ?? FakeDashboardRepository(),
         householdMembersRepository: FakeHouseholdMembersRepository(),
         incomesRepository: incomesRepository ?? FakeIncomesRepository(),
         platformAdminRepository: FakePlatformAdminRepository(),
@@ -283,6 +285,129 @@ void main() {
       expect(find.byType(ExpenseFormScreen), findsOneWidget);
       expect(find.text('Lancar despesa do dia'), findsOneWidget);
     });
+
+    testWidgets(
+      'home -> /expenses/new -> sucesso -> Lancar outra funciona como fluxo diario',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: AuthOnboarding(
+            completed: true,
+            completedAt: DateTime.utc(2026, 3, 28, 12),
+          ),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        final expensesRepository = FakeExpensesRepository();
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          expensesRepository: expensesRepository,
+        );
+
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byKey(const ValueKey('expense-form-description-field')),
+          'Padaria',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('expense-form-amount-field')),
+          '23,90',
+        );
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('expense-form-submit-button')),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('expense-form-submit-button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(expensesRepository.createCalls, 1);
+        expect(find.text('Despesa lancada com sucesso'), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(
+            const ValueKey('expense-form-success-create-another-button'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final descriptionField = tester.widget<TextFormField>(
+          find.byKey(const ValueKey('expense-form-description-field')),
+        );
+        expect(descriptionField.controller?.text, isEmpty);
+        expect(find.text('Despesa lancada com sucesso'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'home -> /expenses/new -> sucesso -> Ver despesas volta para a gestão',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: AuthOnboarding(
+            completed: true,
+            completedAt: DateTime.utc(2026, 3, 28, 12),
+          ),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        final expensesRepository = FakeExpensesRepository();
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          expensesRepository: expensesRepository,
+        );
+
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byKey(const ValueKey('expense-form-description-field')),
+          'Mercado',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('expense-form-amount-field')),
+          '110,00',
+        );
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('expense-form-submit-button')),
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('expense-form-submit-button')),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.byKey(
+            const ValueKey('expense-form-success-open-expenses-button'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Gestao principal de despesas'), findsOneWidget);
+      },
+    );
 
     testWidgets('platform admin is not forced into onboarding gate', (
       tester,

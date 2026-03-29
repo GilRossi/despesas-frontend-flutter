@@ -273,6 +273,7 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.deleteError,
     this.registerPaymentError,
     this.onCreate,
+    this.onCreateAsync,
     this.onUpdate,
     this.onDelete,
     this.onRegisterPayment,
@@ -289,6 +290,7 @@ class FakeExpensesRepository implements ExpensesRepository {
   Exception? deleteError;
   Exception? registerPaymentError;
   void Function(SaveExpenseInput input)? onCreate;
+  Future<void> Function(SaveExpenseInput input)? onCreateAsync;
   void Function(int expenseId, SaveExpenseInput input)? onUpdate;
   void Function(int expenseId)? onDelete;
   void Function(CreateExpensePaymentInput input)? onRegisterPayment;
@@ -343,6 +345,9 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw createError!;
     }
     onCreate?.call(input);
+    if (onCreateAsync != null) {
+      await onCreateAsync!(input);
+    }
   }
 
   @override
@@ -974,99 +979,96 @@ DashboardSummary fakeDashboardSummary({
         assistantCard ??
         const DashboardAssistantCard(
           title: 'Assistente financeiro',
-          message: 'Revise a categoria que mais pesa e siga para a próxima ação.',
+          message:
+              'Revise a categoria que mais pesa e siga para a próxima ação.',
           primaryActionKey: 'OPEN_ASSISTANT',
           route: '/assistant',
         ),
-    monthOverview:
-        isOwner
-            ? monthOverview ??
-                const DashboardMonthOverview(
-                  referenceMonth: '2026-03',
-                  totalAmount: 860,
-                  paidAmount: 540,
-                  remainingAmount: 320,
-                  monthComparison: ReportMonthComparison(
-                    currentMonth: '2026-03',
-                    currentTotal: 860,
-                    previousMonth: '2026-02',
-                    previousTotal: 700,
-                    deltaAmount: 160,
-                    deltaPercentage: 22.86,
-                  ),
-                  highestSpendingCategory: DashboardHighestSpendingCategory(
+    monthOverview: isOwner
+        ? monthOverview ??
+              const DashboardMonthOverview(
+                referenceMonth: '2026-03',
+                totalAmount: 860,
+                paidAmount: 540,
+                remainingAmount: 320,
+                monthComparison: ReportMonthComparison(
+                  currentMonth: '2026-03',
+                  currentTotal: 860,
+                  previousMonth: '2026-02',
+                  previousTotal: 700,
+                  deltaAmount: 160,
+                  deltaPercentage: 22.86,
+                ),
+                highestSpendingCategory: DashboardHighestSpendingCategory(
+                  categoryId: 1,
+                  categoryName: 'Moradia',
+                  totalAmount: 540,
+                  sharePercentage: 62.79,
+                ),
+              )
+        : null,
+    categorySpending: isOwner
+        ? categorySpending ??
+              const DashboardCategorySpending(
+                items: [
+                  ReportCategoryTotal(
                     categoryId: 1,
                     categoryName: 'Moradia',
                     totalAmount: 540,
+                    expensesCount: 2,
                     sharePercentage: 62.79,
                   ),
-                )
-            : null,
-    categorySpending:
-        isOwner
-            ? categorySpending ??
-                const DashboardCategorySpending(
-                  items: [
-                    ReportCategoryTotal(
-                      categoryId: 1,
-                      categoryName: 'Moradia',
-                      totalAmount: 540,
-                      expensesCount: 2,
-                      sharePercentage: 62.79,
-                    ),
-                    ReportCategoryTotal(
-                      categoryId: 2,
-                      categoryName: 'Alimentação',
-                      totalAmount: 320,
-                      expensesCount: 2,
-                      sharePercentage: 37.21,
-                    ),
-                  ],
-                )
-            : null,
-    householdSummary:
-        isOwner
-            ? householdSummary ??
-                const DashboardHouseholdSummary(
-                  membersCount: 3,
-                  ownersCount: 1,
-                  membersOnlyCount: 2,
-                  spaceReferencesCount: 4,
-                  referencesByGroup: [
-                    DashboardReferenceGroupSummary(
-                      group: SpaceReferenceTypeGroup.residencial,
-                      count: 2,
-                    ),
-                    DashboardReferenceGroupSummary(
-                      group: SpaceReferenceTypeGroup.comercialTrabalho,
-                      count: 2,
-                    ),
-                  ],
-                )
-            : null,
-    quickActions:
-        isOwner
-            ? null
-            : quickActions ??
-                const DashboardQuickActions(
-                  items: [
-                    DashboardQuickActionItem(
-                      key: 'OPEN_EXPENSES',
-                      label: 'Ver despesas',
-                      route: '/expenses',
-                    ),
-                    DashboardQuickActionItem(
-                      key: 'OPEN_ASSISTANT',
-                      label: 'Abrir assistente',
-                      route: '/assistant',
-                    ),
-                    DashboardQuickActionItem(
-                      key: 'OPEN_REPORTS',
-                      label: 'Ver relatorios',
-                      route: '/reports',
-                    ),
-                  ],
-                ),
+                  ReportCategoryTotal(
+                    categoryId: 2,
+                    categoryName: 'Alimentação',
+                    totalAmount: 320,
+                    expensesCount: 2,
+                    sharePercentage: 37.21,
+                  ),
+                ],
+              )
+        : null,
+    householdSummary: isOwner
+        ? householdSummary ??
+              const DashboardHouseholdSummary(
+                membersCount: 3,
+                ownersCount: 1,
+                membersOnlyCount: 2,
+                spaceReferencesCount: 4,
+                referencesByGroup: [
+                  DashboardReferenceGroupSummary(
+                    group: SpaceReferenceTypeGroup.residencial,
+                    count: 2,
+                  ),
+                  DashboardReferenceGroupSummary(
+                    group: SpaceReferenceTypeGroup.comercialTrabalho,
+                    count: 2,
+                  ),
+                ],
+              )
+        : null,
+    quickActions: isOwner
+        ? null
+        : quickActions ??
+              const DashboardQuickActions(
+                items: [
+                  DashboardQuickActionItem(
+                    key: 'OPEN_EXPENSES',
+                    label: 'Ver despesas',
+                    route: '/expenses',
+                  ),
+                  DashboardQuickActionItem(
+                    key: 'OPEN_ASSISTANT',
+                    label: 'Abrir assistente',
+                    route: '/assistant',
+                  ),
+                  DashboardQuickActionItem(
+                    key: 'OPEN_REPORTS',
+                    label: 'Ver relatorios',
+                    route: '/reports',
+                  ),
+                ],
+              ),
   );
 }
 

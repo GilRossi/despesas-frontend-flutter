@@ -224,6 +224,81 @@ void main() {
     expect(find.text('Nova despesa'), findsWidgets);
   });
 
+  testWidgets(
+    'creates expense from /expenses and reloads the management list',
+    (tester) async {
+      final controller = SessionController(
+        authRepository: FakeAuthRepository(loginResult: fakeSession()),
+        sessionStore: MemorySessionStore(),
+      );
+      await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+      late FakeExpensesRepository repository;
+      repository = FakeExpensesRepository(
+        result: emptyPage(),
+        onCreate: (input) {
+          repository.result = PagedResult(
+            items: [
+              fakeExpense(
+                id: 99,
+                description: input.description,
+                amount: input.amount,
+              ),
+            ],
+            page: 0,
+            size: 20,
+            totalElements: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false,
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ExpensesListScreen(
+            sessionController: controller,
+            expensesRepository: repository,
+            financialAssistantRepository: FakeFinancialAssistantRepository(),
+            householdMembersRepository: FakeHouseholdMembersRepository(),
+            reportsRepository: FakeReportsRepository(),
+            reviewOperationsRepository: FakeReviewOperationsRepository(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('Nova despesa').first);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('expense-form-description-field')),
+        'Farmacia',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('expense-form-amount-field')),
+        '42,10',
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('expense-form-submit-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('expense-form-submit-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Despesa criada com sucesso.'), findsOneWidget);
+      expect(find.text('Farmacia'), findsOneWidget);
+      expect(repository.createCalls, 1);
+      expect(repository.listCalls, greaterThanOrEqualTo(2));
+    },
+  );
+
   testWidgets('opens review operations for owner', (tester) async {
     final controller = SessionController(
       authRepository: FakeAuthRepository(loginResult: fakeSession()),

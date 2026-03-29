@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:flutter/material.dart';
@@ -270,6 +272,81 @@ void main() {
 
     expect(find.text('Request validation failed'), findsOneWidget);
     expect(find.text('Descricao ja utilizada.'), findsOneWidget);
+  });
+
+  testWidgets('shows generic submit error when request fails unexpectedly', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(createError: Exception('boom'));
+
+    await tester.pumpWidget(
+      MaterialApp(home: ExpenseFormScreen(expensesRepository: repository)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-description-field')),
+      'Internet',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-amount-field')),
+      '89,90',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nao foi possivel salvar a despesa.'), findsOneWidget);
+  });
+
+  testWidgets('shows submit loading state while create request is pending', (
+    tester,
+  ) async {
+    final completer = Completer<void>();
+    final repository = FakeExpensesRepository(
+      onCreateAsync: (_) => completer.future,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpenseFormScreen(
+          expensesRepository: repository,
+          standalone: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-description-field')),
+      'Conta de agua',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-amount-field')),
+      '75,40',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
+    await tester.pump();
+
+    expect(repository.createCalls, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Criar despesa'), findsNothing);
+
+    completer.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Despesa lancada com sucesso'), findsOneWidget);
   });
 
   testWidgets('stays usable on small heights with keyboard inset', (
