@@ -193,6 +193,128 @@ void main() {
     expect(repository.detailCalls, 1);
   });
 
+  testWidgets(
+    'registers payment from detail and reloads the management list on return',
+    (tester) async {
+      configureLargeViewport(tester);
+
+      final controller = SessionController(
+        authRepository: FakeAuthRepository(loginResult: fakeSession()),
+        sessionStore: MemorySessionStore(),
+      );
+      await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+      late final FakeExpensesRepository repository;
+      repository = FakeExpensesRepository(
+        result: PagedResult(
+          items: [
+            fakeExpense(id: 7, description: 'Conta de Agua', status: 'ABERTA'),
+          ],
+          page: 0,
+          size: 20,
+          totalElements: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+        ),
+        detailResult: fakeExpenseDetail(
+          id: 7,
+          description: 'Conta de Agua',
+          paidAmount: 0,
+          remainingAmount: 129.9,
+          paymentsCount: 0,
+          payments: const [],
+        ),
+        onRegisterPayment: (input) {
+          repository.detailResult = fakeExpenseDetail(
+            id: 7,
+            description: 'Conta de Agua',
+            status: 'PARCIALMENTE_PAGA',
+            paidAmount: input.amount,
+            remainingAmount: 80,
+            paymentsCount: 1,
+            payments: [
+              fakeExpensePayment(
+                id: 11,
+                expenseId: 7,
+                amount: input.amount,
+                notes: input.notes,
+                method: input.method,
+              ),
+            ],
+          );
+          repository.result = PagedResult(
+            items: [
+              fakeExpense(
+                id: 7,
+                description: 'Conta de Agua',
+                status: 'PARCIALMENTE_PAGA',
+              ),
+            ],
+            page: 0,
+            size: 20,
+            totalElements: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false,
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ExpensesListScreen(
+            sessionController: controller,
+            expensesRepository: repository,
+            financialAssistantRepository: FakeFinancialAssistantRepository(),
+            householdMembersRepository: FakeHouseholdMembersRepository(),
+            reportsRepository: FakeReportsRepository(),
+            reviewOperationsRepository: FakeReviewOperationsRepository(),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(
+        find.ancestor(
+          of: find.text('Conta de Agua'),
+          matching: find.byType(InkWell),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Valor pago'),
+        '49,90',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Observacoes do pagamento'),
+        'Pagamento parcial',
+      );
+      await tester.ensureVisible(
+        find.widgetWithText(FilledButton, 'Registrar pagamento'),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Registrar pagamento'),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pagamento registrado com sucesso.'), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpensesListScreen), findsOneWidget);
+      expect(find.text('Pagamento registrado com sucesso.'), findsOneWidget);
+      expect(repository.listCalls, 2);
+      expect(find.text('PARCIALMENTE_PAGA'), findsOneWidget);
+    },
+  );
+
   testWidgets('opens expense form when tapping new expense action', (
     tester,
   ) async {
