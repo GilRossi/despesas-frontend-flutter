@@ -247,6 +247,81 @@ void main() {
       );
     });
 
+    testWidgets(
+      'dashboard -> pagamento direto -> sucesso funciona no fluxo principal do bloco 9',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: AuthOnboarding(
+            completed: true,
+            completedAt: DateTime.utc(2026, 3, 28, 12),
+          ),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        late final FakeExpensesRepository expensesRepository;
+        expensesRepository = FakeExpensesRepository(
+          detailResult: fakeExpenseDetail(
+            id: 10,
+            description: 'Internet',
+            paidAmount: 0,
+            remainingAmount: 89.9,
+            paymentsCount: 0,
+            payments: const [],
+          ),
+          onRegisterPayment: (input) {
+            expensesRepository.detailResult = fakeExpenseDetail(
+              id: 10,
+              description: 'Internet',
+              status: 'PAGA',
+              paidAmount: input.amount,
+              remainingAmount: 0,
+              paymentsCount: 1,
+              payments: [
+                fakeExpensePayment(
+                  id: 77,
+                  expenseId: 10,
+                  amount: input.amount,
+                  notes: input.notes,
+                  method: input.method,
+                ),
+              ],
+            );
+          },
+        );
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          dashboardRepository: FakeDashboardRepository(
+            summary: fakeDashboardSummary(role: 'OWNER'),
+          ),
+          expensesRepository: expensesRepository,
+        );
+
+        await scrollTo(tester, find.text('Internet').first);
+        await tester.tap(find.text('Internet').first, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ExpensePaymentScreen), findsOneWidget);
+
+        await scrollTo(
+          tester,
+          find.byKey(const ValueKey('expense-payment-submit-button')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('expense-payment-submit-button')),
+        );
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Despesa quitada com sucesso'), findsOneWidget);
+      },
+    );
+
     testWidgets('first access users are redirected to assistant', (
       tester,
     ) async {

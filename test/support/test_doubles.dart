@@ -277,6 +277,7 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.onUpdate,
     this.onDelete,
     this.onRegisterPayment,
+    this.onRegisterPaymentAsync,
   });
 
   PagedResult<ExpenseSummary>? result;
@@ -294,6 +295,8 @@ class FakeExpensesRepository implements ExpensesRepository {
   void Function(int expenseId, SaveExpenseInput input)? onUpdate;
   void Function(int expenseId)? onDelete;
   void Function(CreateExpensePaymentInput input)? onRegisterPayment;
+  Future<void> Function(CreateExpensePaymentInput input)?
+  onRegisterPaymentAsync;
   int listCalls = 0;
   int detailCalls = 0;
   int catalogCalls = 0;
@@ -382,6 +385,9 @@ class FakeExpensesRepository implements ExpensesRepository {
       throw registerPaymentError!;
     }
     onRegisterPayment?.call(input);
+    if (onRegisterPaymentAsync != null) {
+      await onRegisterPaymentAsync!(input);
+    }
   }
 }
 

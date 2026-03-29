@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -240,5 +242,105 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('dashboard-page'), findsOneWidget);
+  });
+
+  testWidgets('shows not found state when the expense does not exist', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      detailError: fakeApiException(
+        statusCode: 404,
+        message: 'Despesa nao encontrada',
+      ),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    expect(find.text('Despesa nao encontrada'), findsOneWidget);
+    expect(
+      find.textContaining('Nao foi possivel abrir este pagamento'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows retry state when loading the payment flow fails', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      detailError: fakeApiException(message: 'Falha simulada'),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    expect(
+      find.text('Nao foi possivel abrir o fluxo de pagamento.'),
+      findsOneWidget,
+    );
+    expect(find.text('Falha simulada'), findsOneWidget);
+    expect(find.text('Tentar novamente'), findsOneWidget);
+  });
+
+  testWidgets('shows generic submit error when payment fails unexpectedly', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(remainingAmount: 89.9),
+      registerPaymentError: Exception('falha inesperada'),
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Nao foi possivel registrar o pagamento.'),
+      findsOneWidget,
+    );
+    expect(find.text('Despesa quitada com sucesso'), findsNothing);
+  });
+
+  testWidgets('shows loading feedback while submit is still pending', (
+    tester,
+  ) async {
+    final completer = Completer<void>();
+    final repository = FakeExpensesRepository(
+      detailResult: fakeExpenseDetail(remainingAmount: 89.9),
+      onRegisterPaymentAsync: (_) => completer.future,
+    );
+
+    await pumpPaymentFlow(tester, repository: repository);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-payment-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsAtLeastNWidgets(1));
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('expense-payment-submit-button')),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    completer.complete();
+    await tester.pumpAndSettle();
   });
 }

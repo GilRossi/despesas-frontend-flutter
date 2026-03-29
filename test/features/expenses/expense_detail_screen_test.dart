@@ -74,6 +74,7 @@ void main() {
       repository.detailResult = fakeExpenseDetail(
         paidAmount: input.amount,
         remainingAmount: 80,
+        status: 'PARCIALMENTE_PAGA',
         paymentsCount: 1,
         payments: [
           fakeExpensePayment(
@@ -116,6 +117,8 @@ void main() {
     expect(find.text('Pagamento registrado com sucesso.'), findsOneWidget);
     await tester.ensureVisible(find.text('Historico de pagamentos'));
     await tester.pumpAndSettle();
+    expect(find.text('Parcialmente Paga'), findsOneWidget);
+    expect(find.text('R\$ 80,00'), findsAtLeastNWidgets(1));
     expect(find.text('Pagamento avulso'), findsOneWidget);
     expect(find.text('49,90'), findsNothing);
     expect(find.text('R\$ 49,90'), findsAtLeastNWidgets(1));
