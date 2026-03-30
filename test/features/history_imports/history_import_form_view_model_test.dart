@@ -9,52 +9,52 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
-  test('loadCatalogOptions populates catalog data and input serialization works', () async {
-    final repository = FakeExpensesRepository(catalogOptions: fakeCatalogOptions());
-    final viewModel = HistoryImportFormViewModel(
-      historyImportsRepository: FakeHistoryImportsRepository(),
-      expensesRepository: repository,
-    );
+  test(
+    'loadCatalogOptions populates catalog data and input serialization works',
+    () async {
+      final repository = FakeExpensesRepository(
+        catalogOptions: fakeCatalogOptions(),
+      );
+      final viewModel = HistoryImportFormViewModel(
+        historyImportsRepository: FakeHistoryImportsRepository(),
+        expensesRepository: repository,
+      );
 
-    await viewModel.loadCatalogOptions();
+      await viewModel.loadCatalogOptions();
 
-    expect(viewModel.hasCatalogOptions, isTrue);
-    expect(viewModel.catalogOptions, isNotEmpty);
-    expect(viewModel.loadCatalogErrorMessage, isNull);
+      expect(viewModel.hasCatalogOptions, isTrue);
+      expect(viewModel.catalogOptions, isNotEmpty);
+      expect(viewModel.loadCatalogErrorMessage, isNull);
 
-    final input = CreateHistoryImportInput(
-      paymentMethod: HistoryImportPaymentMethod.pix,
-      entries: [
-        HistoryImportEntryInput(
-          description: 'Internet fibra',
-          amount: 129.9,
-          date: DateTime(2026, 3, 10, 14, 30),
-          context: 'HOME',
-          categoryId: 1,
-          subcategoryId: 2,
-          notes: '  Mensalidade  ',
-        ),
-      ],
-    );
+      final input = CreateHistoryImportInput(
+        paymentMethod: HistoryImportPaymentMethod.pix,
+        entries: [
+          HistoryImportEntryInput(
+            description: 'Internet fibra',
+            amount: 129.9,
+            date: DateTime(2026, 3, 10, 14, 30),
+            categoryId: 1,
+            subcategoryId: 2,
+            notes: '  Mensalidade  ',
+          ),
+        ],
+      );
 
-    expect(
-      input.toJson(),
-      {
+      expect(input.toJson(), {
         'paymentMethod': 'PIX',
         'entries': [
           {
             'description': 'Internet fibra',
             'amount': 129.9,
             'date': '2026-03-10',
-            'context': 'HOME',
             'categoryId': 1,
             'subcategoryId': 2,
             'notes': 'Mensalidade',
           },
         ],
-      },
-    );
-  });
+      });
+    },
+  );
 
   test('loadCatalogOptions and importHistory expose error feedback', () async {
     final viewModel = HistoryImportFormViewModel(
@@ -92,38 +92,40 @@ void main() {
     expect(viewModel.submitErrorMessage, isNull);
   });
 
-  test('importHistory returns the created result and keeps the loading flag balanced', () async {
-    final repository = FakeHistoryImportsRepository(
-      importResult: HistoryImportResult(
-        importedCount: 1,
-        entries: [
-          fakeHistoryImportEntryRecord(description: 'Internet fibra'),
-        ],
-      ),
-    );
-    final viewModel = HistoryImportFormViewModel(
-      historyImportsRepository: repository,
-      expensesRepository: FakeExpensesRepository(),
-    );
+  test(
+    'importHistory returns the created result and keeps the loading flag balanced',
+    () async {
+      final repository = FakeHistoryImportsRepository(
+        importResult: HistoryImportResult(
+          importedCount: 1,
+          entries: [
+            fakeHistoryImportEntryRecord(description: 'Internet fibra'),
+          ],
+        ),
+      );
+      final viewModel = HistoryImportFormViewModel(
+        historyImportsRepository: repository,
+        expensesRepository: FakeExpensesRepository(),
+      );
 
-    final result = await viewModel.importHistory(
-      CreateHistoryImportInput(
-        paymentMethod: HistoryImportPaymentMethod.debito,
-        entries: [
-          HistoryImportEntryInput(
-            description: 'Internet fibra',
-            amount: 129.9,
-            date: DateTime(2026, 3, 10),
-            context: 'HOME',
-            categoryId: 1,
-            subcategoryId: 2,
-          ),
-        ],
-      ),
-    );
+      final result = await viewModel.importHistory(
+        CreateHistoryImportInput(
+          paymentMethod: HistoryImportPaymentMethod.debito,
+          entries: [
+            HistoryImportEntryInput(
+              description: 'Internet fibra',
+              amount: 129.9,
+              date: DateTime(2026, 3, 10),
+              categoryId: 1,
+              subcategoryId: 2,
+            ),
+          ],
+        ),
+      );
 
-    expect(repository.importCalls, 1);
-    expect(result?.importedCount, 1);
-    expect(viewModel.isSubmitting, isFalse);
-  });
+      expect(repository.importCalls, 1);
+      expect(result?.importedCount, 1);
+      expect(viewModel.isSubmitting, isFalse);
+    },
+  );
 }

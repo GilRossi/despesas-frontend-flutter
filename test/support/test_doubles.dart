@@ -363,7 +363,6 @@ class FakeExpensesRepository implements ExpensesRepository {
           description: input.description.trim(),
           amount: input.amount,
           dueDate: input.dueDate,
-          context: input.context,
         );
   }
 
@@ -718,7 +717,6 @@ class FakeFixedBillsRepository implements FixedBillsRepository {
           amount: input.amount,
           firstDueDate: input.firstDueDate,
           frequency: input.frequency,
-          context: input.context,
           category: fakeFixedBillReference(id: input.categoryId, name: 'Casa'),
           subcategory: fakeFixedBillReference(
             id: input.subcategoryId,
@@ -1185,7 +1183,6 @@ FixedBillRecord fakeFixedBillRecord({
   double amount = 129.9,
   DateTime? firstDueDate,
   FixedBillFrequency frequency = FixedBillFrequency.monthly,
-  String context = 'CASA',
   FixedBillReference? category,
   FixedBillReference? subcategory,
   FixedBillReference? spaceReference,
@@ -1198,7 +1195,6 @@ FixedBillRecord fakeFixedBillRecord({
     amount: amount,
     firstDueDate: firstDueDate ?? DateTime.utc(2026, 4, 5),
     frequency: frequency,
-    context: context,
     category: category ?? fakeFixedBillReference(id: 1, name: 'Casa'),
     subcategory:
         subcategory ?? fakeFixedBillReference(id: 11, name: 'Internet'),
@@ -1240,7 +1236,6 @@ HistoryImportEntryInput fakeHistoryImportEntryInput({
   String description = 'Mercado de fevereiro',
   double amount = 189.9,
   DateTime? date,
-  String context = 'CASA',
   int categoryId = 1,
   int subcategoryId = 11,
   String? notes,
@@ -1249,7 +1244,6 @@ HistoryImportEntryInput fakeHistoryImportEntryInput({
     description: description,
     amount: amount,
     date: date ?? DateTime.utc(2026, 2, 14),
-    context: context,
     categoryId: categoryId,
     subcategoryId: subcategoryId,
     notes: notes,
@@ -1290,7 +1284,6 @@ ExpenseSummary fakeExpense({
   double amount = 129.9,
   DateTime? dueDate,
   DateTime? occurredOn,
-  String context = 'CASA',
   String category = 'Casa',
   String subcategory = 'Internet',
   String status = 'ABERTA',
@@ -1302,7 +1295,6 @@ ExpenseSummary fakeExpense({
     amount: amount,
     dueDate: dueDate ?? DateTime.utc(2026, 3, 25),
     occurredOn: occurredOn ?? DateTime.utc(2026, 3, 25),
-    context: context,
     category: ExpenseReference(id: 1, name: category),
     subcategory: ExpenseReference(id: 2, name: subcategory),
     reference: reference,
@@ -1336,7 +1328,6 @@ ExpenseDetail fakeExpenseDetail({
     amount: amount,
     dueDate: dueDate ?? DateTime.utc(2026, 3, 25),
     occurredOn: occurredOn ?? DateTime.utc(2026, 3, 25),
-    context: 'CASA',
     category: ExpenseReference(id: 1, name: category),
     subcategory: ExpenseReference(id: 2, name: subcategory),
     reference: reference,

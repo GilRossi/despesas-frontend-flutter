@@ -3,7 +3,6 @@ class HistoryImportEntryInput {
     required this.description,
     required this.amount,
     required this.date,
-    required this.context,
     required this.categoryId,
     required this.subcategoryId,
     this.notes,
@@ -12,7 +11,6 @@ class HistoryImportEntryInput {
   final String description;
   final double amount;
   final DateTime date;
-  final String context;
   final int categoryId;
   final int subcategoryId;
   final String? notes;
@@ -23,7 +21,6 @@ class HistoryImportEntryInput {
       'description': description.trim(),
       'amount': amount,
       'date': _formatDate(date),
-      'context': context,
       'categoryId': categoryId,
       'subcategoryId': subcategoryId,
       if (normalizedNotes != null && normalizedNotes.isNotEmpty)

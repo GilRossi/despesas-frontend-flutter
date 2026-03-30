@@ -6,7 +6,6 @@ class CreateFixedBillInput {
     required this.amount,
     required this.firstDueDate,
     required this.frequency,
-    required this.context,
     required this.categoryId,
     required this.subcategoryId,
     this.spaceReferenceId,
@@ -16,7 +15,6 @@ class CreateFixedBillInput {
   final double amount;
   final DateTime firstDueDate;
   final FixedBillFrequency frequency;
-  final String context;
   final int categoryId;
   final int subcategoryId;
   final int? spaceReferenceId;
@@ -30,7 +28,6 @@ class CreateFixedBillInput {
       'amount': amount,
       'firstDueDate': '${firstDueDate.year}-$month-$day',
       'frequency': frequency.apiValue,
-      'context': context,
       'categoryId': categoryId,
       'subcategoryId': subcategoryId,
       'spaceReferenceId': spaceReferenceId,

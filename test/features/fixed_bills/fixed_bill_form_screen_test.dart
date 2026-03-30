@@ -45,29 +45,27 @@ void main() {
     );
     await scrollTo(
       tester,
-      find.byKey(const ValueKey('fixed-bill-form-context-field-none')),
+      find.byKey(const ValueKey('fixed-bill-form-category-field-none')),
     );
-    await tester.tap(
-      find.byKey(const ValueKey('fixed-bill-form-context-field-none')),
-      warnIfMissed: false,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Casa').last, warnIfMissed: false);
-    await tester.pumpAndSettle();
-
     await tester.tap(
       find.byKey(const ValueKey('fixed-bill-form-category-field-none')),
       warnIfMissed: false,
     );
     await tester.pumpAndSettle();
+    expect(find.text('Casa'), findsWidgets);
     await tester.tap(find.text('Casa').last, warnIfMissed: false);
     await tester.pumpAndSettle();
 
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('fixed-bill-form-subcategory-field-none')),
+    );
     await tester.tap(
       find.byKey(const ValueKey('fixed-bill-form-subcategory-field-none')),
       warnIfMissed: false,
     );
     await tester.pumpAndSettle();
+    expect(find.text('Internet'), findsWidgets);
     await tester.tap(find.text('Internet').last, warnIfMissed: false);
     await tester.pumpAndSettle();
   }

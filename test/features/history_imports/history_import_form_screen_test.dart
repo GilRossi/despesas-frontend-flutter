@@ -58,7 +58,6 @@ void main() {
     int index, {
     required String description,
     required String amount,
-    String context = 'Casa',
     String category = 'Casa',
     String subcategory = 'Internet',
     String? notes,
@@ -75,18 +74,6 @@ void main() {
       find.byKey(ValueKey('history-import-entry-$index-amount-field')),
       amount,
     );
-
-    await scrollTo(
-      tester,
-      find.byKey(ValueKey('history-import-entry-$index-context-field-none')),
-    );
-    await tester.tap(
-      find.byKey(ValueKey('history-import-entry-$index-context-field-none')),
-      warnIfMissed: false,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(context).last, warnIfMissed: false);
-    await tester.pumpAndSettle();
 
     await tester.tap(
       find.byKey(ValueKey('history-import-entry-$index-category-field-none')),
@@ -258,7 +245,6 @@ void main() {
       1,
       description: 'Combustivel de fevereiro',
       amount: '240,00',
-      context: 'Veiculo',
       category: 'Veiculo',
       subcategory: 'Combustivel',
       notes: 'abastecimento do inicio do mes',

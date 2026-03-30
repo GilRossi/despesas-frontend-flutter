@@ -68,9 +68,8 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   Future<void> _openCreateExpense() async {
     final result = await _pushOrNavigate<ExpenseFlowResult>(
       '/expenses/new',
-      fallbackBuilder: () => ExpenseFormScreen(
-        expensesRepository: widget.expensesRepository,
-      ),
+      fallbackBuilder: () =>
+          ExpenseFormScreen(expensesRepository: widget.expensesRepository),
     );
     await _handleFlowResult(result);
   }
@@ -155,9 +154,9 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     try {
       return await context.push<T>(route);
     } catch (_) {
-      return Navigator.of(context).push<T>(
-        MaterialPageRoute(builder: (_) => fallbackBuilder()),
-      );
+      return Navigator.of(
+        context,
+      ).push<T>(MaterialPageRoute(builder: (_) => fallbackBuilder()));
     }
   }
 
@@ -169,9 +168,9 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       context.go(route);
       return;
     } catch (_) {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(builder: (_) => fallbackBuilder()),
-      );
+      await Navigator.of(
+        context,
+      ).push<void>(MaterialPageRoute(builder: (_) => fallbackBuilder()));
     }
   }
 
@@ -385,7 +384,7 @@ class _ExpenseCard extends StatelessWidget {
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 6),
-                      Text(
+                        Text(
                           '${expense.category.name} · ${expense.subcategory.name}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF65727B),
@@ -433,7 +432,6 @@ class _ExpenseCard extends StatelessWidget {
                         : 'Vence em $dueDate',
                   ),
                   _MetaChip(label: expense.status),
-                  _MetaChip(label: expense.context),
                   if (expense.overdue) const _MetaChip(label: 'Atrasada'),
                 ],
               ),

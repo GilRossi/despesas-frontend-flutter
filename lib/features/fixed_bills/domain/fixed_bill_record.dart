@@ -8,7 +8,6 @@ class FixedBillRecord {
     required this.amount,
     required this.firstDueDate,
     required this.frequency,
-    required this.context,
     required this.category,
     required this.subcategory,
     required this.active,
@@ -21,7 +20,6 @@ class FixedBillRecord {
   final double amount;
   final DateTime firstDueDate;
   final FixedBillFrequency frequency;
-  final String context;
   final FixedBillReference category;
   final FixedBillReference subcategory;
   final FixedBillReference? spaceReference;
@@ -44,7 +42,6 @@ class FixedBillRecord {
       frequency: FixedBillFrequency.fromApiValue(
         json['frequency'] as String? ?? '',
       ),
-      context: json['context'] as String? ?? '',
       category: FixedBillReference.fromJson(categoryJson),
       subcategory: FixedBillReference.fromJson(subcategoryJson),
       spaceReference: spaceReferenceJson == null
