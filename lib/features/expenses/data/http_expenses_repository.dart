@@ -93,7 +93,7 @@ class HttpExpensesRepository implements ExpensesRepository {
       return _authorizedRequestExecutor.apiClient.postJson(
         '/api/v1/expenses',
         headers: headers,
-        body: input.toJson(),
+        body: input.toJson(includeInitialPayment: true),
       );
     });
 
@@ -115,7 +115,7 @@ class HttpExpensesRepository implements ExpensesRepository {
       return _authorizedRequestExecutor.apiClient.patchJson(
         '/api/v1/expenses/$expenseId',
         headers: headers,
-        body: input.toJson(),
+        body: input.toJson(includeInitialPayment: false),
       );
     });
 

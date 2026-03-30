@@ -324,6 +324,10 @@ void main() {
           subcategoryId: 11,
           spaceReferenceId: 77,
           notes: 'Compra da semana',
+          initialPayment: ExpenseInitialPaymentInput(
+            paidAt: DateTime.utc(2026, 3, 29),
+            method: 'PIX',
+          ),
         ),
       );
 
@@ -338,6 +342,10 @@ void main() {
         'subcategoryId': 11,
         'spaceReferenceId': 77,
         'notes': 'Compra da semana',
+        'initialPayment': {
+          'paidAt': '2026-03-29',
+          'method': 'PIX',
+        },
       });
     },
   );
@@ -360,11 +368,20 @@ void main() {
         subcategoryId: 11,
         spaceReferenceId: null,
         notes: 'Atualizada',
+        initialPayment: ExpenseInitialPaymentInput(
+          paidAt: DateTime.utc(2026, 3, 30),
+          method: 'PIX',
+        ),
       ),
     );
 
     expect(capturedRequest.method, 'PATCH');
     expect(capturedRequest.url.path, '/api/v1/expenses/12');
+    expect(
+      (jsonDecode(capturedRequest.body) as Map<String, dynamic>)
+          .containsKey('initialPayment'),
+      isFalse,
+    );
   });
 
   test('deleteExpense envia DELETE para o id informado', () async {

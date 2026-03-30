@@ -3,6 +3,15 @@ import 'package:despesas_frontend/features/expenses/domain/create_expense_paymen
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
 import 'package:flutter/material.dart';
 
+const expensePaymentMethods = [
+  'PIX',
+  'DINHEIRO',
+  'DEBITO',
+  'CREDITO',
+  'TRANSFERENCIA',
+  'BOLETO',
+];
+
 class ExpensePaymentFormCard extends StatefulWidget {
   const ExpensePaymentFormCard({
     super.key,
@@ -24,21 +33,12 @@ class ExpensePaymentFormCard extends StatefulWidget {
 }
 
 class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
-  static const _paymentMethods = [
-    'PIX',
-    'DINHEIRO',
-    'DEBITO',
-    'CREDITO',
-    'TRANSFERENCIA',
-    'BOLETO',
-  ];
-
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
 
   late DateTime _paidAt;
-  String _method = _paymentMethods.first;
+  String _method = expensePaymentMethods.first;
   int _lastPaymentsCount = 0;
 
   bool get _isPaidOff => widget.expense.remainingAmount <= 0;
@@ -132,7 +132,7 @@ class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
                   decoration: const InputDecoration(
                     labelText: 'Metodo de pagamento',
                   ),
-                  items: _paymentMethods
+                  items: expensePaymentMethods
                       .map(
                         (method) => DropdownMenuItem<String>(
                           value: method,
@@ -262,7 +262,7 @@ class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
     _amountController.text = _formatAmount(widget.expense.remainingAmount);
     _notesController.clear();
     _paidAt = _normalizeDate(DateTime.now());
-    _method = _paymentMethods.first;
+    _method = expensePaymentMethods.first;
   }
 
   DateTime _normalizeDate(DateTime value) {

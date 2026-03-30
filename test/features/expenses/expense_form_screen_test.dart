@@ -150,6 +150,72 @@ void main() {
     expect(result?.message, 'Despesa atualizada com sucesso.');
   });
 
+  testWidgets('create flow can mark the expense as already paid', (
+    tester,
+  ) async {
+    final repository = FakeExpensesRepository(
+      createResult: fakeExpense(
+        description: 'Plano de celular',
+        amount: 89.9,
+        status: 'PAGA',
+        paidAmount: 89.9,
+        remainingAmount: 0,
+      ),
+    );
+    late final GoRouter router;
+
+    router = GoRouter(
+      initialLocation: '/expenses/new',
+      routes: [
+        GoRoute(
+          path: '/expenses/new',
+          builder: (context, state) => ExpenseFormScreen(
+            expensesRepository: repository,
+            standalone: true,
+          ),
+        ),
+        GoRoute(
+          path: '/expenses',
+          builder: (context, state) => const Scaffold(body: Text('Despesas')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-description-field')),
+      'Plano de celular',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('expense-form-amount-field')),
+      '89,90',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('expense-form-initial-payment-toggle')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('expense-form-initial-payment-toggle')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(repository.createCalls, 1);
+    expect(repository.lastCreatedInput?.initialPayment, isNotNull);
+    expect(repository.lastCreatedInput?.initialPayment?.method, 'PIX');
+    expect(find.text('Despesa lancada e quitada'), findsOneWidget);
+  });
+
   testWidgets('standalone flow shows success state with clear CTAs', (
     tester,
   ) async {
