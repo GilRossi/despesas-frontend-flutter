@@ -159,6 +159,20 @@ class HttpExpensesRepository implements ExpensesRepository {
     }
   }
 
+  @override
+  Future<void> deleteExpensePayment(int paymentId) async {
+    final response = await _authorizedRequestExecutor.run((headers) {
+      return _authorizedRequestExecutor.apiClient.delete(
+        '/api/v1/payments/$paymentId',
+        headers: headers,
+      );
+    });
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+  }
+
   String _formatDate(DateTime value) {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');

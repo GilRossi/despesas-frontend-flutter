@@ -217,7 +217,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ExpenseFormScreen), findsOneWidget);
-      expect(find.text('Lancar despesa do dia'), findsOneWidget);
+      expect(find.text('Lancar despesa'), findsOneWidget);
       expect(find.text('Ver despesas'), findsOneWidget);
     });
 
@@ -385,7 +385,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ExpenseFormScreen), findsOneWidget);
-      expect(find.text('Lancar despesa do dia'), findsOneWidget);
+      expect(find.text('Lancar despesa'), findsOneWidget);
     });
 
     testWidgets(
@@ -428,6 +428,10 @@ void main() {
           find.byKey(const ValueKey('expense-form-submit-button')),
           200,
           scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('expense-form-submit-button')),
         );
         await tester.pumpAndSettle();
         await tester.tap(
@@ -493,6 +497,10 @@ void main() {
           find.byKey(const ValueKey('expense-form-submit-button')),
           200,
           scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('expense-form-submit-button')),
         );
         await tester.pumpAndSettle();
         await tester.tap(

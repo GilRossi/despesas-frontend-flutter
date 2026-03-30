@@ -9,6 +9,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_form_card.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,10 +18,12 @@ class ExpenseDetailScreen extends StatefulWidget {
     super.key,
     required this.expenseId,
     required this.expensesRepository,
+    this.spaceReferencesRepository,
   });
 
   final int expenseId;
   final ExpensesRepository expensesRepository;
+  final SpaceReferencesRepository? spaceReferencesRepository;
 
   @override
   State<ExpenseDetailScreen> createState() => _ExpenseDetailScreenState();
@@ -65,6 +68,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       MaterialPageRoute(
         builder: (_) => ExpenseFormScreen(
           expensesRepository: widget.expensesRepository,
+          spaceReferencesRepository: widget.spaceReferencesRepository,
           initialExpense: expense,
         ),
       ),
@@ -164,6 +168,59 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     return success;
   }
 
+  Future<void> _confirmDeletePayment(ExpensePayment payment) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Corrigir pagamento'),
+              content: Text(
+                'Remover este pagamento de ${formatCurrency(payment.amount)} para registrar novamente do jeito certo?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Remover pagamento'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    final success = await _viewModel.deletePayment(payment.id);
+    if (!mounted) {
+      return;
+    }
+
+    if (success) {
+      _resultOnClose = const ExpenseFlowResult.reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pagamento removido. Voce ja pode registrar o valor correto.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_viewModel.paymentErrorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_viewModel.paymentErrorMessage!)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope<Object?>(
@@ -244,8 +301,10 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                     expense: expense,
                     showPaymentForm: expense.remainingAmount > 0,
                     isSubmittingPayment: _viewModel.isSubmittingPayment,
+                    removingPaymentId: _viewModel.removingPaymentId,
                     paymentErrorMessage: _viewModel.paymentErrorMessage,
                     onSubmitPayment: _handleSubmitPayment,
+                    onDeletePayment: _confirmDeletePayment,
                   );
                 },
               ),
@@ -262,15 +321,19 @@ class _DetailContent extends StatelessWidget {
     required this.expense,
     required this.showPaymentForm,
     required this.isSubmittingPayment,
+    required this.removingPaymentId,
     required this.paymentErrorMessage,
     required this.onSubmitPayment,
+    required this.onDeletePayment,
   });
 
   final ExpenseDetail expense;
   final bool showPaymentForm;
   final bool isSubmittingPayment;
+  final int? removingPaymentId;
   final String? paymentErrorMessage;
   final Future<bool> Function(CreateExpensePaymentInput input) onSubmitPayment;
+  final Future<void> Function(ExpensePayment payment) onDeletePayment;
 
   @override
   Widget build(BuildContext context) {
@@ -329,8 +392,14 @@ class _DetailContent extends StatelessWidget {
                         '${expense.category.name} · ${expense.subcategory.name}',
                   ),
                   _DetailField(
+                    label: 'Ocorrencia',
+                    value: _formatDate(expense.occurredOn),
+                  ),
+                  _DetailField(
                     label: 'Vencimento',
-                    value: _formatDate(expense.dueDate),
+                    value: expense.dueDate == null
+                        ? 'Sem vencimento'
+                        : _formatDate(expense.dueDate!),
                   ),
                   _DetailField(
                     label: 'Pago',
@@ -344,6 +413,11 @@ class _DetailContent extends StatelessWidget {
                     label: 'Pagamentos registrados',
                     value: '${expense.paymentsCount}',
                   ),
+                  if (expense.reference != null)
+                    _DetailField(
+                      label: 'Referencia do Espaco',
+                      value: expense.reference!.name,
+                    ),
                 ],
               ),
             ),
@@ -403,7 +477,11 @@ class _DetailContent extends StatelessWidget {
                       index < expense.payments.length;
                       index++
                     ) ...[
-                      _PaymentEntry(payment: expense.payments[index]),
+                      _PaymentEntry(
+                        payment: expense.payments[index],
+                        isRemoving: removingPaymentId == expense.payments[index].id,
+                        onDelete: () => onDeletePayment(expense.payments[index]),
+                      ),
                       if (index < expense.payments.length - 1) ...[
                         const SizedBox(height: 16),
                         const Divider(height: 1),
@@ -448,9 +526,15 @@ class _DetailContent extends StatelessWidget {
 }
 
 class _PaymentEntry extends StatelessWidget {
-  const _PaymentEntry({required this.payment});
+  const _PaymentEntry({
+    required this.payment,
+    required this.isRemoving,
+    required this.onDelete,
+  });
 
   final ExpensePayment payment;
+  final bool isRemoving;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -477,10 +561,29 @@ class _PaymentEntry extends StatelessWidget {
                 color: const Color(0xFF65727B),
               ),
             ),
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Remover pagamento',
+              onPressed: isRemoving ? null : onDelete,
+              icon: isRemoving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_outline),
+            ),
           ],
         ),
         const SizedBox(height: 8),
         _MetaChip(label: _DetailContent._formatEnumLabel(payment.method)),
+        const SizedBox(height: 8),
+        Text(
+          'Se este pagamento foi lancado errado, remova e registre novamente com o valor correto.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: const Color(0xFF65727B),
+          ),
+        ),
         if (payment.hasNotes) ...[
           const SizedBox(height: 12),
           Text(

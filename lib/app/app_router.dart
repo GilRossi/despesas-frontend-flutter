@@ -135,6 +135,9 @@ GoRouter createAppRouter({
             builder: (context, state) => FinancialAssistantScreen(
               financialAssistantRepository: financialAssistantRepository,
               sessionController: sessionController,
+              reopenTourOnStart:
+                  state.uri.queryParameters['tour'] == '1' ||
+                  state.uri.queryParameters['tour'] == 'true',
               onStarterPrimaryActionRequested: (primaryActionKey) {
                 if (primaryActionKey == 'OPEN_IMPORT_HISTORY') {
                   context.go('/history/import');
@@ -205,6 +208,7 @@ GoRouter createAppRouter({
             path: '/expenses/new',
             builder: (context, state) => ExpenseFormScreen(
               expensesRepository: expensesRepository,
+              spaceReferencesRepository: spaceReferencesRepository,
               standalone: true,
             ),
           ),
@@ -244,6 +248,7 @@ GoRouter createAppRouter({
               return ExpenseDetailScreen(
                 expenseId: expenseId,
                 expensesRepository: expensesRepository,
+                spaceReferencesRepository: spaceReferencesRepository,
               );
             },
           ),

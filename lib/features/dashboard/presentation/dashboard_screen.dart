@@ -72,6 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onNewExpenseTap: () => context.go('/expenses/new'),
                     onAssistantTap: () =>
                         context.go(dashboard.assistantCard.route),
+                    onTourTap: () => context.go('/assistant?tour=1'),
                   ),
                   const SizedBox(height: 16),
                   LayoutBuilder(
@@ -208,11 +209,13 @@ class _DashboardHero extends StatelessWidget {
     required this.dashboard,
     required this.onNewExpenseTap,
     required this.onAssistantTap,
+    required this.onTourTap,
   });
 
   final DashboardSummary dashboard;
   final VoidCallback onNewExpenseTap;
   final VoidCallback onAssistantTap;
+  final VoidCallback onTourTap;
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +251,7 @@ class _DashboardHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Seu dia financeiro começa aqui',
+                  'Comece pelo caminho certo, sem tela fria',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -256,10 +259,20 @@ class _DashboardHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Veja o que precisa de atenção, acompanhe o mês e siga para a próxima ação sem sair da home.',
+                  'A home precisa orientar de verdade: lance uma despesa, abra o assistente ou reative o tour guiado sempre que quiser revisar os primeiros passos.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.86),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: const [
+                    _HeroBadge(label: 'Avulsa sem vencimento'),
+                    _HeroBadge(label: 'Conta com vencimento'),
+                    _HeroBadge(label: 'Conta fixa e historico separados'),
+                  ],
                 ),
               ],
             ),
@@ -280,9 +293,45 @@ class _DashboardHero extends StatelessWidget {
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('Abrir assistente'),
               ),
+              OutlinedButton.icon(
+                key: const ValueKey('dashboard-hero-tour-button'),
+                onPressed: onTourTap,
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Ver tour guiado'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white38),
+                ),
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -474,10 +523,17 @@ class _AssistantCard extends StatelessWidget {
               children: [
                 _SectionTitle(
                   title: assistantCard.title,
-                  subtitle: 'Apoio rápido sem sair da home',
+                  subtitle: 'Apoio rápido, tour reabrivel e próximos passos',
                 ),
                 const SizedBox(height: 12),
                 Text(assistantCard.message),
+                const SizedBox(height: 12),
+                Text(
+                  'Se der dúvida sobre por onde começar, abra o assistente e reative o tour guiado sem depender do onboarding inicial.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF65727B),
+                  ),
+                ),
               ],
             ),
           ),

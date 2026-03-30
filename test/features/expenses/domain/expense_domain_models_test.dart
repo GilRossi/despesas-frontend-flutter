@@ -13,9 +13,11 @@ void main() {
       'description': 'Conta de luz',
       'amount': '129.90',
       'dueDate': '2026-03-25',
+      'occurredOn': '2026-03-20',
       'context': 'CASA',
       'category': {'id': 1, 'name': 'Casa'},
       'subcategory': {'id': 11, 'name': 'Energia'},
+      'reference': {'id': 99, 'name': 'Apartamento 12'},
       'status': 'ABERTA',
       'paidAmount': 20,
       'remainingAmount': 109.9,
@@ -29,6 +31,7 @@ void main() {
     expect(summary.overdue, isTrue);
     expect(summary.category.name, 'Casa');
     expect(summary.subcategory.id, 11);
+    expect(summary.reference?.name, 'Apartamento 12');
   });
 
   test('expense detail decodes payments and derived flags', () {
@@ -37,9 +40,11 @@ void main() {
       'description': 'Internet',
       'amount': 99,
       'dueDate': '2026-03-31',
+      'occurredOn': '2026-03-20',
       'context': 'CASA',
       'category': {'id': 1, 'name': 'Casa'},
       'subcategory': {'id': 11, 'name': 'Internet'},
+      'reference': {'id': 7, 'name': 'Casa principal'},
       'notes': 'Conta da operadora',
       'status': 'PARCIALMENTE_PAGA',
       'paidAmount': '40.00',
@@ -66,6 +71,7 @@ void main() {
     expect(detail.hasPayments, isTrue);
     expect(detail.payments.single.method, 'PIX');
     expect(detail.payments.single.hasNotes, isTrue);
+    expect(detail.reference?.name, 'Casa principal');
   });
 
   test('expense payment and references handle defaults and conversion', () {
@@ -83,6 +89,7 @@ void main() {
       'description': 'Teste',
       'amount': null,
       'dueDate': '2026-03-01',
+      'occurredOn': '2026-03-01',
       'context': 'CASA',
       'category': {'id': 1, 'name': 'Casa'},
       'subcategory': {'id': 2, 'name': 'Mercado'},
@@ -99,6 +106,7 @@ void main() {
     expect(emptyDetail.payments, isEmpty);
     expect(emptyDetail.hasNotes, isFalse);
     expect(emptyDetail.hasPayments, isFalse);
+    expect(emptyDetail.reference, isNull);
   });
 
   test('catalog option and save expense input map to the form contract', () {
@@ -112,25 +120,31 @@ void main() {
     final inputWithNotes = SaveExpenseInput(
       description: 'Mercado',
       amount: 120.5,
+      occurredOn: DateTime.utc(2026, 3, 29),
       dueDate: DateTime.utc(2026, 3, 29),
       context: 'CASA',
       categoryId: 1,
       subcategoryId: 11,
+      spaceReferenceId: 77,
       notes: '  compra da semana  ',
     );
     final inputWithoutNotes = SaveExpenseInput(
       description: 'Mercado',
       amount: 120.5,
+      occurredOn: DateTime.utc(2026, 3, 29),
       dueDate: DateTime.utc(2026, 3, 29),
       context: 'CASA',
       categoryId: 1,
       subcategoryId: 11,
+      spaceReferenceId: null,
       notes: '   ',
     );
 
     expect(option.id, 1);
     expect(option.subcategories.single.name, 'Internet');
+    expect(inputWithNotes.toJson()['occurredOn'], '2026-03-29');
     expect(inputWithNotes.toJson()['dueDate'], '2026-03-29');
+    expect(inputWithNotes.toJson()['spaceReferenceId'], 77);
     expect(inputWithNotes.toJson()['notes'], 'compra da semana');
     expect(inputWithoutNotes.toJson()['notes'], isNull);
   });

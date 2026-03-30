@@ -358,8 +358,11 @@ class _ExpenseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dueDate =
-        '${expense.dueDate.day.toString().padLeft(2, '0')}/${expense.dueDate.month.toString().padLeft(2, '0')}/${expense.dueDate.year}';
+    final dueDate = expense.dueDate == null
+        ? null
+        : '${expense.dueDate!.day.toString().padLeft(2, '0')}/${expense.dueDate!.month.toString().padLeft(2, '0')}/${expense.dueDate!.year}';
+    final effectiveDate =
+        '${expense.occurredOn.day.toString().padLeft(2, '0')}/${expense.occurredOn.month.toString().padLeft(2, '0')}/${expense.occurredOn.year}';
 
     return Card(
       child: InkWell(
@@ -382,12 +385,21 @@ class _ExpenseCard extends StatelessWidget {
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 6),
-                        Text(
+                      Text(
                           '${expense.category.name} · ${expense.subcategory.name}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF65727B),
                           ),
                         ),
+                        if (expense.reference != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            'Referencia: ${expense.reference!.name}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF65727B),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -415,7 +427,11 @@ class _ExpenseCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _MetaChip(label: 'Vence em $dueDate'),
+                  _MetaChip(
+                    label: dueDate == null
+                        ? 'Sem vencimento · $effectiveDate'
+                        : 'Vence em $dueDate',
+                  ),
                   _MetaChip(label: expense.status),
                   _MetaChip(label: expense.context),
                   if (expense.overdue) const _MetaChip(label: 'Atrasada'),
