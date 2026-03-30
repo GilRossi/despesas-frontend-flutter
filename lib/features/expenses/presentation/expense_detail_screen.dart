@@ -215,9 +215,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     }
 
     if (_viewModel.paymentErrorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_viewModel.paymentErrorMessage!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_viewModel.paymentErrorMessage!)));
     }
   }
 
@@ -369,7 +369,6 @@ class _DetailContent extends StatelessWidget {
                     runSpacing: 8,
                     children: [
                       _MetaChip(label: _formatEnumLabel(expense.status)),
-                      _MetaChip(label: _formatEnumLabel(expense.context)),
                       if (expense.overdue) const _MetaChip(label: 'Atrasada'),
                     ],
                   ),
@@ -479,8 +478,10 @@ class _DetailContent extends StatelessWidget {
                     ) ...[
                       _PaymentEntry(
                         payment: expense.payments[index],
-                        isRemoving: removingPaymentId == expense.payments[index].id,
-                        onDelete: () => onDeletePayment(expense.payments[index]),
+                        isRemoving:
+                            removingPaymentId == expense.payments[index].id,
+                        onDelete: () =>
+                            onDeletePayment(expense.payments[index]),
                       ),
                       if (index < expense.payments.length - 1) ...[
                         const SizedBox(height: 16),

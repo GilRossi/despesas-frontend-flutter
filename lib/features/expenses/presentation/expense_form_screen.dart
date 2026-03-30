@@ -35,16 +35,6 @@ class ExpenseFormScreen extends StatefulWidget {
 }
 
 class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
-  static const _contexts = [
-    'CASA',
-    'VEICULO',
-    'UBER',
-    'PJ',
-    'BUSCA_EMPREGO',
-    'PETS',
-    'GERAL',
-  ];
-
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
@@ -55,7 +45,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   late final ExpenseFormViewModel _viewModel;
   late DateTime _occurredOn;
   DateTime? _dueDate;
-  late String _context;
   late _ExpenseLaunchMode _launchMode;
   int? _selectedCategoryId;
   int? _selectedSubcategoryId;
@@ -135,7 +124,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     _launchMode = expense?.dueDate == null
         ? _ExpenseLaunchMode.oneOff
         : _ExpenseLaunchMode.dueDated;
-    _context = expense?.context ?? _contexts.first;
     _selectedCategoryId = expense?.category.id;
     _selectedSubcategoryId = expense?.subcategory.id;
     _selectedSpaceReferenceId = expense?.reference?.id;
@@ -279,7 +267,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       amount: amount,
       occurredOn: _occurredOn,
       dueDate: _launchMode == _ExpenseLaunchMode.dueDated ? _dueDate : null,
-      context: _context,
       categoryId: _selectedCategoryId!,
       subcategoryId: _selectedSubcategoryId!,
       spaceReferenceId: _selectedSpaceReferenceId,
@@ -359,7 +346,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 );
               }
 
-              if (_viewModel.isLoadingCatalog && !_viewModel.hasCatalogOptions) {
+              if (_viewModel.isLoadingCatalog &&
+                  !_viewModel.hasCatalogOptions) {
                 return const Center(child: CircularProgressIndicator());
               }
 
@@ -407,7 +395,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           ),
                           const SizedBox(height: 20),
                           _FlowGuidanceCard(
-                            onOpenFixedBills: () => context.go('/fixed-bills/new'),
+                            onOpenFixedBills: () =>
+                                context.go('/fixed-bills/new'),
                             onOpenHistoryImport: () =>
                                 context.go('/history/import'),
                             onOpenReferences: () =>
@@ -428,8 +417,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                   children: [
                                     ChoiceChip(
                                       label: const Text('Avulsa / pontual'),
-                                      avatar:
-                                          const Icon(Icons.flash_on_outlined),
+                                      avatar: const Icon(
+                                        Icons.flash_on_outlined,
+                                      ),
                                       selected:
                                           _launchMode ==
                                           _ExpenseLaunchMode.oneOff,
@@ -496,7 +486,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           ),
                           const SizedBox(height: 24),
                           TextFormField(
-                            key: const ValueKey('expense-form-description-field'),
+                            key: const ValueKey(
+                              'expense-form-description-field',
+                            ),
                             controller: _descriptionController,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
@@ -586,7 +578,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                 ),
                               ),
                               validator: (value) {
-                                if (_launchMode != _ExpenseLaunchMode.dueDated) {
+                                if (_launchMode !=
+                                    _ExpenseLaunchMode.dueDated) {
                                   return null;
                                 }
                                 if (value == null || value.trim().isEmpty) {
@@ -602,29 +595,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                   'Esta despesa vai usar a data da ocorrencia como referencia principal e nao sera tratada como vencida automaticamente.',
                             ),
                           const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            key: ValueKey('context-$_context'),
-                            initialValue: _context,
-                            decoration: InputDecoration(
-                              labelText: 'Contexto',
-                              errorText: _viewModel.fieldError('context'),
-                            ),
-                            items: [
-                              for (final contextValue in _contexts)
-                                DropdownMenuItem(
-                                  value: contextValue,
-                                  child: Text(_formatEnumLabel(contextValue)),
-                                ),
-                            ],
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() => _context = value);
-                              _viewModel.clearFieldError('context');
-                            },
-                          ),
-                          const SizedBox(height: 12),
                           DropdownButtonFormField<int?>(
                             key: ValueKey(
                               'expense-form-space-reference-field-${_selectedSpaceReferenceId ?? 'none'}',
@@ -632,13 +602,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             initialValue: _selectedSpaceReferenceId,
                             decoration: InputDecoration(
                               labelText: 'Referencia do Espaco',
-                              helperText:
-                                  _viewModel.hasReferences
+                              helperText: _viewModel.hasReferences
                                   ? 'Opcional. Use quando o gasto estiver ligado a casa, veiculo, cliente, projeto ou outra referencia cadastrada.'
                                   : _viewModel.loadReferencesErrorMessage ??
                                         'Nenhuma referencia cadastrada ainda. Voce pode seguir sem isso ou abrir o Espaço para cadastrar.',
-                              errorText:
-                                  _viewModel.fieldError('spaceReferenceId'),
+                              errorText: _viewModel.fieldError(
+                                'spaceReferenceId',
+                              ),
                             ),
                             items: [
                               const DropdownMenuItem<int?>(
@@ -667,7 +637,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                               children: [
                                 Chip(label: Text(_selectedReference!.name)),
                                 Chip(
-                                  label: Text(_selectedReference!.typeGroup.label),
+                                  label: Text(
+                                    _selectedReference!.typeGroup.label,
+                                  ),
                                 ),
                               ],
                             ),
@@ -767,7 +739,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Opcional. Use para contexto rapido, posto, motivo ou alguma anotacao util.',
+                            'Opcional. Use para posto, motivo, detalhes do gasto ou alguma anotacao util.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: const Color(0xFF65727B),
                             ),
@@ -861,14 +833,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     return '$day/$month/${value.year}';
   }
 
-  static String _formatEnumLabel(String value) {
-    return value
-        .toLowerCase()
-        .split('_')
-        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
-  }
-
   static double? _parseAmount(String rawValue) {
     final normalized = rawValue
         .trim()
@@ -923,7 +887,10 @@ class _FlowGuidanceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Antes de lancar, confirme o tipo certo', style: theme.textTheme.titleMedium),
+            Text(
+              'Antes de lancar, confirme o tipo certo',
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text(
               'Despesa avulsa e pontual fica aqui. Conta fixa vai para contas fixas. Lancamento antigo ou lote passado vai para historico. Referencia do Espaco pode ser criada antes ou escolhida aqui quando existir.',
@@ -968,11 +935,7 @@ class _FlowGuidanceCard extends StatelessWidget {
                   );
                 }
 
-                return Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: buttons,
-                );
+                return Wrap(spacing: 10, runSpacing: 10, children: buttons);
               },
             ),
           ],

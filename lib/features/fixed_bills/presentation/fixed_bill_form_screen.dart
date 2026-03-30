@@ -36,16 +36,6 @@ class FixedBillFormScreen extends StatefulWidget {
 }
 
 class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
-  static const _contexts = [
-    'CASA',
-    'VEICULO',
-    'UBER',
-    'PJ',
-    'BUSCA_EMPREGO',
-    'PETS',
-    'GERAL',
-  ];
-
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
@@ -55,7 +45,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
   late DateTime _firstDueDate;
 
   _FixedBillFlowStep _step = _FixedBillFlowStep.collect;
-  String? _selectedContext;
   int? _selectedCategoryId;
   int? _selectedSubcategoryId;
   int? _selectedSpaceReferenceId;
@@ -179,7 +168,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       _amountController.clear();
       _firstDueDate = _normalizeDate(DateTime.now());
       _firstDueDateController.text = _formatDate(_firstDueDate);
-      _selectedContext = null;
       _selectedCategoryId = null;
       _selectedSubcategoryId = null;
       _selectedSpaceReferenceId = null;
@@ -193,7 +181,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     final amount = _parseAmount(_amountController.text);
     if (amount == null ||
         amount <= 0 ||
-        _selectedContext == null ||
         _selectedCategoryId == null ||
         _selectedSubcategoryId == null) {
       return null;
@@ -204,7 +191,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       amount: amount,
       firstDueDate: _firstDueDate,
       frequency: FixedBillFrequency.monthly,
-      context: _selectedContext!,
       categoryId: _selectedCategoryId!,
       subcategoryId: _selectedSubcategoryId!,
       spaceReferenceId: _selectedSpaceReferenceId,
@@ -374,38 +360,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
               child: const Text('Mensal'),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String?>(
-              key: ValueKey(
-                'fixed-bill-form-context-field-${_selectedContext ?? 'none'}',
-              ),
-              initialValue: _selectedContext,
-              decoration: InputDecoration(
-                labelText: 'Onde essa conta fixa se encaixa?',
-                errorText: _viewModel.fieldError('context'),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('Escolha o contexto'),
-                ),
-                for (final contextValue in _contexts)
-                  DropdownMenuItem<String?>(
-                    value: contextValue,
-                    child: Text(_formatContextLabel(contextValue)),
-                  ),
-              ],
-              onChanged: (value) {
-                setState(() => _selectedContext = value);
-                _viewModel.clearFieldError('context');
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Selecione o contexto da conta fixa.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
             DropdownButtonFormField<int?>(
               key: ValueKey(
                 'fixed-bill-form-category-field-${_selectedCategoryId ?? 'none'}',
@@ -554,12 +508,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 value: FixedBillFrequency.monthly.label,
               ),
               _ReviewRow(
-                label: 'Contexto',
-                value: _selectedContext == null
-                    ? '-'
-                    : _formatContextLabel(_selectedContext!),
-              ),
-              _ReviewRow(
                 label: 'Categoria',
                 value: _selectedCategory?.name ?? '-',
               ),
@@ -673,10 +621,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             label: 'Recorrencia',
             value: createdFixedBill.frequency.label,
           ),
-          _ReviewRow(
-            label: 'Contexto',
-            value: _formatContextLabel(createdFixedBill.context),
-          ),
           _ReviewRow(label: 'Categoria', value: createdFixedBill.category.name),
           _ReviewRow(
             label: 'Subcategoria',
@@ -735,19 +679,6 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
         .replaceAll(',', '.');
     return double.tryParse(normalized);
   }
-
-  static String _formatContextLabel(String value) {
-    return switch (value) {
-      'CASA' => 'Casa',
-      'VEICULO' => 'Veiculo',
-      'UBER' => 'Uber',
-      'PJ' => 'PJ',
-      'BUSCA_EMPREGO' => 'Busca de emprego',
-      'PETS' => 'Pets',
-      'GERAL' => 'Geral',
-      _ => value,
-    };
-  }
 }
 
 class _HeroCard extends StatelessWidget {
@@ -790,7 +721,7 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             step == _FixedBillFlowStep.collect
-                ? 'Voce preenche so o essencial: descricao, valor, primeiro vencimento, contexto, catalogo e uma referencia opcional do seu Espaco.'
+                ? 'Voce preenche so o essencial: descricao, valor, primeiro vencimento, catalogo e uma referencia opcional do seu Espaco.'
                 : step == _FixedBillFlowStep.review
                 ? 'Agora confira com calma. A gravacao real so acontece depois da sua confirmacao.'
                 : 'Tudo certo. O backend confirmou o cadastro da conta fixa.',

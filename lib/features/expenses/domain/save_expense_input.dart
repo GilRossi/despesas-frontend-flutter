@@ -4,7 +4,6 @@ class SaveExpenseInput {
     required this.amount,
     required this.occurredOn,
     required this.dueDate,
-    required this.context,
     required this.categoryId,
     required this.subcategoryId,
     required this.spaceReferenceId,
@@ -15,7 +14,6 @@ class SaveExpenseInput {
   final double amount;
   final DateTime occurredOn;
   final DateTime? dueDate;
-  final String context;
   final int categoryId;
   final int subcategoryId;
   final int? spaceReferenceId;
@@ -27,7 +25,6 @@ class SaveExpenseInput {
       'amount': amount,
       'occurredOn': _formatDate(occurredOn),
       'dueDate': dueDate == null ? null : _formatDate(dueDate!),
-      'context': context,
       'categoryId': categoryId,
       'subcategoryId': subcategoryId,
       'spaceReferenceId': spaceReferenceId,

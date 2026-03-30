@@ -35,16 +35,6 @@ class HistoryImportFormScreen extends StatefulWidget {
 }
 
 class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
-  static const _contexts = [
-    'CASA',
-    'VEICULO',
-    'UBER',
-    'PJ',
-    'BUSCA_EMPREGO',
-    'PETS',
-    'GERAL',
-  ];
-
   final _formKey = GlobalKey<FormState>();
   final List<_HistoryImportEntryDraft> _entries = [];
 
@@ -182,7 +172,6 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
       final amount = _parseAmount(entry.amountController.text);
       if (amount == null ||
           amount <= 0 ||
-          entry.selectedContext == null ||
           entry.selectedCategoryId == null ||
           entry.selectedSubcategoryId == null) {
         return null;
@@ -193,7 +182,6 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
           description: entry.descriptionController.text.trim(),
           amount: amount,
           date: entry.date,
-          context: entry.selectedContext!,
           categoryId: entry.selectedCategoryId!,
           subcategoryId: entry.selectedSubcategoryId!,
           notes: entry.notesController.text.trim(),
@@ -527,38 +515,6 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             },
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String?>(
-            key: ValueKey(
-              'history-import-entry-$index-context-field-${entry.selectedContext ?? 'none'}',
-            ),
-            initialValue: entry.selectedContext,
-            decoration: InputDecoration(
-              labelText: 'Onde esse item se encaixa?',
-              errorText: _entryFieldError(index, 'context'),
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('Escolha o contexto'),
-              ),
-              for (final contextValue in _contexts)
-                DropdownMenuItem<String?>(
-                  value: contextValue,
-                  child: Text(_formatContextLabel(contextValue)),
-                ),
-            ],
-            onChanged: (value) {
-              setState(() => entry.selectedContext = value);
-              _clearEntryFieldError(index, 'context');
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Selecione o contexto deste item.';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
             key: ValueKey(
               'history-import-entry-$index-category-field-${entry.selectedCategoryId ?? 'none'}',
@@ -762,10 +718,6 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             _ReviewRow(label: 'Valor', value: formatCurrency(entry.amount)),
             _ReviewRow(label: 'Data', value: _formatDate(entry.date)),
             _ReviewRow(
-              label: 'Contexto',
-              value: _formatContextLabel(entry.context),
-            ),
-            _ReviewRow(
               label: 'Categoria',
               value: _selectedCategoryFor(draft)?.name ?? '-',
             ),
@@ -898,19 +850,6 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
     return double.tryParse(normalized);
   }
 
-  static String _formatContextLabel(String value) {
-    return switch (value) {
-      'CASA' => 'Casa',
-      'VEICULO' => 'Veiculo',
-      'UBER' => 'Uber',
-      'PJ' => 'PJ',
-      'BUSCA_EMPREGO' => 'Busca de emprego',
-      'PETS' => 'Pets',
-      'GERAL' => 'Geral',
-      _ => value,
-    };
-  }
-
   static String _formatStatusLabel(String value) {
     return switch (value) {
       'PAGA' => 'Paga',
@@ -936,7 +875,6 @@ class _HistoryImportEntryDraft {
   final TextEditingController dateController;
 
   DateTime date;
-  String? selectedContext;
   int? selectedCategoryId;
   int? selectedSubcategoryId;
 

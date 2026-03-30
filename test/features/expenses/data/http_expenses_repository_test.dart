@@ -285,61 +285,62 @@ void main() {
     expect(options.first.subcategories.first.name, 'Internet');
   });
 
-  test('createExpense envia o payload da despesa para POST /expenses', () async {
-    late http.Request capturedRequest;
-    final repository = await buildRepository((request) async {
-      capturedRequest = request;
-      return http.Response(
-        jsonEncode({
-          'data': {
-            'id': 99,
-            'description': 'Mercado',
-            'amount': 120.5,
-            'dueDate': '2026-03-29',
-            'occurredOn': '2026-03-29',
-            'context': 'CASA',
-            'category': {'id': 1, 'name': 'Casa'},
-            'subcategory': {'id': 11, 'name': 'Supermercado'},
-            'reference': {'id': 77, 'name': 'Casa principal'},
-            'status': 'PENDENTE',
-            'remainingAmount': 120.5,
-            'paidAmount': 0,
-            'overdue': false,
-          },
-        }),
-        201,
-        headers: {'content-type': 'application/json'},
+  test(
+    'createExpense envia o payload da despesa para POST /expenses',
+    () async {
+      late http.Request capturedRequest;
+      final repository = await buildRepository((request) async {
+        capturedRequest = request;
+        return http.Response(
+          jsonEncode({
+            'data': {
+              'id': 99,
+              'description': 'Mercado',
+              'amount': 120.5,
+              'dueDate': '2026-03-29',
+              'occurredOn': '2026-03-29',
+              'context': 'CASA',
+              'category': {'id': 1, 'name': 'Casa'},
+              'subcategory': {'id': 11, 'name': 'Supermercado'},
+              'reference': {'id': 77, 'name': 'Casa principal'},
+              'status': 'PENDENTE',
+              'remainingAmount': 120.5,
+              'paidAmount': 0,
+              'overdue': false,
+            },
+          }),
+          201,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      await repository.createExpense(
+        SaveExpenseInput(
+          description: 'Mercado',
+          amount: 120.5,
+          occurredOn: DateTime.utc(2026, 3, 29),
+          dueDate: DateTime.utc(2026, 3, 29),
+          categoryId: 1,
+          subcategoryId: 11,
+          spaceReferenceId: 77,
+          notes: 'Compra da semana',
+        ),
       );
-    });
 
-    await repository.createExpense(
-      SaveExpenseInput(
-        description: 'Mercado',
-        amount: 120.5,
-        occurredOn: DateTime.utc(2026, 3, 29),
-        dueDate: DateTime.utc(2026, 3, 29),
-        context: 'CASA',
-        categoryId: 1,
-        subcategoryId: 11,
-        spaceReferenceId: 77,
-        notes: 'Compra da semana',
-      ),
-    );
-
-    expect(capturedRequest.method, 'POST');
-    expect(capturedRequest.url.path, '/api/v1/expenses');
-    expect(jsonDecode(capturedRequest.body), {
-      'description': 'Mercado',
-      'amount': 120.5,
-      'occurredOn': '2026-03-29',
-      'dueDate': '2026-03-29',
-      'context': 'CASA',
-      'categoryId': 1,
-      'subcategoryId': 11,
-      'spaceReferenceId': 77,
-      'notes': 'Compra da semana',
-    });
-  });
+      expect(capturedRequest.method, 'POST');
+      expect(capturedRequest.url.path, '/api/v1/expenses');
+      expect(jsonDecode(capturedRequest.body), {
+        'description': 'Mercado',
+        'amount': 120.5,
+        'occurredOn': '2026-03-29',
+        'dueDate': '2026-03-29',
+        'categoryId': 1,
+        'subcategoryId': 11,
+        'spaceReferenceId': 77,
+        'notes': 'Compra da semana',
+      });
+    },
+  );
 
   test('updateExpense envia PATCH com o id correto', () async {
     late http.Request capturedRequest;
@@ -355,7 +356,6 @@ void main() {
         amount: 89.9,
         occurredOn: DateTime.utc(2026, 3, 30),
         dueDate: DateTime.utc(2026, 3, 30),
-        context: 'CASA',
         categoryId: 1,
         subcategoryId: 11,
         spaceReferenceId: null,
@@ -383,10 +383,7 @@ void main() {
   test('listExpenses propaga erro do backend', () async {
     final repository = await buildRepository((request) async {
       return http.Response(
-        jsonEncode({
-          'code': 'SERVER_ERROR',
-          'message': 'Falha simulada',
-        }),
+        jsonEncode({'code': 'SERVER_ERROR', 'message': 'Falha simulada'}),
         500,
         headers: {'content-type': 'application/json'},
       );

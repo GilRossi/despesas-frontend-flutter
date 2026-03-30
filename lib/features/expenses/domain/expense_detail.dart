@@ -8,7 +8,6 @@ class ExpenseDetail {
     required this.amount,
     required this.dueDate,
     required this.occurredOn,
-    required this.context,
     required this.category,
     required this.subcategory,
     required this.reference,
@@ -26,7 +25,6 @@ class ExpenseDetail {
   final double amount;
   final DateTime? dueDate;
   final DateTime occurredOn;
-  final String context;
   final ExpenseReference category;
   final ExpenseReference subcategory;
   final ExpenseReference? reference;
@@ -50,7 +48,6 @@ class ExpenseDetail {
       amount: _toDouble(json['amount']),
       dueDate: _toNullableDate(json['dueDate']),
       occurredOn: DateTime.parse('${json['occurredOn']}T00:00:00'),
-      context: json['context'] as String,
       category: ExpenseReference.fromJson(
         json['category'] as Map<String, dynamic>,
       ),
