@@ -25,6 +25,7 @@ import 'package:go_router/go_router.dart';
 class ExpensesListScreen extends StatefulWidget {
   const ExpensesListScreen({
     super.key,
+    this.initialHighlightedExpenseId,
     required this.sessionController,
     required this.expensesRepository,
     required this.financialAssistantRepository,
@@ -33,6 +34,7 @@ class ExpensesListScreen extends StatefulWidget {
     required this.reviewOperationsRepository,
   });
 
+  final int? initialHighlightedExpenseId;
   final SessionController sessionController;
   final ExpensesRepository expensesRepository;
   final FinancialAssistantRepository financialAssistantRepository;
@@ -46,10 +48,12 @@ class ExpensesListScreen extends StatefulWidget {
 
 class _ExpensesListScreenState extends State<ExpensesListScreen> {
   late final ExpensesListViewModel _viewModel;
+  int? _highlightedExpenseId;
 
   @override
   void initState() {
     super.initState();
+    _highlightedExpenseId = widget.initialHighlightedExpenseId;
     _viewModel = ExpensesListViewModel(
       expensesRepository: widget.expensesRepository,
     )..load();
@@ -135,6 +139,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     }
 
     if (result.shouldReload) {
+      _highlightedExpenseId = result.expenseId;
       await _viewModel.load();
     }
 
@@ -326,14 +331,34 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                     ),
                   ),
                 ] else ...[
-                  Text(
-                    'Despesas do household atual',
-                    style: theme.textTheme.titleMedium,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Despesas do household atual',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Mais recentes primeiro para facilitar localizar o ultimo lancamento.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: const Color(0xFF65727B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   for (final expense in _viewModel.expenses) ...[
                     _ExpenseCard(
                       expense: expense,
+                      highlighted: expense.id == _highlightedExpenseId,
                       onTap: () => _openExpenseDetail(expense),
                     ),
                     const SizedBox(height: 12),
@@ -349,14 +374,21 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
 }
 
 class _ExpenseCard extends StatelessWidget {
-  const _ExpenseCard({required this.expense, required this.onTap});
+  const _ExpenseCard({
+    required this.expense,
+    required this.onTap,
+    required this.highlighted,
+  });
 
   final ExpenseSummary expense;
   final VoidCallback onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final createdDate =
+        '${expense.createdAt.day.toString().padLeft(2, '0')}/${expense.createdAt.month.toString().padLeft(2, '0')}/${expense.createdAt.year}';
     final dueDate = expense.dueDate == null
         ? null
         : '${expense.dueDate!.day.toString().padLeft(2, '0')}/${expense.dueDate!.month.toString().padLeft(2, '0')}/${expense.dueDate!.year}';
@@ -364,6 +396,15 @@ class _ExpenseCard extends StatelessWidget {
         '${expense.occurredOn.day.toString().padLeft(2, '0')}/${expense.occurredOn.month.toString().padLeft(2, '0')}/${expense.occurredOn.year}';
 
     return Card(
+      color: highlighted ? const Color(0xFFF5FBF8) : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: highlighted
+              ? theme.colorScheme.primary.withValues(alpha: 0.28)
+              : Colors.transparent,
+        ),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
@@ -426,6 +467,11 @@ class _ExpenseCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  _MetaChip(
+                    label: highlighted
+                        ? 'Recem criada · lancada em $createdDate'
+                        : 'Lancada em $createdDate',
+                  ),
                   _MetaChip(
                     label: dueDate == null
                         ? 'Sem vencimento · $effectiveDate'

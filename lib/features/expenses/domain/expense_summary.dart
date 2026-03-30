@@ -14,6 +14,7 @@ class ExpenseSummary {
     required this.paidAmount,
     required this.remainingAmount,
     required this.overdue,
+    required this.createdAt,
   });
 
   final int id;
@@ -28,6 +29,7 @@ class ExpenseSummary {
   final double paidAmount;
   final double remainingAmount;
   final bool overdue;
+  final DateTime createdAt;
 
   bool get hasDueDate => dueDate != null;
 
@@ -51,6 +53,9 @@ class ExpenseSummary {
       paidAmount: _toDouble(json['paidAmount']),
       remainingAmount: _toDouble(json['remainingAmount']),
       overdue: json['overdue'] as bool? ?? false,
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.parse('1970-01-01T00:00:00Z'),
     );
   }
 

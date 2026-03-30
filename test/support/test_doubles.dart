@@ -1285,6 +1285,7 @@ ExpenseSummary fakeExpense({
   double amount = 129.9,
   DateTime? dueDate,
   DateTime? occurredOn,
+  DateTime? createdAt,
   String category = 'Casa',
   String subcategory = 'Internet',
   String status = 'ABERTA',
@@ -1305,6 +1306,7 @@ ExpenseSummary fakeExpense({
     paidAmount: paidAmount,
     remainingAmount: remainingAmount ?? amount,
     overdue: false,
+    createdAt: createdAt ?? DateTime.utc(2026, 3, 28, 12),
   );
 }
 

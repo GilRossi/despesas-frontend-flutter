@@ -5,6 +5,7 @@ import 'package:despesas_frontend/app/app_theme.dart';
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
+import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
@@ -403,7 +404,30 @@ void main() {
           password: 'password',
         );
 
-        final expensesRepository = FakeExpensesRepository();
+        final expensesRepository = FakeExpensesRepository(
+          createResult: fakeExpense(
+            id: 99,
+            description: 'Mercado',
+            amount: 110,
+            createdAt: DateTime.utc(2026, 3, 30, 15, 20),
+          ),
+          result: PagedResult(
+            items: [
+              fakeExpense(
+                id: 99,
+                description: 'Mercado',
+                amount: 110,
+                createdAt: DateTime.utc(2026, 3, 30, 15, 20),
+              ),
+            ],
+            page: 0,
+            size: 20,
+            totalElements: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false,
+          ),
+        );
 
         await pumpRouter(
           tester,
@@ -472,7 +496,30 @@ void main() {
           password: 'password',
         );
 
-        final expensesRepository = FakeExpensesRepository();
+        final expensesRepository = FakeExpensesRepository(
+          createResult: fakeExpense(
+            id: 99,
+            description: 'Mercado',
+            amount: 110,
+            createdAt: DateTime.utc(2026, 3, 30, 15, 20),
+          ),
+          result: PagedResult(
+            items: [
+              fakeExpense(
+                id: 99,
+                description: 'Mercado',
+                amount: 110,
+                createdAt: DateTime.utc(2026, 3, 30, 15, 20),
+              ),
+            ],
+            page: 0,
+            size: 20,
+            totalElements: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false,
+          ),
+        );
 
         await pumpRouter(
           tester,
@@ -516,6 +563,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Gestao principal de despesas'), findsOneWidget);
+        expect(find.text('Mercado'), findsOneWidget);
       },
     );
 

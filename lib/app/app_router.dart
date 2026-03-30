@@ -196,6 +196,9 @@ GoRouter createAppRouter({
           GoRoute(
             path: '/expenses',
             builder: (context, state) => ExpensesListScreen(
+              initialHighlightedExpenseId: int.tryParse(
+                state.uri.queryParameters['highlight'] ?? '',
+              ),
               sessionController: sessionController,
               expensesRepository: expensesRepository,
               financialAssistantRepository: financialAssistantRepository,

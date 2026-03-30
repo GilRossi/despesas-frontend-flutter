@@ -194,6 +194,7 @@ void main() {
               'remainingAmount': 129.9,
               'paymentsCount': 0,
               'payments': [],
+              'createdAt': '2026-03-30T15:20:10Z',
             },
           ],
           'page': {
@@ -307,6 +308,7 @@ void main() {
               'remainingAmount': 120.5,
               'paidAmount': 0,
               'overdue': false,
+              'createdAt': '2026-03-30T15:20:10Z',
             },
           }),
           201,
