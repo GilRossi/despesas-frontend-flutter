@@ -268,6 +268,7 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.detailError,
     this.catalogOptions,
     this.catalogError,
+    this.createResult,
     this.createError,
     this.updateError,
     this.deleteError,
@@ -1288,6 +1289,8 @@ ExpenseSummary fakeExpense({
   String subcategory = 'Internet',
   String status = 'ABERTA',
   ExpenseReference? reference,
+  double paidAmount = 0,
+  double? remainingAmount,
 }) {
   return ExpenseSummary(
     id: id,
@@ -1299,8 +1302,8 @@ ExpenseSummary fakeExpense({
     subcategory: ExpenseReference(id: 2, name: subcategory),
     reference: reference,
     status: status,
-    paidAmount: 0,
-    remainingAmount: amount,
+    paidAmount: paidAmount,
+    remainingAmount: remainingAmount ?? amount,
     overdue: false,
   );
 }

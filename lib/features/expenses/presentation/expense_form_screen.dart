@@ -7,6 +7,7 @@ import 'package:despesas_frontend/features/expenses/domain/expenses_repository.d
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_view_model.dart';
+import 'package:despesas_frontend/features/expenses/presentation/expense_payment_form_card.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_reference_item.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   int? _selectedCategoryId;
   int? _selectedSubcategoryId;
   int? _selectedSpaceReferenceId;
+  bool _registerInitialPayment = false;
+  late DateTime _initialPaymentPaidAt;
+  String _initialPaymentMethod = expensePaymentMethods.first;
   _ExpenseCreateSuccessState? _successState;
 
   bool get _isEditing => widget.isEditing;
@@ -127,6 +131,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     _selectedCategoryId = expense?.category.id;
     _selectedSubcategoryId = expense?.subcategory.id;
     _selectedSpaceReferenceId = expense?.reference?.id;
+    _registerInitialPayment = false;
+    _initialPaymentPaidAt = _occurredOn;
+    _initialPaymentMethod = expensePaymentMethods.first;
   }
 
   Future<void> _loadDependencies() async {
@@ -224,6 +231,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     });
   }
 
+  Future<void> _pickInitialPaymentDate() async {
+    final picked = await _pickDate(initialDate: _initialPaymentPaidAt);
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    setState(() => _initialPaymentPaidAt = picked);
+  }
+
   Future<DateTime?> _pickDate({required DateTime initialDate}) async {
     final picked = await showDatePicker(
       context: context,
@@ -271,6 +287,12 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       subcategoryId: _selectedSubcategoryId!,
       spaceReferenceId: _selectedSpaceReferenceId,
       notes: _notesController.text,
+      initialPayment: !_isEditing && _registerInitialPayment
+          ? ExpenseInitialPaymentInput(
+              paidAt: _initialPaymentPaidAt,
+              method: _initialPaymentMethod,
+            )
+          : null,
     );
 
     final createdExpense = _isEditing
@@ -293,6 +315,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           description: createdExpense.description,
           amount: createdExpense.amount,
           hasDueDate: createdExpense.hasDueDate,
+          paidNow: createdExpense.paidAmount > 0 && createdExpense.remainingAmount <= 0,
         );
       });
       return;
@@ -302,6 +325,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       ExpenseFlowResult.reload(
         message: _isEditing
             ? 'Despesa atualizada com sucesso.'
+            : _registerInitialPayment
+            ? 'Despesa criada e pagamento registrado com sucesso.'
             : 'Despesa criada com sucesso.',
       ),
     );
@@ -744,6 +769,112 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                               color: const Color(0xFF65727B),
                             ),
                           ),
+                          if (!_isEditing) ...[
+                            const SizedBox(height: 20),
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF6F8F7),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: const Color(0xFFDCE5E1),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(18),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SwitchListTile.adaptive(
+                                      key: const ValueKey(
+                                        'expense-form-initial-payment-toggle',
+                                      ),
+                                      contentPadding: EdgeInsets.zero,
+                                      value: _registerInitialPayment,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _registerInitialPayment = value;
+                                          if (value) {
+                                            _initialPaymentPaidAt = _occurredOn;
+                                          }
+                                        });
+                                      },
+                                      title: const Text('Ja foi paga?'),
+                                      subtitle: const Text(
+                                        'Marque apenas quando esta despesa ja estiver totalmente quitada. Pagamento parcial continua no fluxo de pagamento separado.',
+                                      ),
+                                    ),
+                                    if (_registerInitialPayment) ...[
+                                      const SizedBox(height: 8),
+                                      InkWell(
+                                        key: const ValueKey(
+                                          'expense-form-initial-payment-date-field',
+                                        ),
+                                        onTap: _pickInitialPaymentDate,
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: InputDecorator(
+                                          decoration: const InputDecoration(
+                                            labelText: 'Data do pagamento',
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  formatExpensePaymentDate(
+                                                    _initialPaymentPaidAt,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              const Icon(
+                                                Icons.calendar_today_outlined,
+                                                size: 18,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      DropdownButtonFormField<String>(
+                                        key: const ValueKey(
+                                          'expense-form-initial-payment-method-field',
+                                        ),
+                                        initialValue: _initialPaymentMethod,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Metodo do pagamento',
+                                        ),
+                                        items: expensePaymentMethods
+                                            .map(
+                                              (method) => DropdownMenuItem<String>(
+                                                value: method,
+                                                child: Text(
+                                                  formatExpenseEnumLabel(method),
+                                                ),
+                                              ),
+                                            )
+                                            .toList(growable: false),
+                                        onChanged: (value) {
+                                          if (value == null) {
+                                            return;
+                                          }
+                                          setState(
+                                            () =>
+                                                _initialPaymentMethod = value,
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'O sistema vai registrar um pagamento integral com o mesmo valor desta despesa.',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: const Color(0xFF65727B),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                           if (_viewModel.submitErrorMessage != null) ...[
                             const SizedBox(height: 12),
                             Text(
@@ -985,11 +1116,13 @@ class _ExpenseCreateSuccessState {
     required this.description,
     required this.amount,
     required this.hasDueDate,
+    required this.paidNow,
   });
 
   final String description;
   final double amount;
   final bool hasDueDate;
+  final bool paidNow;
 }
 
 class _ExpenseFormSuccessState extends StatelessWidget {
@@ -1028,12 +1161,16 @@ class _ExpenseFormSuccessState extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Despesa lancada com sucesso',
+                successState.paidNow
+                    ? 'Despesa lancada e quitada'
+                    : 'Despesa lancada com sucesso',
                 style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
-                '"${successState.description}" entrou como lancamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')}.',
+                successState.paidNow
+                    ? '"${successState.description}" entrou como lancamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')} e ja foi marcada como paga no mesmo fluxo.'
+                    : '"${successState.description}" entrou como lancamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')}.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
