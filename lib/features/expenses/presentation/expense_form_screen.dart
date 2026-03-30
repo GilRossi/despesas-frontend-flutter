@@ -312,6 +312,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     if (widget.standalone && !_isEditing && createdExpense != null) {
       setState(() {
         _successState = _ExpenseCreateSuccessState(
+          expenseId: createdExpense.id,
           description: createdExpense.description,
           amount: createdExpense.amount,
           hasDueDate: createdExpense.hasDueDate,
@@ -323,6 +324,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
     Navigator.of(context).pop(
       ExpenseFlowResult.reload(
+        expenseId: createdExpense?.id,
         message: _isEditing
             ? 'Despesa atualizada com sucesso.'
             : _registerInitialPayment
@@ -367,7 +369,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 return _ExpenseFormSuccessState(
                   successState: successState,
                   onCreateAnother: _startAnotherExpense,
-                  onOpenExpenses: () => context.go('/expenses'),
+                  onOpenExpenses: () =>
+                      context.go('/expenses?highlight=${successState.expenseId}'),
                 );
               }
 
@@ -1113,12 +1116,14 @@ class _InlineInfoCard extends StatelessWidget {
 
 class _ExpenseCreateSuccessState {
   const _ExpenseCreateSuccessState({
+    required this.expenseId,
     required this.description,
     required this.amount,
     required this.hasDueDate,
     required this.paidNow,
   });
 
+  final int expenseId;
   final String description;
   final double amount;
   final bool hasDueDate;

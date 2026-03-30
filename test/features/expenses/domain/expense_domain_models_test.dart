@@ -21,6 +21,7 @@ void main() {
       'paidAmount': 20,
       'remainingAmount': 109.9,
       'overdue': true,
+      'createdAt': '2026-03-30T15:20:10Z',
     });
 
     expect(summary.id, 7);
@@ -31,6 +32,7 @@ void main() {
     expect(summary.category.name, 'Casa');
     expect(summary.subcategory.id, 11);
     expect(summary.reference?.name, 'Apartamento 12');
+    expect(summary.createdAt, DateTime.parse('2026-03-30T15:20:10Z'));
   });
 
   test('expense detail decodes payments and derived flags', () {
