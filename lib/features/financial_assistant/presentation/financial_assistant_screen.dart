@@ -22,11 +22,13 @@ class FinancialAssistantScreen extends StatefulWidget {
     super.key,
     required this.financialAssistantRepository,
     required this.sessionController,
+    this.reopenTourOnStart = false,
     this.onStarterPrimaryActionRequested,
   });
 
   final FinancialAssistantRepository financialAssistantRepository;
   final SessionController sessionController;
+  final bool reopenTourOnStart;
   final void Function(String primaryActionKey)? onStarterPrimaryActionRequested;
 
   @override
@@ -47,6 +49,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
     _viewModel = FinancialAssistantViewModel(
       financialAssistantRepository: widget.financialAssistantRepository,
       sessionController: widget.sessionController,
+      reopenTourOnStart: widget.reopenTourOnStart,
     );
   }
 
@@ -326,7 +329,9 @@ class _HeroCard extends StatelessWidget {
                   key: const ValueKey('assistant-reopen-tour-button'),
                   onPressed: isTourVisible ? null : onReopenTour,
                   icon: const Icon(Icons.play_circle_outline),
-                  label: const Text('Rever tour'),
+                  label: Text(
+                    isTourVisible ? 'Tour em andamento' : 'Abrir tour guiado',
+                  ),
                 ),
                 OutlinedButton(
                   onPressed: isLoading ? null : () => onNextMonth(),

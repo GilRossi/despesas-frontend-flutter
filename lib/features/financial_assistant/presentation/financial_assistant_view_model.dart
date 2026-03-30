@@ -11,13 +11,15 @@ class FinancialAssistantViewModel extends ChangeNotifier {
     required FinancialAssistantRepository financialAssistantRepository,
     required SessionController sessionController,
     DateTime? initialReferenceMonth,
+    bool reopenTourOnStart = false,
   }) : _financialAssistantRepository = financialAssistantRepository,
        _sessionController = sessionController,
        _referenceMonth = DateTime(
          initialReferenceMonth?.year ?? 2026,
          initialReferenceMonth?.month ?? 3,
        ),
-       _isTourVisible = sessionController.requiresOnboarding {
+       _isTourVisible =
+           sessionController.requiresOnboarding || reopenTourOnStart {
     _sessionController.addListener(_handleSessionChanged);
   }
 

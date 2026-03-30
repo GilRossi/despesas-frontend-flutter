@@ -25,4 +25,6 @@ abstract interface class ExpensesRepository {
   Future<void> deleteExpense(int expenseId);
 
   Future<void> registerExpensePayment(CreateExpensePaymentInput input);
+
+  Future<void> deleteExpensePayment(int paymentId);
 }

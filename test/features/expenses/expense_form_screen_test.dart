@@ -59,6 +59,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Criar despesa'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Criar despesa'));
     await tester.pumpAndSettle();
 
@@ -132,6 +134,10 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
     await tester.pumpAndSettle();
 
@@ -183,6 +189,10 @@ void main() {
       find.byKey(const ValueKey('expense-form-submit-button')),
       200,
       scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
@@ -241,6 +251,10 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
     await tester.pumpAndSettle();
 
@@ -255,14 +269,14 @@ void main() {
     final amountField = tester.widget<TextFormField>(
       find.byKey(const ValueKey('expense-form-amount-field')),
     );
-    final dueDateField = tester.widget<TextFormField>(
-      find.byKey(const ValueKey('expense-form-due-date-field')),
+    final occurredOnField = tester.widget<TextFormField>(
+      find.byKey(const ValueKey('expense-form-occurred-on-field')),
     );
 
     expect(find.text('Despesa lancada com sucesso'), findsNothing);
     expect(descriptionField.controller?.text, isEmpty);
     expect(amountField.controller?.text, isEmpty);
-    expect(dueDateField.controller?.text, isNotEmpty);
+    expect(occurredOnField.controller?.text, isNotEmpty);
   });
 
   testWidgets('standalone success secondary CTA goes to expenses list', (
@@ -306,6 +320,10 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
     await tester.pumpAndSettle();
 
@@ -341,6 +359,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Criar despesa'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Criar despesa'));
     await tester.pumpAndSettle();
 
@@ -370,6 +390,10 @@ void main() {
       find.byKey(const ValueKey('expense-form-submit-button')),
       200,
       scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
@@ -410,6 +434,10 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-submit-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
     await tester.pump();
 
@@ -437,7 +465,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(TextFormField).at(0));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('expense-form-description-field')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('expense-form-description-field')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Criar despesa'),

@@ -7,9 +7,11 @@ class ExpenseDetail {
     required this.description,
     required this.amount,
     required this.dueDate,
+    required this.occurredOn,
     required this.context,
     required this.category,
     required this.subcategory,
+    required this.reference,
     required this.notes,
     required this.status,
     required this.paidAmount,
@@ -22,10 +24,12 @@ class ExpenseDetail {
   final int id;
   final String description;
   final double amount;
-  final DateTime dueDate;
+  final DateTime? dueDate;
+  final DateTime occurredOn;
   final String context;
   final ExpenseReference category;
   final ExpenseReference subcategory;
+  final ExpenseReference? reference;
   final String notes;
   final String status;
   final double paidAmount;
@@ -36,13 +40,16 @@ class ExpenseDetail {
 
   bool get hasNotes => notes.trim().isNotEmpty;
   bool get hasPayments => payments.isNotEmpty;
+  bool get hasDueDate => dueDate != null;
+  bool get hasReference => reference != null;
 
   factory ExpenseDetail.fromJson(Map<String, dynamic> json) {
     return ExpenseDetail(
       id: json['id'] as int,
       description: json['description'] as String,
       amount: _toDouble(json['amount']),
-      dueDate: DateTime.parse('${json['dueDate']}T00:00:00'),
+      dueDate: _toNullableDate(json['dueDate']),
+      occurredOn: DateTime.parse('${json['occurredOn']}T00:00:00'),
       context: json['context'] as String,
       category: ExpenseReference.fromJson(
         json['category'] as Map<String, dynamic>,
@@ -50,6 +57,9 @@ class ExpenseDetail {
       subcategory: ExpenseReference.fromJson(
         json['subcategory'] as Map<String, dynamic>,
       ),
+      reference: json['reference'] is Map<String, dynamic>
+          ? ExpenseReference.fromJson(json['reference'] as Map<String, dynamic>)
+          : null,
       notes: json['notes'] as String? ?? '',
       status: json['status'] as String,
       paidAmount: _toDouble(json['paidAmount']),
@@ -60,6 +70,14 @@ class ExpenseDetail {
           .map((item) => ExpensePayment.fromJson(item as Map<String, dynamic>))
           .toList(growable: false),
     );
+  }
+
+  static DateTime? _toNullableDate(Object? value) {
+    final text = value as String?;
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+    return DateTime.parse('${text}T00:00:00');
   }
 
   static double _toDouble(Object? value) {

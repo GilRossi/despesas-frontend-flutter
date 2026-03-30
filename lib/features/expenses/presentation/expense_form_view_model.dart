@@ -3,27 +3,40 @@ import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_item.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class ExpenseFormViewModel extends ChangeNotifier {
-  ExpenseFormViewModel({required ExpensesRepository expensesRepository})
-    : _expensesRepository = expensesRepository;
+  ExpenseFormViewModel({
+    required ExpensesRepository expensesRepository,
+    SpaceReferencesRepository? spaceReferencesRepository,
+  }) : _expensesRepository = expensesRepository,
+       _spaceReferencesRepository = spaceReferencesRepository;
 
   final ExpensesRepository _expensesRepository;
+  final SpaceReferencesRepository? _spaceReferencesRepository;
 
   bool _isLoadingCatalog = false;
+  bool _isLoadingReferences = false;
   bool _isSubmitting = false;
   String? _loadErrorMessage;
+  String? _loadReferencesErrorMessage;
   String? _submitErrorMessage;
   Map<String, String> _fieldErrors = const {};
   List<CatalogOption> _catalogOptions = const [];
+  List<SpaceReferenceItem> _references = const [];
 
   bool get isLoadingCatalog => _isLoadingCatalog;
+  bool get isLoadingReferences => _isLoadingReferences;
   bool get isSubmitting => _isSubmitting;
   String? get loadErrorMessage => _loadErrorMessage;
+  String? get loadReferencesErrorMessage => _loadReferencesErrorMessage;
   String? get submitErrorMessage => _submitErrorMessage;
   List<CatalogOption> get catalogOptions => _catalogOptions;
+  List<SpaceReferenceItem> get references => List.unmodifiable(_references);
   bool get hasCatalogOptions => _catalogOptions.isNotEmpty;
+  bool get hasReferences => _references.isNotEmpty;
   String? fieldError(String field) => _fieldErrors[field];
 
   Future<void> loadCatalogOptions() async {
@@ -40,6 +53,32 @@ class ExpenseFormViewModel extends ChangeNotifier {
           'Nao foi possivel carregar categorias e subcategorias.';
     } finally {
       _isLoadingCatalog = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadReferences() async {
+    final repository = _spaceReferencesRepository;
+    if (repository == null) {
+      _references = const [];
+      _loadReferencesErrorMessage = null;
+      notifyListeners();
+      return;
+    }
+
+    _isLoadingReferences = true;
+    _loadReferencesErrorMessage = null;
+    notifyListeners();
+
+    try {
+      _references = await repository.listReferences();
+    } on ApiException catch (error) {
+      _loadReferencesErrorMessage = error.message;
+    } catch (_) {
+      _loadReferencesErrorMessage =
+          'Nao foi possivel carregar as referencias do seu Espaco.';
+    } finally {
+      _isLoadingReferences = false;
       notifyListeners();
     }
   }

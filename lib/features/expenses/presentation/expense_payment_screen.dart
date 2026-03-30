@@ -203,7 +203,9 @@ class _ExpensePaymentSummaryCard extends StatelessWidget {
                 ),
                 _SummaryChip(
                   label: 'Vencimento',
-                  value: formatExpensePaymentDate(expense.dueDate),
+                  value: expense.dueDate == null
+                      ? 'Sem vencimento'
+                      : formatExpensePaymentDate(expense.dueDate!),
                 ),
                 _SummaryChip(
                   label: 'Status',

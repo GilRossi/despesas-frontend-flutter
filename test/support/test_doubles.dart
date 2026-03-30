@@ -272,12 +272,14 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.updateError,
     this.deleteError,
     this.registerPaymentError,
+    this.deletePaymentError,
     this.onCreate,
     this.onCreateAsync,
     this.onUpdate,
     this.onDelete,
     this.onRegisterPayment,
     this.onRegisterPaymentAsync,
+    this.onDeletePayment,
   });
 
   PagedResult<ExpenseSummary>? result;
@@ -290,6 +292,7 @@ class FakeExpensesRepository implements ExpensesRepository {
   Exception? updateError;
   Exception? deleteError;
   Exception? registerPaymentError;
+  Exception? deletePaymentError;
   ExpenseSummary? createResult;
   void Function(SaveExpenseInput input)? onCreate;
   Future<void> Function(SaveExpenseInput input)? onCreateAsync;
@@ -298,6 +301,7 @@ class FakeExpensesRepository implements ExpensesRepository {
   void Function(CreateExpensePaymentInput input)? onRegisterPayment;
   Future<void> Function(CreateExpensePaymentInput input)?
   onRegisterPaymentAsync;
+  void Function(int paymentId)? onDeletePayment;
   int listCalls = 0;
   int detailCalls = 0;
   int catalogCalls = 0;
@@ -305,10 +309,12 @@ class FakeExpensesRepository implements ExpensesRepository {
   int updateCalls = 0;
   int deleteCalls = 0;
   int registerPaymentCalls = 0;
+  int deletePaymentCalls = 0;
   SaveExpenseInput? lastCreatedInput;
   SaveExpenseInput? lastUpdatedInput;
   int? lastUpdatedExpenseId;
   int? lastDeletedExpenseId;
+  int? lastDeletedPaymentId;
   CreateExpensePaymentInput? lastPaymentInput;
 
   @override
@@ -396,6 +402,16 @@ class FakeExpensesRepository implements ExpensesRepository {
     if (onRegisterPaymentAsync != null) {
       await onRegisterPaymentAsync!(input);
     }
+  }
+
+  @override
+  Future<void> deleteExpensePayment(int paymentId) async {
+    deletePaymentCalls += 1;
+    lastDeletedPaymentId = paymentId;
+    if (deletePaymentError != null) {
+      throw deletePaymentError!;
+    }
+    onDeletePayment?.call(paymentId);
   }
 }
 
@@ -1273,19 +1289,23 @@ ExpenseSummary fakeExpense({
   String description = 'Internet Fibra',
   double amount = 129.9,
   DateTime? dueDate,
+  DateTime? occurredOn,
   String context = 'CASA',
   String category = 'Casa',
   String subcategory = 'Internet',
   String status = 'ABERTA',
+  ExpenseReference? reference,
 }) {
   return ExpenseSummary(
     id: id,
     description: description,
     amount: amount,
     dueDate: dueDate ?? DateTime.utc(2026, 3, 25),
+    occurredOn: occurredOn ?? DateTime.utc(2026, 3, 25),
     context: context,
     category: ExpenseReference(id: 1, name: category),
     subcategory: ExpenseReference(id: 2, name: subcategory),
+    reference: reference,
     status: status,
     paidAmount: 0,
     remainingAmount: amount,
@@ -1301,6 +1321,9 @@ ExpenseDetail fakeExpenseDetail({
   String subcategory = 'Internet',
   String status = 'ABERTA',
   String notes = 'Conta mensal',
+  DateTime? dueDate,
+  DateTime? occurredOn,
+  ExpenseReference? reference,
   double paidAmount = 40,
   double remainingAmount = 89.9,
   int paymentsCount = 1,
@@ -1311,10 +1334,12 @@ ExpenseDetail fakeExpenseDetail({
     id: id,
     description: description,
     amount: amount,
-    dueDate: DateTime.utc(2026, 3, 25),
+    dueDate: dueDate ?? DateTime.utc(2026, 3, 25),
+    occurredOn: occurredOn ?? DateTime.utc(2026, 3, 25),
     context: 'CASA',
     category: ExpenseReference(id: 1, name: category),
     subcategory: ExpenseReference(id: 2, name: subcategory),
+    reference: reference,
     notes: notes,
     status: status,
     paidAmount: paidAmount,

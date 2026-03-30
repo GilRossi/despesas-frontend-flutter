@@ -25,6 +25,11 @@ class ResponsiveScrollBody extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final resolvedPadding = padding.resolve(Directionality.of(context));
+        final availableWidth = math.max(
+          0.0,
+          constraints.maxWidth - resolvedPadding.horizontal,
+        );
+        final bodyWidth = math.min(maxWidth, availableWidth);
         final minHeight = math
             .max(0.0, constraints.maxHeight - resolvedPadding.vertical)
             .toDouble();
@@ -39,8 +44,8 @@ class ResponsiveScrollBody extends StatelessWidget {
               alignment: centerVertically
                   ? Alignment.center
                   : Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
+              child: SizedBox(
+                width: bodyWidth,
                 child: child,
               ),
             ),
