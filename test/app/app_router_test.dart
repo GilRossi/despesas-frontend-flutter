@@ -323,7 +323,7 @@ void main() {
       },
     );
 
-    testWidgets('first access users are redirected to assistant', (
+    testWidgets('first access users land on the manual-first dashboard', (
       tester,
     ) async {
       authRepository.loginResult = fakeSession(
@@ -337,8 +337,40 @@ void main() {
 
       await pumpRouter(tester, login: const Text('login'));
 
-      expect(find.text('Bem-vindo ao seu Espaco, Gil'), findsOneWidget);
-      expect(find.text('Dashboard'), findsNothing);
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.byKey(const ValueKey('dashboard-first-use-card')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('dashboard-first-use-manual-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+        findsOneWidget,
+      );
+      expect(find.text('Bem-vindo ao seu Espaco, Gil'), findsNothing);
+    });
+
+    testWidgets('first access users can still open the assistant as optional help', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: const AuthOnboarding(completed: false),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      await pumpRouter(tester, login: const Text('login'));
+
+      await tester.tap(
+        find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Assistente financeiro'), findsOneWidget);
+      expect(find.byKey(const ValueKey('assistant-tour-card')), findsOneWidget);
     });
 
     testWidgets('subsequent access users keep the normal home flow', (
@@ -629,6 +661,11 @@ void main() {
           historyImportsRepository: FakeHistoryImportsRepository(),
         );
 
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+        );
+        await tester.pumpAndSettle();
+
         await scrollTo(
           tester,
           find.byKey(const ValueKey('assistant-starter-import_history-button')),
@@ -680,6 +717,11 @@ void main() {
             references: [fakeSpaceReferenceItem(name: 'Projeto Acme')],
           ),
         );
+
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+        );
+        await tester.pumpAndSettle();
 
         await scrollTo(
           tester,
@@ -738,6 +780,11 @@ void main() {
           ),
         );
 
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+        );
+        await tester.pumpAndSettle();
+
         await scrollTo(
           tester,
           find.byKey(
@@ -794,6 +841,11 @@ void main() {
             references: [fakeSpaceReferenceItem(name: 'Projeto Acme')],
           ),
         );
+
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+        );
+        await tester.pumpAndSettle();
 
         await scrollTo(
           tester,

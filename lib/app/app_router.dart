@@ -56,12 +56,6 @@ GoRouter createAppRouter({
       final inSplash = state.matchedLocation == '/splash';
       final inForgot = state.matchedLocation == '/forgot-password';
       final inReset = state.matchedLocation == '/reset-password';
-      final inAssistant = state.matchedLocation == '/assistant';
-      final inFixedBillsNew = state.matchedLocation == '/fixed-bills/new';
-      final inHistoryImport = state.matchedLocation == '/history/import';
-      final inIncomeNew = state.matchedLocation == '/incomes/new';
-      final inSpaceReferences = state.matchedLocation == '/space/references';
-
       if (status == SessionStatus.bootstrapping) {
         return inSplash ? null : '/splash';
       }
@@ -74,16 +68,6 @@ GoRouter createAppRouter({
       }
 
       // Authenticated
-      if (sessionController.requiresOnboarding) {
-        return inAssistant ||
-                inFixedBillsNew ||
-                inHistoryImport ||
-                inIncomeNew ||
-                inSpaceReferences
-            ? null
-            : '/assistant';
-      }
-
       if (loggingIn || inSplash || inForgot || inReset) {
         return '/';
       }
