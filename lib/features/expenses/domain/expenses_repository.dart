@@ -6,6 +6,10 @@ import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 
 abstract interface class ExpensesRepository {
+  ExpenseSummary? get pendingCreatedExpense;
+
+  void clearPendingCreatedExpense();
+
   Future<PagedResult<ExpenseSummary>> listExpenses({
     int page = 0,
     int size = 20,

@@ -14,6 +14,15 @@ class HttpExpensesRepository implements ExpensesRepository {
   HttpExpensesRepository(this._authorizedRequestExecutor);
 
   final AuthorizedRequestExecutor _authorizedRequestExecutor;
+  ExpenseSummary? _pendingCreatedExpense;
+
+  @override
+  ExpenseSummary? get pendingCreatedExpense => _pendingCreatedExpense;
+
+  @override
+  void clearPendingCreatedExpense() {
+    _pendingCreatedExpense = null;
+  }
 
   @override
   Future<PagedResult<ExpenseSummary>> listExpenses({
@@ -103,7 +112,9 @@ class HttpExpensesRepository implements ExpensesRepository {
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final data = decoded['data'] as Map<String, dynamic>;
-    return ExpenseSummary.fromJson(data);
+    final createdExpense = ExpenseSummary.fromJson(data);
+    _pendingCreatedExpense = createdExpense;
+    return createdExpense;
   }
 
   @override
