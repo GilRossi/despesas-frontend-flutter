@@ -24,6 +24,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<DashboardSummary> _future;
+  bool _isCompletingOnboarding = false;
 
   @override
   void initState() {
@@ -38,9 +39,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _future;
   }
 
+  Future<void> _startManualFlow() async {
+    if (!_isCompletingOnboarding && widget.sessionController.requiresOnboarding) {
+      setState(() {
+        _isCompletingOnboarding = true;
+      });
+      try {
+        await widget.sessionController.completeOnboarding();
+      } catch (_) {
+        // Do not block the manual flow if onboarding completion is temporarily unavailable.
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isCompletingOnboarding = false;
+          });
+        }
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    context.go('/expenses/new');
+  }
+
   @override
   Widget build(BuildContext context) {
     final firstName = _firstName(widget.sessionController.currentUser?.name);
+    final showFirstUseCard = widget.sessionController.requiresOnboarding;
 
     return AppScaffold(
       title: 'Dashboard',
@@ -67,9 +93,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (showFirstUseCard) ...[
+                    _FirstUseCard(
+                      isCompletingOnboarding: _isCompletingOnboarding,
+                      onStartManualFlow: _startManualFlow,
+                      onOpenAssistantHelp: () => context.go('/assistant?tour=1'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _DashboardHero(
                     dashboard: dashboard,
-                    onNewExpenseTap: () => context.go('/expenses/new'),
+                    onNewExpenseTap: _startManualFlow,
                     onAssistantTap: () =>
                         context.go(dashboard.assistantCard.route),
                     onTourTap: () => context.go('/assistant?tour=1'),
@@ -158,6 +192,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return null;
     }
     return fullName.trim().split(' ').first;
+  }
+}
+
+class _FirstUseCard extends StatelessWidget {
+  const _FirstUseCard({
+    required this.isCompletingOnboarding,
+    required this.onStartManualFlow,
+    required this.onOpenAssistantHelp,
+  });
+
+  final bool isCompletingOnboarding;
+  final Future<void> Function() onStartManualFlow;
+  final VoidCallback onOpenAssistantHelp;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      key: const ValueKey('dashboard-first-use-card'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Primeiro uso: comece pelo lancamento manual',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'O caminho mais simples e lancar sua primeira despesa agora. O assistente continua disponivel como ajuda opcional, reabrivel e contextual.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.icon(
+                key: const ValueKey('dashboard-first-use-manual-button'),
+                onPressed: isCompletingOnboarding ? null : onStartManualFlow,
+                icon: isCompletingOnboarding
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add_circle_outline),
+                label: Text(
+                  isCompletingOnboarding
+                      ? 'Abrindo lancamento...'
+                      : 'Lancar minha primeira despesa',
+                ),
+              ),
+              FilledButton.tonalIcon(
+                key: const ValueKey('dashboard-first-use-assistant-button'),
+                onPressed: isCompletingOnboarding ? null : onOpenAssistantHelp,
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Abrir ajuda opcional'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

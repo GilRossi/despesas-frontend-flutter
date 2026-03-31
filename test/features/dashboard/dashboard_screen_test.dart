@@ -12,18 +12,30 @@ import 'package:go_router/go_router.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
-  SessionController buildSessionController({String role = 'OWNER'}) {
-    final authRepository = FakeAuthRepository(
+  SessionController buildSessionController({
+    String role = 'OWNER',
+    AuthOnboarding onboarding = const AuthOnboarding(
+      completed: true,
+      completedAt: null,
+    ),
+    FakeAuthRepository? authRepository,
+  }) {
+    final repository =
+        authRepository ??
+        FakeAuthRepository(
       loginResult: fakeSession(
         role: role,
-        onboarding: AuthOnboarding(
-          completed: true,
-          completedAt: DateTime.utc(2026, 3, 28, 12),
-        ),
+        onboarding: onboarding.completed
+            ? AuthOnboarding(
+                completed: true,
+                completedAt:
+                    onboarding.completedAt ?? DateTime.utc(2026, 3, 28, 12),
+              )
+            : onboarding,
       ),
     );
     final sessionController = SessionController(
-      authRepository: authRepository,
+      authRepository: repository,
       sessionStore: MemorySessionStore(),
     );
     return sessionController;
@@ -192,6 +204,69 @@ void main() {
 
     expect(find.text('assistant-page'), findsOneWidget);
   });
+
+  testWidgets('primeiro uso mostra onboarding curto orientado ao manual', (
+    tester,
+  ) async {
+    final repository = FakeDashboardRepository(
+      summary: fakeDashboardSummary(role: 'OWNER'),
+    );
+    final sessionController = buildSessionController(
+      role: 'OWNER',
+      onboarding: const AuthOnboarding(completed: false),
+    );
+
+    await pumpDashboard(
+      tester,
+      repository: repository,
+      sessionController: sessionController,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('dashboard-first-use-card')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('dashboard-first-use-manual-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'CTA manual do onboarding conclui a introducao e leva para /expenses/new',
+    (tester) async {
+      final repository = FakeDashboardRepository(
+        summary: fakeDashboardSummary(role: 'OWNER'),
+      );
+      final authRepository = FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      );
+      final sessionController = buildSessionController(
+        role: 'OWNER',
+        onboarding: const AuthOnboarding(completed: false),
+        authRepository: authRepository,
+      );
+
+      await pumpDashboard(
+        tester,
+        repository: repository,
+        sessionController: sessionController,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('dashboard-first-use-manual-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(authRepository.completeOnboardingCalls, 1);
+      expect(find.text('new-expense-page'), findsOneWidget);
+    },
+  );
 
   testWidgets('CTA de lancar despesa leva para /expenses/new para OWNER', (
     tester,
