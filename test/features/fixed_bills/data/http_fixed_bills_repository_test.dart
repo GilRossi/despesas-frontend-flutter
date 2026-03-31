@@ -94,6 +94,65 @@ void main() {
     },
   );
 
+  test('createFixedBill suporta payload semanal no MVP', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'id': 22,
+            'description': 'Faxina',
+            'amount': 90.0,
+            'firstDueDate': '2026-04-03',
+            'frequency': 'WEEKLY',
+            'category': {'id': 1, 'name': 'Moradia'},
+            'subcategory': {'id': 21, 'name': 'Condominio'},
+            'active': true,
+            'createdAt': '2026-03-30T12:00:00Z',
+          },
+        }),
+        201,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final repository = HttpFixedBillsRepository(
+      AuthorizedRequestExecutor(
+        apiClient: DespesasApiClient(
+          baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+          httpClient: client,
+        ),
+        sessionManager: sessionController,
+      ),
+    );
+
+    final fixedBill = await repository.createFixedBill(
+      CreateFixedBillInput(
+        description: 'Faxina',
+        amount: 90,
+        firstDueDate: DateTime.utc(2026, 4, 3),
+        frequency: FixedBillFrequency.weekly,
+        categoryId: 1,
+        subcategoryId: 21,
+      ),
+    );
+
+    expect(jsonDecode(capturedRequest.body)['frequency'], 'WEEKLY');
+    expect(fixedBill.frequency, FixedBillFrequency.weekly);
+  });
+
   test('createFixedBill propaga fieldErrors do backend', () async {
     final client = MockClient((request) async {
       return http.Response(
