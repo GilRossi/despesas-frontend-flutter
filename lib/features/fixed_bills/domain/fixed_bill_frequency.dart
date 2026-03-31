@@ -1,4 +1,5 @@
 enum FixedBillFrequency {
+  weekly('WEEKLY', 'Semanal'),
   monthly('MONTHLY', 'Mensal');
 
   const FixedBillFrequency(this.apiValue, this.label);

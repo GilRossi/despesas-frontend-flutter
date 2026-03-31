@@ -48,6 +48,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
   int? _selectedCategoryId;
   int? _selectedSubcategoryId;
   int? _selectedSpaceReferenceId;
+  FixedBillFrequency _selectedFrequency = FixedBillFrequency.monthly;
   FixedBillRecord? _createdFixedBill;
 
   CatalogOption? get _selectedCategory {
@@ -171,6 +172,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       _selectedCategoryId = null;
       _selectedSubcategoryId = null;
       _selectedSpaceReferenceId = null;
+      _selectedFrequency = FixedBillFrequency.monthly;
       _createdFixedBill = null;
       _step = _FixedBillFlowStep.collect;
     });
@@ -190,7 +192,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       description: _descriptionController.text.trim(),
       amount: amount,
       firstDueDate: _firstDueDate,
-      frequency: FixedBillFrequency.monthly,
+      frequency: _selectedFrequency,
       categoryId: _selectedCategoryId!,
       subcategoryId: _selectedSubcategoryId!,
       spaceReferenceId: _selectedSpaceReferenceId,
@@ -279,7 +281,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             const SummaryHeader(
               title: 'Conte o essencial da conta fixa',
               subtitle:
-                  'Neste fluxo base voce define nome, valor, primeiro vencimento e o encaixe no catalogo real antes da revisao final.',
+                  'Defina o nome, o valor previsto, quando ela comeca a vencer e se essa recorrencia acontece toda semana ou todo mes.',
             ),
             const SizedBox(height: 20),
             TextFormField(
@@ -313,8 +315,12 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 decimal: true,
               ),
               decoration: InputDecoration(
-                labelText: 'Qual o valor mensal?',
-                hintText: 'Ex.: 129,90',
+                labelText: _selectedFrequency == FixedBillFrequency.weekly
+                    ? 'Qual o valor semanal?'
+                    : 'Qual o valor mensal?',
+                hintText: _selectedFrequency == FixedBillFrequency.weekly
+                    ? 'Ex.: 90,00'
+                    : 'Ex.: 129,90',
                 errorText: _viewModel.fieldError('amount'),
               ),
               validator: (value) {
@@ -355,9 +361,45 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             const SizedBox(height: 12),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: 'Recorrencia base deste release',
+                labelText: 'Periodicidade previsivel',
               ),
-              child: const Text('Mensal'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SegmentedButton<FixedBillFrequency>(
+                    key: const ValueKey('fixed-bill-form-frequency-field'),
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(
+                        value: FixedBillFrequency.weekly,
+                        label: Text('Semanal'),
+                        icon: Icon(Icons.calendar_view_week_outlined),
+                      ),
+                      ButtonSegment(
+                        value: FixedBillFrequency.monthly,
+                        label: Text('Mensal'),
+                        icon: Icon(Icons.calendar_month_outlined),
+                      ),
+                    ],
+                    selected: {_selectedFrequency},
+                    onSelectionChanged: (selection) {
+                      if (selection.isEmpty) {
+                        return;
+                      }
+                      setState(() => _selectedFrequency = selection.first);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _selectedFrequency == FixedBillFrequency.weekly
+                        ? 'Use semanal para contas previsiveis que se repetem toda semana.'
+                        : 'Use mensal para contas previsiveis que se repetem todo mes.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF65727B),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<int?>(
@@ -498,14 +540,19 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 label: 'Descricao',
                 value: _descriptionController.text.trim(),
               ),
-              _ReviewRow(label: 'Valor mensal', value: formatCurrency(amount)),
+              _ReviewRow(
+                label: _selectedFrequency == FixedBillFrequency.weekly
+                    ? 'Valor semanal'
+                    : 'Valor mensal',
+                value: formatCurrency(amount),
+              ),
               _ReviewRow(
                 label: 'Primeiro vencimento',
                 value: _formatDate(_firstDueDate),
               ),
               _ReviewRow(
                 label: 'Recorrencia',
-                value: FixedBillFrequency.monthly.label,
+                value: _selectedFrequency.label,
               ),
               _ReviewRow(
                 label: 'Categoria',
@@ -610,7 +657,9 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
           const SizedBox(height: 20),
           _ReviewRow(label: 'Descricao', value: createdFixedBill.description),
           _ReviewRow(
-            label: 'Valor mensal',
+            label: createdFixedBill.frequency == FixedBillFrequency.weekly
+                ? 'Valor semanal'
+                : 'Valor mensal',
             value: formatCurrency(createdFixedBill.amount),
           ),
           _ReviewRow(
@@ -721,7 +770,7 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             step == _FixedBillFlowStep.collect
-                ? 'Voce preenche so o essencial: descricao, valor, primeiro vencimento, catalogo e uma referencia opcional do seu Espaco.'
+                ? 'Voce preenche so o essencial: descricao, valor previsto, primeiro vencimento, periodicidade semanal ou mensal, catalogo e uma referencia opcional.'
                 : step == _FixedBillFlowStep.review
                 ? 'Agora confira com calma. A gravacao real so acontece depois da sua confirmacao.'
                 : 'Tudo certo. O backend confirmou o cadastro da conta fixa.',

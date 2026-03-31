@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_frequency.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -70,6 +71,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> selectWeeklyFrequency(WidgetTester tester) async {
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('fixed-bill-form-frequency-field')),
+    );
+    await tester.tap(find.text('Semanal'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('coleta guiada avanca para a revisao local', (tester) async {
     await pumpScreen(
       tester,
@@ -99,6 +109,27 @@ void main() {
     expect(find.text('Mensal'), findsOneWidget);
   });
 
+  testWidgets('permite escolher recorrencia semanal no fluxo simples', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await fillRequiredFields(tester);
+    await selectWeeklyFrequency(tester);
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('fixed-bill-form-continue-button')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('fixed-bill-form-continue-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Semanal'), findsWidgets);
+    expect(find.text('Valor semanal'), findsOneWidget);
+  });
+
   testWidgets('POST bem-sucedido mostra o estado final de sucesso', (
     tester,
   ) async {
@@ -106,6 +137,7 @@ void main() {
       createResult: fakeFixedBillRecord(
         description: 'Internet fibra',
         amount: 129.9,
+        frequency: FixedBillFrequency.weekly,
         spaceReference: fakeFixedBillReference(name: 'Projeto Horizonte'),
       ),
     );
@@ -119,6 +151,7 @@ void main() {
     );
 
     await fillRequiredFields(tester);
+    await selectWeeklyFrequency(tester);
     await scrollTo(
       tester,
       find.byKey(const ValueKey('fixed-bill-form-space-reference-field-none')),
@@ -152,13 +185,14 @@ void main() {
     expect(repository.createCalls, 1);
     expect(repository.lastCreatedInput?.description, 'Internet fibra');
     expect(repository.lastCreatedInput?.amount, 129.9);
-    expect(repository.lastCreatedInput?.frequency.apiValue, 'MONTHLY');
+    expect(repository.lastCreatedInput?.frequency.apiValue, 'WEEKLY');
     expect(
       find.byKey(const ValueKey('fixed-bill-success-card')),
       findsOneWidget,
     );
     expect(find.text('Conta fixa registrada'), findsOneWidget);
     expect(find.text('Cadastrar outra conta fixa'), findsOneWidget);
+    expect(find.text('Semanal'), findsWidgets);
   });
 
   testWidgets('fieldErrors do backend voltam para a etapa de coleta', (
