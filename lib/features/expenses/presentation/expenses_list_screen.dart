@@ -53,10 +53,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   @override
   void initState() {
     super.initState();
-    _highlightedExpenseId = widget.initialHighlightedExpenseId;
     _viewModel = ExpensesListViewModel(
       expensesRepository: widget.expensesRepository,
-    )..load();
+    );
+    _highlightedExpenseId =
+        widget.initialHighlightedExpenseId ?? _viewModel.pendingCreatedExpenseId;
+    _viewModel.load();
   }
 
   @override
@@ -310,7 +312,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (_viewModel.isLoading) ...[
+                if (_viewModel.isLoading && _viewModel.expenses.isEmpty) ...[
                   const SizedBox(height: 120),
                   const Center(child: CircularProgressIndicator()),
                 ] else if (_viewModel.errorMessage != null) ...[
@@ -331,6 +333,10 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                     ),
                   ),
                 ] else ...[
+                  if (_viewModel.isLoading) ...[
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 12),
+                  ],
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

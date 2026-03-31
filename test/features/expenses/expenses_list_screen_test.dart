@@ -2,6 +2,7 @@ import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
+import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
@@ -148,6 +149,57 @@ void main() {
     final maisAntigaTop = tester.getTopLeft(find.text('Mais antiga')).dy;
     expect(recemCriadaTop, lessThan(maisAntigaTop));
   });
+
+  testWidgets(
+    'shows the newly created expense immediately even before the refreshed list finishes',
+    (tester) async {
+      final controller = SessionController(
+        authRepository: FakeAuthRepository(loginResult: fakeSession()),
+        sessionStore: MemorySessionStore(),
+      );
+      await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+      final repository = FakeExpensesRepository(
+        result: emptyPage(),
+        listDelay: const Duration(milliseconds: 300),
+      );
+      await repository.createExpense(
+        SaveExpenseInput(
+          description: 'Despesa imediata',
+          amount: 89.9,
+          occurredOn: DateTime.utc(2026, 3, 30),
+          dueDate: null,
+          categoryId: 1,
+          subcategoryId: 10,
+          spaceReferenceId: null,
+          notes: '',
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ExpensesListScreen(
+            sessionController: controller,
+            expensesRepository: repository,
+            financialAssistantRepository: FakeFinancialAssistantRepository(),
+            householdMembersRepository: FakeHouseholdMembersRepository(),
+            reportsRepository: FakeReportsRepository(),
+            reviewOperationsRepository: FakeReviewOperationsRepository(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(find.text('Despesa imediata'), findsOneWidget);
+      expect(find.textContaining('Recem criada · lancada em'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Despesa imediata'), findsOneWidget);
+    },
+  );
 
   testWidgets('remains stable on small heights', (tester) async {
     configureSmallViewport(tester);

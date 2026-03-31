@@ -281,6 +281,7 @@ class FakeExpensesRepository implements ExpensesRepository {
     this.onRegisterPayment,
     this.onRegisterPaymentAsync,
     this.onDeletePayment,
+    this.listDelay,
   });
 
   PagedResult<ExpenseSummary>? result;
@@ -317,6 +318,16 @@ class FakeExpensesRepository implements ExpensesRepository {
   int? lastDeletedExpenseId;
   int? lastDeletedPaymentId;
   CreateExpensePaymentInput? lastPaymentInput;
+  Duration? listDelay;
+  ExpenseSummary? _pendingCreatedExpense;
+
+  @override
+  ExpenseSummary? get pendingCreatedExpense => _pendingCreatedExpense;
+
+  @override
+  void clearPendingCreatedExpense() {
+    _pendingCreatedExpense = null;
+  }
 
   @override
   Future<PagedResult<ExpenseSummary>> listExpenses({
@@ -324,6 +335,9 @@ class FakeExpensesRepository implements ExpensesRepository {
     int size = 20,
   }) async {
     listCalls += 1;
+    if (listDelay != null) {
+      await Future<void>.delayed(listDelay!);
+    }
     if (error != null) {
       throw error!;
     }
@@ -359,12 +373,15 @@ class FakeExpensesRepository implements ExpensesRepository {
     if (onCreateAsync != null) {
       await onCreateAsync!(input);
     }
-    return createResult ??
+    final createdExpense =
+        createResult ??
         fakeExpense(
           description: input.description.trim(),
           amount: input.amount,
           dueDate: input.dueDate,
         );
+    _pendingCreatedExpense = createdExpense;
+    return createdExpense;
   }
 
   @override

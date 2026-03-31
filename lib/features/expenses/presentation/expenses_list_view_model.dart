@@ -5,9 +5,15 @@ import 'package:flutter/foundation.dart';
 
 class ExpensesListViewModel extends ChangeNotifier {
   ExpensesListViewModel({required ExpensesRepository expensesRepository})
-    : _expensesRepository = expensesRepository;
+    : _expensesRepository = expensesRepository,
+      _pendingCreatedExpense = expensesRepository.pendingCreatedExpense {
+    if (_pendingCreatedExpense != null) {
+      _expenses = [_pendingCreatedExpense!];
+    }
+  }
 
   final ExpensesRepository _expensesRepository;
+  ExpenseSummary? _pendingCreatedExpense;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -17,6 +23,7 @@ class ExpensesListViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<ExpenseSummary> get expenses => _expenses;
   bool get isEmpty => !_isLoading && _errorMessage == null && _expenses.isEmpty;
+  int? get pendingCreatedExpenseId => _pendingCreatedExpense?.id;
 
   Future<void> load() async {
     _isLoading = true;
@@ -25,7 +32,25 @@ class ExpensesListViewModel extends ChangeNotifier {
 
     try {
       final page = await _expensesRepository.listExpenses();
-      _expenses = page.items;
+      final fetchedItems = page.items;
+      final pendingExpense = _pendingCreatedExpense;
+      if (pendingExpense == null) {
+        _expenses = fetchedItems;
+      } else {
+        final containsPending = fetchedItems.any(
+          (expense) => expense.id == pendingExpense.id,
+        );
+        if (containsPending) {
+          _expenses = fetchedItems;
+          _pendingCreatedExpense = null;
+          _expensesRepository.clearPendingCreatedExpense();
+        } else {
+          _expenses = [
+            pendingExpense,
+            ...fetchedItems.where((expense) => expense.id != pendingExpense.id),
+          ];
+        }
+      }
     } on ApiException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
