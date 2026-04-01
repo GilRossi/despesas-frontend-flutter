@@ -94,6 +94,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       '/review-operations',
       fallbackBuilder: () => ReviewOperationsListScreen(
         reviewOperationsRepository: widget.reviewOperationsRepository,
+        sessionController: widget.sessionController,
       ),
     );
   }
@@ -101,8 +102,10 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   Future<void> _openReports() async {
     await _goOrPush(
       '/reports',
-      fallbackBuilder: () =>
-          ReportsScreen(reportsRepository: widget.reportsRepository),
+      fallbackBuilder: () => ReportsScreen(
+        reportsRepository: widget.reportsRepository,
+        sessionController: widget.sessionController,
+      ),
     );
   }
 
@@ -121,6 +124,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       '/household-members',
       fallbackBuilder: () => HouseholdMembersScreen(
         householdMembersRepository: widget.householdMembersRepository,
+        sessionController: widget.sessionController,
       ),
     );
   }

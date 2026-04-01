@@ -331,6 +331,160 @@ void main() {
       expect(find.text('Leitura clara do mes financeiro'), findsOneWidget);
     });
 
+    testWidgets('reports mantem menu autenticado e logout acessivel', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/reports');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/reports')),
+        findsNothing,
+      );
+
+      await tester.tapAt(const Offset(16, 16));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('login'), findsOneWidget);
+    });
+
+    testWidgets('minha senha mantem menu autenticado e omite a tela atual', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        role: 'OWNER',
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'owner@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/change-password');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/change-password'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/history/import'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('owner pages mantem menu autenticado no household', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        role: 'OWNER',
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'owner@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+
+      router.go('/household-members');
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/household-members'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/review-operations'),
+        ),
+        findsOneWidget,
+      );
+
+      router.go('/review-operations');
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/review-operations'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/household-members'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('authenticated users can open /expenses/new', (tester) async {
       authRepository.loginResult = fakeSession(
         onboarding: AuthOnboarding(

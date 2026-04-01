@@ -142,6 +142,7 @@ GoRouter createAppRouter({
             path: '/household-members',
             builder: (context, state) => HouseholdMembersScreen(
               householdMembersRepository: householdMembersRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(
@@ -244,6 +245,7 @@ GoRouter createAppRouter({
             path: '/review-operations',
             builder: (context, state) => ReviewOperationsListScreen(
               reviewOperationsRepository: reviewOperationsRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(
@@ -263,13 +265,16 @@ GoRouter createAppRouter({
               return ReviewOperationDetailScreen(
                 ingestionId: ingestionId,
                 reviewOperationsRepository: reviewOperationsRepository,
+                sessionController: sessionController,
               );
             },
           ),
           GoRoute(
             path: '/reports',
-            builder: (context, state) =>
-                ReportsScreen(reportsRepository: reportsRepository),
+            builder: (context, state) => ReportsScreen(
+              reportsRepository: reportsRepository,
+              sessionController: sessionController,
+            ),
           ),
         ],
       ),

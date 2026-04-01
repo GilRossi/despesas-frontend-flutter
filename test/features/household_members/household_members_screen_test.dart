@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
+  SessionController buildSessionController() {
+    return SessionController(
+      authRepository: FakeAuthRepository(),
+      sessionStore: MemorySessionStore(),
+    );
+  }
+
   void configureSmallViewport(WidgetTester tester) {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 640);
@@ -28,6 +36,7 @@ void main() {
               ),
             ],
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -53,7 +62,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: HouseholdMembersScreen(householdMembersRepository: repository),
+        home: HouseholdMembersScreen(
+          householdMembersRepository: repository,
+          sessionController: buildSessionController(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -90,6 +102,7 @@ void main() {
               message: 'Apenas owner pode acessar.',
             ),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -106,6 +119,7 @@ void main() {
       MaterialApp(
         home: HouseholdMembersScreen(
           householdMembersRepository: FakeHouseholdMembersRepository(),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -144,6 +158,7 @@ void main() {
               ),
             ],
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );

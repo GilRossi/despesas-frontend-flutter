@@ -1,4 +1,6 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
@@ -12,9 +14,14 @@ import 'package:despesas_frontend/features/reports/presentation/reports_view_mod
 import 'package:flutter/material.dart';
 
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key, required this.reportsRepository});
+  const ReportsScreen({
+    super.key,
+    required this.reportsRepository,
+    required this.sessionController,
+  });
 
   final ReportsRepository reportsRepository;
+  final SessionController sessionController;
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -45,6 +52,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/'),
             title: const Text('Relatorios'),
+            actions: buildAuthenticatedTopBarActions(
+              context: context,
+              sessionController: widget.sessionController,
+              currentLocation: '/reports',
+              canReviewOperations:
+                  widget.sessionController.currentUser?.role == 'OWNER',
+            ),
           ),
           body: SafeArea(
             top: false,

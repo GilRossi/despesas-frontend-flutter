@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_screen.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_flow_result.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
+  SessionController buildSessionController() {
+    return SessionController(
+      authRepository: FakeAuthRepository(),
+      sessionStore: MemorySessionStore(),
+    );
+  }
+
   void configureSmallViewport(WidgetTester tester) {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 640);
@@ -20,6 +28,7 @@ void main() {
           reviewOperationsRepository: FakeReviewOperationsRepository(
             detailResult: fakeReviewDetail(),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -53,6 +62,7 @@ void main() {
                             builder: (_) => ReviewOperationDetailScreen(
                               ingestionId: 51,
                               reviewOperationsRepository: repository,
+                              sessionController: buildSessionController(),
                             ),
                           ),
                         );
@@ -101,6 +111,7 @@ void main() {
                             builder: (_) => ReviewOperationDetailScreen(
                               ingestionId: 51,
                               reviewOperationsRepository: repository,
+                              sessionController: buildSessionController(),
                             ),
                           ),
                         );
@@ -140,6 +151,7 @@ void main() {
                   'A ingestao selecionada nao esta mais pendente de revisao.',
             ),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -169,6 +181,7 @@ void main() {
               message: 'Access denied',
             ),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -189,6 +202,7 @@ void main() {
           reviewOperationsRepository: FakeReviewOperationsRepository(
             detailResult: fakeReviewDetail(),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );

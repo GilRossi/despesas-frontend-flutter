@@ -1,3 +1,5 @@
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_item.dart';
@@ -12,10 +14,12 @@ class ReviewOperationDetailScreen extends StatefulWidget {
     super.key,
     required this.ingestionId,
     required this.reviewOperationsRepository,
+    required this.sessionController,
   });
 
   final int ingestionId;
   final ReviewOperationsRepository reviewOperationsRepository;
+  final SessionController sessionController;
 
   @override
   State<ReviewOperationDetailScreen> createState() =>
@@ -96,6 +100,13 @@ class _ReviewOperationDetailScreenState
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/review-operations'),
             title: const Text('Detalhe da review'),
+            actions: buildAuthenticatedTopBarActions(
+              context: context,
+              sessionController: widget.sessionController,
+              currentLocation: '/review-operations/${widget.ingestionId}',
+              canReviewOperations:
+                  widget.sessionController.currentUser?.role == 'OWNER',
+            ),
           ),
           body: SafeArea(
             top: false,
