@@ -1,6 +1,7 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
@@ -40,7 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _startManualFlow() async {
-    if (!_isCompletingOnboarding && widget.sessionController.requiresOnboarding) {
+    if (!_isCompletingOnboarding &&
+        widget.sessionController.requiresOnboarding) {
       setState(() {
         _isCompletingOnboarding = true;
       });
@@ -73,6 +75,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       subtitle: firstName == null
           ? 'O que merece sua atenção hoje'
           : '$firstName, aqui está o que merece sua atenção hoje',
+      actions: buildAuthenticatedTopBarActions(
+        context: context,
+        sessionController: widget.sessionController,
+        currentLocation: '/',
+        canReviewOperations:
+            widget.sessionController.currentUser?.role == 'OWNER',
+      ),
       body: FutureBuilder<DashboardSummary>(
         future: _future,
         builder: (context, snapshot) {
@@ -97,7 +106,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _FirstUseCard(
                       isCompletingOnboarding: _isCompletingOnboarding,
                       onStartManualFlow: _startManualFlow,
-                      onOpenAssistantHelp: () => context.go('/assistant?tour=1'),
+                      onOpenAssistantHelp: () =>
+                          context.go('/assistant?tour=1'),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -426,9 +436,9 @@ class _HeroBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Text(
           label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: Colors.white,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(color: Colors.white),
         ),
       ),
     );

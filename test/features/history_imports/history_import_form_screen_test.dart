@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/history_imports/domain/history_import_payment_method.dart';
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ void main() {
     WidgetTester tester, {
     FakeHistoryImportsRepository? historyImportsRepository,
     FakeExpensesRepository? expensesRepository,
+    SessionController? sessionController,
     Size? logicalSize,
     double devicePixelRatio = 1,
     double? textScaleFactor,
@@ -38,12 +40,21 @@ void main() {
       addTearDown(tester.platformDispatcher.clearAllTestValues);
     }
 
+    final controller =
+        sessionController ??
+        SessionController(
+          authRepository: FakeAuthRepository(loginResult: fakeSession()),
+          sessionStore: MemorySessionStore(),
+        );
+    await controller.login(email: 'user@example.com', password: 'password');
+
     await tester.pumpWidget(
       MaterialApp(
         home: HistoryImportFormScreen(
           historyImportsRepository:
               historyImportsRepository ?? FakeHistoryImportsRepository(),
           expensesRepository: expensesRepository ?? FakeExpensesRepository(),
+          sessionController: controller,
         ),
       ),
     );
@@ -119,24 +130,23 @@ void main() {
     }
   }
 
-  testWidgets(
-    'nao estoura layout na coleta guiada em largura mobile',
-    (tester) async {
-      await pumpScreen(
-        tester,
-        logicalSize: const Size(360, 800),
-        textScaleFactor: 1.2,
-      );
+  testWidgets('nao estoura layout na coleta guiada em largura mobile', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      logicalSize: const Size(360, 800),
+      textScaleFactor: 1.2,
+    );
 
-      expect(
-        find.byKey(
-          const ValueKey('history-import-form-payment-method-field-none'),
-        ),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(
+      find.byKey(
+        const ValueKey('history-import-form-payment-method-field-none'),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'coleta guiada permite adicionar e remover itens antes da revisao',

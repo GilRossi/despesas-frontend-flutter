@@ -1,4 +1,6 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
@@ -25,10 +27,12 @@ class HistoryImportFormScreen extends StatefulWidget {
     super.key,
     required this.historyImportsRepository,
     required this.expensesRepository,
+    required this.sessionController,
   });
 
   final HistoryImportsRepository historyImportsRepository;
   final ExpensesRepository expensesRepository;
+  final SessionController sessionController;
 
   @override
   State<HistoryImportFormScreen> createState() =>
@@ -266,6 +270,13 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
       appBar: AppBar(
         leading: const RouteBackButton(fallbackRoute: '/expenses/new'),
         title: const Text('Trazer meu historico'),
+        actions: buildAuthenticatedTopBarActions(
+          context: context,
+          sessionController: widget.sessionController,
+          currentLocation: '/history/import',
+          canReviewOperations:
+              widget.sessionController.currentUser?.role == 'OWNER',
+        ),
       ),
       body: SafeArea(
         top: false,

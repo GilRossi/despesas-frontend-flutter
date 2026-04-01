@@ -1,7 +1,8 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/empty_state.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
@@ -57,7 +58,8 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       expensesRepository: widget.expensesRepository,
     );
     _highlightedExpenseId =
-        widget.initialHighlightedExpenseId ?? _viewModel.pendingCreatedExpenseId;
+        widget.initialHighlightedExpenseId ??
+        _viewModel.pendingCreatedExpenseId;
     _viewModel.load();
   }
 
@@ -65,10 +67,6 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   void dispose() {
     _viewModel.dispose();
     super.dispose();
-  }
-
-  Future<void> _logout() {
-    return widget.sessionController.logout();
   }
 
   Future<void> _openCreateExpense() async {
@@ -195,40 +193,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
           title: 'Despesas',
           subtitle: user?.name,
           leading: const RouteBackButton(fallbackRoute: '/'),
-          actions: [
-            IconButton(
-              tooltip: 'Assistente financeiro',
-              onPressed: _openFinancialAssistant,
-              icon: const Icon(Icons.psychology_alt_outlined),
-            ),
-            IconButton(
-              tooltip: 'Relatorios',
-              onPressed: _openReports,
-              icon: const Icon(Icons.insert_chart_outlined),
-            ),
-            if (canReviewOperations)
-              IconButton(
-                tooltip: 'Membros do household',
-                onPressed: _openHouseholdMembers,
-                icon: const Icon(Icons.group_outlined),
-              ),
-            if (canReviewOperations)
-              IconButton(
-                tooltip: 'Review operations',
-                onPressed: _openReviewOperations,
-                icon: const Icon(Icons.fact_check_outlined),
-              ),
-            IconButton(
-              tooltip: 'Nova despesa',
-              onPressed: _openCreateExpense,
-              icon: const Icon(Icons.add_circle_outline),
-            ),
-            IconButton(
-              tooltip: 'Sair',
-              onPressed: _logout,
-              icon: const Icon(Icons.logout),
-            ),
-          ],
+          actions: buildAuthenticatedTopBarActions(
+            context: context,
+            sessionController: widget.sessionController,
+            currentLocation: '/expenses',
+            canReviewOperations: canReviewOperations,
+          ),
           body: RefreshIndicator(
             onRefresh: _viewModel.load,
             child: ListView(
