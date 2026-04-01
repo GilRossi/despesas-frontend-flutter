@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
+import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -466,6 +467,49 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nao foi possivel salvar a despesa.'), findsOneWidget);
+  });
+
+  testWidgets('atalho de conta fixa entra primeiro no formulario', (
+    tester,
+  ) async {
+    late final GoRouter router;
+
+    router = GoRouter(
+      initialLocation: '/expenses/new',
+      routes: [
+        GoRoute(
+          path: '/expenses/new',
+          builder: (context, state) => ExpenseFormScreen(
+            expensesRepository: FakeExpensesRepository(),
+            standalone: true,
+          ),
+        ),
+        GoRoute(
+          path: '/fixed-bills/new',
+          builder: (context, state) => FixedBillFormScreen(
+            fixedBillsRepository: FakeFixedBillsRepository(),
+            expensesRepository: FakeExpensesRepository(),
+            spaceReferencesRepository: FakeSpaceReferencesRepository(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Conta fixa'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Conta fixa').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FixedBillFormScreen), findsOneWidget);
+    expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
   });
 
   testWidgets('shows submit loading state while create request is pending', (

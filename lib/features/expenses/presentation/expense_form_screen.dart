@@ -424,7 +424,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           const SizedBox(height: 20),
                           _FlowGuidanceCard(
                             onOpenFixedBills: () =>
-                                context.go('/fixed-bills'),
+                                context.go('/fixed-bills/new'),
                             onOpenHistoryImport: () =>
                                 context.go('/history/import'),
                             onOpenReferences: () =>
