@@ -5,7 +5,6 @@ import 'package:despesas_frontend/core/ui/components/empty_state.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
-import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
@@ -13,13 +12,9 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_flow_re
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_view_model.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
-import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
-import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
-import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
-import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -89,54 +84,6 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     await _handleFlowResult(result);
   }
 
-  Future<void> _openReviewOperations() async {
-    await _goOrPush(
-      '/review-operations',
-      fallbackBuilder: () => ReviewOperationsListScreen(
-        reviewOperationsRepository: widget.reviewOperationsRepository,
-        sessionController: widget.sessionController,
-      ),
-    );
-  }
-
-  Future<void> _openReports() async {
-    await _goOrPush(
-      '/reports',
-      fallbackBuilder: () => ReportsScreen(
-        reportsRepository: widget.reportsRepository,
-        sessionController: widget.sessionController,
-      ),
-    );
-  }
-
-  Future<void> _openFinancialAssistant() async {
-    await _goOrPush(
-      '/assistant',
-      fallbackBuilder: () => FinancialAssistantScreen(
-        financialAssistantRepository: widget.financialAssistantRepository,
-        sessionController: widget.sessionController,
-      ),
-    );
-  }
-
-  Future<void> _openHouseholdMembers() async {
-    await _goOrPush(
-      '/household-members',
-      fallbackBuilder: () => HouseholdMembersScreen(
-        householdMembersRepository: widget.householdMembersRepository,
-        sessionController: widget.sessionController,
-      ),
-    );
-  }
-
-  Future<void> _openChangePassword() async {
-    await _goOrPush(
-      '/change-password',
-      fallbackBuilder: () =>
-          ChangePasswordScreen(sessionController: widget.sessionController),
-    );
-  }
-
   Future<void> _handleFlowResult(ExpenseFlowResult? result) async {
     if (!mounted || result == null) {
       return;
@@ -168,21 +115,6 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       ).push<T>(MaterialPageRoute(builder: (_) => fallbackBuilder()));
     }
   }
-
-  Future<void> _goOrPush(
-    String route, {
-    required Widget Function() fallbackBuilder,
-  }) async {
-    try {
-      context.go(route);
-      return;
-    } catch (_) {
-      await Navigator.of(
-        context,
-      ).push<void>(MaterialPageRoute(builder: (_) => fallbackBuilder()));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -215,26 +147,18 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                     spacing: 16,
                     children: [
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
+                        constraints: const BoxConstraints(maxWidth: 560),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Gestao principal de despesas',
+                              'Lista principal do household',
                               style: theme.textTheme.titleLarge,
                             ),
                             const SizedBox(height: 8),
-                            if (user?.email != null)
-                              Text(
-                                user!.email,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF65727B),
-                                ),
-                              ),
-                            const SizedBox(height: 6),
                             Text(
-                              'Crie, acompanhe, edite e remova despesas do household atual sem voltar ao legado.',
+                              'Aqui o foco e localizar, abrir e acompanhar despesas. A navegacao global continua no menu superior.',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -248,40 +172,6 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                         icon: const Icon(Icons.add),
                         label: const Text('Nova despesa'),
                       ),
-                      OutlinedButton.icon(
-                        key: const ValueKey('expenses-assistant-button'),
-                        onPressed: _openFinancialAssistant,
-                        icon: const Icon(Icons.psychology_alt_outlined),
-                        label: const Text('Assistente financeiro'),
-                      ),
-                      OutlinedButton.icon(
-                        key: const ValueKey('expenses-reports-button'),
-                        onPressed: _openReports,
-                        icon: const Icon(Icons.insert_chart_outlined),
-                        label: const Text('Relatorios'),
-                      ),
-                      OutlinedButton.icon(
-                        key: const ValueKey('expenses-security-button'),
-                        onPressed: _openChangePassword,
-                        icon: const Icon(Icons.lock_outline),
-                        label: const Text('Minha senha'),
-                      ),
-                      if (canReviewOperations)
-                        OutlinedButton.icon(
-                          key: const ValueKey('expenses-members-button'),
-                          onPressed: _openHouseholdMembers,
-                          icon: const Icon(Icons.group_outlined),
-                          label: const Text('Membros do household'),
-                        ),
-                      if (canReviewOperations)
-                        OutlinedButton.icon(
-                          key: const ValueKey(
-                            'expenses-review-operations-button',
-                          ),
-                          onPressed: _openReviewOperations,
-                          icon: const Icon(Icons.fact_check_outlined),
-                          label: const Text('Review operations'),
-                        ),
                     ],
                   ),
                 ),
@@ -324,7 +214,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Mais recentes primeiro para facilitar localizar o ultimo lancamento.',
+                              'Cada card destaca status, vencimento e saldo restante para reduzir leitura desnecessaria.',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -367,13 +257,11 @@ class _ExpenseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final createdDate =
-        '${expense.createdAt.day.toString().padLeft(2, '0')}/${expense.createdAt.month.toString().padLeft(2, '0')}/${expense.createdAt.year}';
     final dueDate = expense.dueDate == null
         ? null
         : '${expense.dueDate!.day.toString().padLeft(2, '0')}/${expense.dueDate!.month.toString().padLeft(2, '0')}/${expense.dueDate!.year}';
-    final effectiveDate =
-        '${expense.occurredOn.day.toString().padLeft(2, '0')}/${expense.occurredOn.month.toString().padLeft(2, '0')}/${expense.occurredOn.year}';
+    final statusTone = _ExpenseStatusTone.fromExpense(expense, theme);
+    final financialSummary = _buildFinancialSummary(expense);
 
     return Card(
       color: highlighted ? const Color(0xFFF5FBF8) : null,
@@ -389,7 +277,7 @@ class _ExpenseCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -434,30 +322,28 @@ class _ExpenseCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Icon(
-                        Icons.chevron_right,
-                        color: theme.colorScheme.primary,
+                      _MetaChip(
+                        label: statusTone.label,
+                        backgroundColor: statusTone.backgroundColor,
+                        textColor: statusTone.textColor,
+                        borderColor: statusTone.borderColor,
                       ),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
                   _MetaChip(
-                    label: highlighted
-                        ? 'Recem criada · lancada em $createdDate'
-                        : 'Lancada em $createdDate',
+                    label: dueDate == null ? 'Sem vencimento' : 'Vence em $dueDate',
                   ),
                   _MetaChip(
-                    label: dueDate == null
-                        ? 'Sem vencimento · $effectiveDate'
-                        : 'Vence em $dueDate',
+                    label: financialSummary,
                   ),
-                  _MetaChip(label: expense.status),
+                  if (highlighted) const _MetaChip(label: 'Recem criada'),
                   if (expense.overdue) const _MetaChip(label: 'Atrasada'),
                 ],
               ),
@@ -467,24 +353,100 @@ class _ExpenseCard extends StatelessWidget {
       ),
     );
   }
+
+  String _buildFinancialSummary(ExpenseSummary expense) {
+    if (expense.remainingAmount <= 0) {
+      return 'Pago ${formatCurrency(expense.paidAmount)}';
+    }
+    if (expense.paidAmount > 0) {
+      return 'Pago ${formatCurrency(expense.paidAmount)} · Restam ${formatCurrency(expense.remainingAmount)}';
+    }
+    return 'Restante ${formatCurrency(expense.remainingAmount)}';
+  }
 }
 
 class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.label});
+  const _MetaChip({
+    required this.label,
+    this.backgroundColor = const Color(0xFFF0F4F3),
+    this.textColor = const Color(0xFF32414B),
+    this.borderColor = Colors.transparent,
+  });
 
   final String label;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F3),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text(label),
+        child: Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: textColor),
+        ),
       ),
     );
+  }
+}
+
+class _ExpenseStatusTone {
+  const _ExpenseStatusTone({
+    required this.label,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.borderColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color borderColor;
+
+  factory _ExpenseStatusTone.fromExpense(ExpenseSummary expense, ThemeData theme) {
+    if (expense.overdue) {
+      return const _ExpenseStatusTone(
+        label: 'Atrasada',
+        backgroundColor: Color(0xFFFDECEC),
+        textColor: Color(0xFFB42318),
+        borderColor: Color(0xFFF9D3D0),
+      );
+    }
+
+    return switch (expense.status) {
+      'PAGA' => const _ExpenseStatusTone(
+        label: 'Paga',
+        backgroundColor: Color(0xFFE9F7EF),
+        textColor: Color(0xFF0F7B44),
+        borderColor: Color(0xFFC7EBD4),
+      ),
+      'PARCIALMENTE_PAGA' => _ExpenseStatusTone(
+        label: 'Parcialmente paga',
+        backgroundColor: const Color(0xFFFFF4E5),
+        textColor: const Color(0xFFB54708),
+        borderColor: const Color(0xFFF3D3A6),
+      ),
+      'PREVISTA' => _ExpenseStatusTone(
+        label: 'Prevista',
+        backgroundColor: const Color(0xFFF3F4F6),
+        textColor: const Color(0xFF475467),
+        borderColor: const Color(0xFFD5D8DD),
+      ),
+      _ => _ExpenseStatusTone(
+        label: 'Em aberto',
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+        textColor: theme.colorScheme.primary,
+        borderColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+      ),
+    };
   }
 }
