@@ -13,6 +13,8 @@ abstract interface class AuthRepository {
 
   Future<MobileSession> refresh({required String refreshToken});
 
+  Future<void> logout({required String refreshToken});
+
   Future<AuthUser> fetchCurrentUser();
 
   Future<AuthOnboarding> completeOnboarding();

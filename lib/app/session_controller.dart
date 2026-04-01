@@ -116,7 +116,18 @@ class SessionController extends ChangeNotifier implements SessionManager {
   }
 
   Future<void> logout() async {
-    await clearSession();
+    final refreshToken =
+        _session?.refreshToken ?? await _readStoredRefreshToken();
+
+    try {
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await _authRepository.logout(refreshToken: refreshToken);
+      }
+    } catch (_) {
+      // Local logout must still complete even if backend revocation fails.
+    } finally {
+      await clearSession();
+    }
   }
 
   Future<AuthOnboarding> completeOnboarding() async {

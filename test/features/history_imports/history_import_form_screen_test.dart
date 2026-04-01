@@ -19,7 +19,25 @@ void main() {
     WidgetTester tester, {
     FakeHistoryImportsRepository? historyImportsRepository,
     FakeExpensesRepository? expensesRepository,
+    Size? logicalSize,
+    double devicePixelRatio = 1,
+    double? textScaleFactor,
   }) async {
+    if (logicalSize != null) {
+      tester.view.physicalSize = Size(
+        logicalSize.width * devicePixelRatio,
+        logicalSize.height * devicePixelRatio,
+      );
+      tester.view.devicePixelRatio = devicePixelRatio;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+    }
+
+    if (textScaleFactor != null) {
+      tester.platformDispatcher.textScaleFactorTestValue = textScaleFactor;
+      addTearDown(tester.platformDispatcher.clearAllTestValues);
+    }
+
     await tester.pumpWidget(
       MaterialApp(
         home: HistoryImportFormScreen(
@@ -102,6 +120,25 @@ void main() {
   }
 
   testWidgets(
+    'nao estoura layout na coleta guiada em largura mobile',
+    (tester) async {
+      await pumpScreen(
+        tester,
+        logicalSize: const Size(360, 800),
+        textScaleFactor: 1.2,
+      );
+
+      expect(
+        find.byKey(
+          const ValueKey('history-import-form-payment-method-field-none'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'coleta guiada permite adicionar e remover itens antes da revisao',
     (tester) async {
       await pumpScreen(tester);
@@ -161,6 +198,76 @@ void main() {
       expect(find.text('Revise antes de confirmar.'), findsOneWidget);
       expect(find.text('Mercado de fevereiro'), findsOneWidget);
       expect(find.text('PIX'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'duplicar ultimo item reaproveita a serie simples e avanca um mes',
+    (tester) async {
+      await pumpScreen(tester);
+
+      await selectPaymentMethod(tester, label: 'Credito');
+      await fillEntry(
+        tester,
+        0,
+        description: 'Internet janeiro',
+        amount: '129,90',
+        notes: 'serie simples',
+      );
+
+      await scrollTo(
+        tester,
+        find.byKey(const ValueKey('history-import-duplicate-entry-button')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('history-import-duplicate-entry-button')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('history-import-entry-1-description-field')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(
+                const ValueKey('history-import-entry-1-description-field'),
+              ),
+            )
+            .controller
+            ?.text,
+        'Internet janeiro',
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const ValueKey('history-import-entry-1-amount-field')),
+            )
+            .controller
+            ?.text,
+        '129,90',
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const ValueKey('history-import-entry-1-notes-field')),
+            )
+            .controller
+            ?.text,
+        'serie simples',
+      );
+      expect(
+        find.byKey(const ValueKey('history-import-entry-1-category-field-1')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey('history-import-entry-1-subcategory-field-11'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 

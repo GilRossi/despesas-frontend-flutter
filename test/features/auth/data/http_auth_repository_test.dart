@@ -98,6 +98,30 @@ void main() {
     expect(session.accessToken, 'fresh-access-token');
   });
 
+  test('logout envia refresh token para o endpoint autenticado', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response('', 204);
+    });
+    final repository = buildRepository(
+      client: client,
+      accessToken: 'token-de-teste',
+    );
+
+    await repository.logout(refreshToken: 'refresh-token');
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/auth/logout',
+    );
+    expect(capturedRequest.method, 'POST');
+    expect(capturedRequest.headers['authorization'], 'Bearer token-de-teste');
+    expect(jsonDecode(capturedRequest.body) as Map<String, dynamic>, {
+      'refreshToken': 'refresh-token',
+    });
+  });
+
   test('forgotPassword interpreta a resposta mascarada', () async {
     late http.Request capturedRequest;
     final client = MockClient((request) async {
@@ -129,10 +153,7 @@ void main() {
       capturedRequest = request;
       return http.Response(
         jsonEncode({
-          'data': {
-            'revokedRefreshTokens': 3,
-            'success': true,
-          },
+          'data': {'revokedRefreshTokens': 3, 'success': true},
         }),
         200,
         headers: {'content-type': 'application/json'},

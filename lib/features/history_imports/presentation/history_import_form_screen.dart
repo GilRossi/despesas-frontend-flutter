@@ -16,6 +16,7 @@ import 'package:despesas_frontend/features/history_imports/domain/history_import
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:math' as math;
 
 enum _HistoryImportFlowStep { collect, review, success }
 
@@ -90,6 +91,24 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
 
   void _addEntry() {
     setState(() => _entries.add(_newEntryDraft()));
+    _viewModel.clearSubmissionFeedback();
+  }
+
+  void _duplicateLastEntry() {
+    if (_entries.isEmpty) {
+      return;
+    }
+
+    final source = _entries.last;
+    final duplicated = _newEntryDraft();
+    duplicated.descriptionController.text = source.descriptionController.text;
+    duplicated.amountController.text = source.amountController.text;
+    duplicated.notesController.text = source.notesController.text;
+    duplicated.selectedCategoryId = source.selectedCategoryId;
+    duplicated.selectedSubcategoryId = source.selectedSubcategoryId;
+    duplicated.setDate(_advanceOneMonth(source.date));
+
+    setState(() => _entries.add(duplicated));
     _viewModel.clearSubmissionFeedback();
   }
 
@@ -245,7 +264,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const RouteBackButton(fallbackRoute: '/assistant'),
+        leading: const RouteBackButton(fallbackRoute: '/expenses/new'),
         title: const Text('Trazer meu historico'),
       ),
       body: SafeArea(
@@ -334,6 +353,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
                   key: ValueKey(
                     'history-import-form-payment-method-field-${_selectedPaymentMethod?.apiValue ?? 'none'}',
                   ),
+                  isExpanded: true,
                   initialValue: _selectedPaymentMethod,
                   decoration: InputDecoration(
                     labelText: 'Como esse lote foi pago?',
@@ -373,11 +393,25 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
           ],
           Align(
             alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              key: const ValueKey('history-import-add-entry-button'),
-              onPressed: _viewModel.isSubmitting ? null : _addEntry,
-              icon: const Icon(Icons.add),
-              label: const Text('Adicionar outro item ao lote'),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  key: const ValueKey('history-import-add-entry-button'),
+                  onPressed: _viewModel.isSubmitting ? null : _addEntry,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar item em branco'),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('history-import-duplicate-entry-button'),
+                  onPressed: _viewModel.isSubmitting
+                      ? null
+                      : _duplicateLastEntry,
+                  icon: const Icon(Icons.copy_all_outlined),
+                  label: const Text('Duplicar ultimo item'),
+                ),
+              ],
             ),
           ),
           if (_viewModel.submitErrorMessage != null) ...[
@@ -394,8 +428,8 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             secondary: OutlinedButton(
               onPressed: _viewModel.isSubmitting
                   ? null
-                  : () => context.go('/assistant'),
-              child: const Text('Voltar ao assistente'),
+                  : () => context.go('/expenses/new'),
+              child: const Text('Voltar ao lancamento manual'),
             ),
             primary: FilledButton.icon(
               key: const ValueKey('history-import-form-continue-button'),
@@ -519,6 +553,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             key: ValueKey(
               'history-import-entry-$index-category-field-${entry.selectedCategoryId ?? 'none'}',
             ),
+            isExpanded: true,
             initialValue: entry.selectedCategoryId,
             decoration: InputDecoration(
               labelText: 'Categoria',
@@ -555,6 +590,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             key: ValueKey(
               'history-import-entry-$index-subcategory-field-${entry.selectedSubcategoryId ?? 'none'}',
             ),
+            isExpanded: true,
             initialValue: entry.selectedSubcategoryId,
             decoration: InputDecoration(
               labelText: 'Subcategoria',
@@ -784,8 +820,8 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
           const SizedBox(height: 20),
           _ActionBar(
             secondary: OutlinedButton(
-              onPressed: () => context.go('/assistant'),
-              child: const Text('Voltar ao assistente'),
+              onPressed: () => context.go('/expenses'),
+              child: const Text('Ver despesas importadas'),
             ),
             primary: FilledButton.icon(
               key: const ValueKey(
@@ -832,6 +868,17 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
 
   static DateTime _normalizeDate(DateTime value) {
     return DateTime(value.year, value.month, value.day);
+  }
+
+  static DateTime _advanceOneMonth(DateTime value) {
+    final normalized = _normalizeDate(value);
+    final lastDayOfNextMonth = DateTime(
+      normalized.year,
+      normalized.month + 2,
+      0,
+    ).day;
+    final nextDay = math.min(normalized.day, lastDayOfNextMonth);
+    return DateTime(normalized.year, normalized.month + 1, nextDay);
   }
 
   static String _formatDate(DateTime value) {
@@ -931,7 +978,7 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             step == _HistoryImportFlowStep.collect
-                ? 'Voce monta um lote manual com metodo de pagamento unico e itens claros, todos ligados ao catalogo real do backend.'
+                ? 'Voce monta um lote manual com metodo de pagamento unico e itens claros, todos ligados ao catalogo real do backend. Para series simples, duplique o ultimo item e ajuste o que mudou no mes.'
                 : step == _HistoryImportFlowStep.review
                 ? 'Agora confira o lote inteiro com calma. A gravacao real so acontece depois da sua confirmacao.'
                 : 'Tudo certo. O backend confirmou a importacao historica em lote.',
