@@ -128,7 +128,7 @@ GoRouter createAppRouter({
                   context.go('/history/import');
                 }
                 if (primaryActionKey == 'OPEN_FIXED_BILLS') {
-                  context.go('/fixed-bills');
+                  context.go('/fixed-bills/new');
                 }
                 if (primaryActionKey == 'OPEN_REGISTER_INCOME') {
                   context.go('/incomes/new');

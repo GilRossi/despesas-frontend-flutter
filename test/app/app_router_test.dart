@@ -1189,8 +1189,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byType(FixedBillsListScreen), findsOneWidget);
-        expect(find.text('Minhas contas fixas'), findsWidgets);
+        expect(find.byType(FixedBillFormScreen), findsOneWidget);
+        expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
       },
     );
   });
