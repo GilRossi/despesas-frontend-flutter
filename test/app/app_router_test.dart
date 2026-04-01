@@ -10,6 +10,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_form_sc
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
+import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bills_list_screen.dart';
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
@@ -226,6 +227,36 @@ void main() {
 
       expect(find.byType(FixedBillFormScreen), findsOneWidget);
       expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+    });
+
+    testWidgets('authenticated users can open /fixed-bills', (tester) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(
+        tester,
+        login: const Text('login'),
+        fixedBillsRepository: FakeFixedBillsRepository(
+          listResult: [
+            fakeFixedBillRecord(description: 'Internet fibra'),
+          ],
+        ),
+      );
+      router.go('/fixed-bills');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FixedBillsListScreen), findsOneWidget);
+      expect(find.text('Minhas contas fixas'), findsWidgets);
+      expect(find.text('Internet fibra'), findsOneWidget);
     });
 
     testWidgets('authenticated users can open /history/import', (tester) async {
@@ -1158,8 +1189,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.byType(FixedBillFormScreen), findsOneWidget);
-        expect(find.text('Revise antes de confirmar.'), findsNothing);
+        expect(find.byType(FixedBillsListScreen), findsOneWidget);
+        expect(find.text('Minhas contas fixas'), findsWidgets);
       },
     );
   });

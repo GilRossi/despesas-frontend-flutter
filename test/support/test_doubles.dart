@@ -722,16 +722,30 @@ class FakeIncomesRepository implements IncomesRepository {
 
 class FakeFixedBillsRepository implements FixedBillsRepository {
   FakeFixedBillsRepository({
+    this.listResult,
+    this.listError,
     this.createResult,
     this.createError,
     this.onCreate,
   });
 
+  List<FixedBillRecord>? listResult;
+  Exception? listError;
   FixedBillRecord? createResult;
   Exception? createError;
   FutureOr<void> Function(CreateFixedBillInput input)? onCreate;
+  int listCalls = 0;
   int createCalls = 0;
   CreateFixedBillInput? lastCreatedInput;
+
+  @override
+  Future<List<FixedBillRecord>> listFixedBills() async {
+    listCalls += 1;
+    if (listError != null) {
+      throw listError!;
+    }
+    return listResult ?? const [];
+  }
 
   @override
   Future<FixedBillRecord> createFixedBill(CreateFixedBillInput input) async {
