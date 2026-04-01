@@ -92,6 +92,30 @@ void main() {
       expect(find.text('login'), findsOneWidget);
     });
 
+    testWidgets('logout refreshes the router and returns to login', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      await pumpRouter(tester, login: const Text('login'));
+
+      await sessionController.logout();
+      await tester.pumpAndSettle();
+
+      expect(find.text('login'), findsOneWidget);
+      expect(authRepository.logoutCalls, 1);
+    });
+
     testWidgets('authenticated users can open /space/references', (
       tester,
     ) async {
@@ -338,7 +362,10 @@ void main() {
       await pumpRouter(tester, login: const Text('login'));
 
       expect(find.text('Dashboard'), findsOneWidget);
-      expect(find.byKey(const ValueKey('dashboard-first-use-card')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('dashboard-first-use-card')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey('dashboard-first-use-manual-button')),
         findsOneWidget,
@@ -350,28 +377,32 @@ void main() {
       expect(find.text('Bem-vindo ao seu Espaco, Gil'), findsNothing);
     });
 
-    testWidgets('first access users can still open the assistant as optional help', (
-      tester,
-    ) async {
-      authRepository.loginResult = fakeSession(
-        onboarding: const AuthOnboarding(completed: false),
-      );
+    testWidgets(
+      'first access users can still open the assistant as optional help',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        );
 
-      await sessionController.login(
-        email: 'user@example.com',
-        password: 'password',
-      );
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
 
-      await pumpRouter(tester, login: const Text('login'));
+        await pumpRouter(tester, login: const Text('login'));
 
-      await tester.tap(
-        find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
-      );
-      await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-first-use-assistant-button')),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Assistente financeiro'), findsOneWidget);
-      expect(find.byKey(const ValueKey('assistant-tour-card')), findsOneWidget);
-    });
+        expect(find.text('Assistente financeiro'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('assistant-tour-card')),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('subsequent access users keep the normal home flow', (
       tester,

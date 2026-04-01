@@ -70,6 +70,87 @@ void main() {
     );
     await _pumpUntilVisible(
       tester,
+      find.text('Antes de lancar, confirme o tipo certo'),
+    );
+    await _tap(tester, find.text('Historico'));
+    await _pumpUntilVisible(tester, find.text('Trazer meu historico'));
+    await _tap(
+      tester,
+      find.byKey(
+        const ValueKey('history-import-form-payment-method-field-none'),
+      ),
+    );
+    await _tap(tester, find.text('PIX').last);
+    await tester.enterText(
+      find.byKey(const ValueKey('history-import-entry-0-description-field')),
+      'Internet janeiro $_proofRunId',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('history-import-entry-0-amount-field')),
+      '129,90',
+    );
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('history-import-entry-0-category-field-none')),
+    );
+    await _tap(tester, _historyCategoryFinder());
+    await _tap(
+      tester,
+      find.byKey(
+        const ValueKey('history-import-entry-0-subcategory-field-none'),
+      ),
+    );
+    await _tap(tester, find.text('Internet').last);
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('history-import-duplicate-entry-button')),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('history-import-entry-1-description-field')),
+      'Internet fevereiro $_proofRunId',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('history-import-entry-1-amount-field')),
+      '139,90',
+    );
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('history-import-form-continue-button')),
+    );
+    await _pumpUntilVisible(
+      tester,
+      find.byKey(const ValueKey('history-import-review-panel')),
+    );
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('history-import-review-confirm-button')),
+    );
+    await _pumpUntilVisible(
+      tester,
+      find.byKey(const ValueKey('history-import-success-card')),
+      timeout: const Duration(seconds: 20),
+    );
+    await _expectNoFlutterErrors(tester);
+    await binding.takeScreenshot('03-owner-history-import-success');
+    await _tap(tester, find.text('Ver despesas importadas'));
+    await _waitForHomeScreen(
+      tester,
+      binding,
+      screenshotName: 'owner-home-after-history-timeout',
+    );
+    await _pumpUntilVisible(
+      tester,
+      find.text('Internet fevereiro $_proofRunId'),
+    );
+    await _expectNoFlutterErrors(tester);
+    await binding.takeScreenshot('04-owner-home-after-history');
+
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('expenses-new-expense-button')),
+    );
+    await _pumpUntilVisible(
+      tester,
       find.byKey(const ValueKey('expense-form-description-field')),
     );
     await tester.enterText(
@@ -90,7 +171,7 @@ void main() {
     );
     await _pumpUntilVisible(tester, find.text(expenseDescription));
     await _expectNoFlutterErrors(tester);
-    await binding.takeScreenshot('03-owner-expense-created');
+    await binding.takeScreenshot('05-owner-expense-created');
 
     await _tap(tester, find.text(expenseDescription));
     await _pumpUntilVisible(tester, find.text('Detalhe da despesa'));
@@ -112,7 +193,7 @@ void main() {
       timeout: const Duration(seconds: 20),
     );
     await _expectNoFlutterErrors(tester);
-    await binding.takeScreenshot('04-owner-payment-registered');
+    await binding.takeScreenshot('06-owner-payment-registered');
     await tester.pageBack();
     await tester.pumpAndSettle();
 
@@ -122,7 +203,7 @@ void main() {
       find.text('Leitura clara do mes financeiro'),
     );
     await _expectNoFlutterErrors(tester);
-    await binding.takeScreenshot('05-owner-reports');
+    await binding.takeScreenshot('07-owner-reports');
     await tester.pageBack();
     await tester.pumpAndSettle();
 
@@ -138,7 +219,7 @@ void main() {
     await _tap(tester, find.byKey(const ValueKey('assistant-submit-button')));
     await _pumpUntilVisible(tester, find.text('Resposta do assistente'));
     await _expectNoFlutterErrors(tester);
-    await binding.takeScreenshot('06-owner-assistant');
+    await binding.takeScreenshot('08-owner-assistant');
     await tester.pageBack();
     await tester.pumpAndSettle();
 
@@ -157,7 +238,7 @@ void main() {
       findsNothing,
     );
     await _expectNoFlutterErrors(tester);
-    await binding.takeScreenshot('07-member-home');
+    await binding.takeScreenshot('09-member-home');
   });
 }
 
@@ -204,6 +285,14 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
   await tester.tap(finder);
   await tester.pump();
+}
+
+Finder _historyCategoryFinder() {
+  final moradia = find.text('Moradia').last;
+  if (moradia.evaluate().isNotEmpty) {
+    return moradia;
+  }
+  return find.text('Casa').last;
 }
 
 Future<void> _pumpUntilVisible(

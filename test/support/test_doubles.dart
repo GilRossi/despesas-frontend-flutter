@@ -75,6 +75,7 @@ class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({
     this.loginResult,
     this.refreshResult,
+    this.logoutError,
     this.changePasswordResult,
     this.forgotPasswordResult,
     this.resetPasswordResult,
@@ -91,6 +92,7 @@ class FakeAuthRepository implements AuthRepository {
 
   MobileSession? loginResult;
   MobileSession? refreshResult;
+  Exception? logoutError;
   ChangePasswordResult? changePasswordResult;
   ForgotPasswordResult? forgotPasswordResult;
   ResetPasswordResult? resetPasswordResult;
@@ -104,12 +106,14 @@ class FakeAuthRepository implements AuthRepository {
   Exception? fetchCurrentUserError;
   Exception? completeOnboardingError;
   int refreshCalls = 0;
+  int logoutCalls = 0;
   int changePasswordCalls = 0;
   int forgotPasswordCalls = 0;
   int resetPasswordCalls = 0;
   int fetchCurrentUserCalls = 0;
   int completeOnboardingCalls = 0;
   String? lastCurrentPassword;
+  String? lastLogoutRefreshToken;
   String? lastNewPassword;
   String? lastNewPasswordConfirmation;
   String? lastForgotEmail;
@@ -133,6 +137,15 @@ class FakeAuthRepository implements AuthRepository {
       throw refreshError!;
     }
     return refreshResult ?? fakeSession();
+  }
+
+  @override
+  Future<void> logout({required String refreshToken}) async {
+    logoutCalls += 1;
+    lastLogoutRefreshToken = refreshToken;
+    if (logoutError != null) {
+      throw logoutError!;
+    }
   }
 
   @override

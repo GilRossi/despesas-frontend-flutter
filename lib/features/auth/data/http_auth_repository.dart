@@ -46,6 +46,19 @@ class HttpAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> logout({required String refreshToken}) async {
+    final response = await _apiClient.postJson(
+      '/api/v1/auth/logout',
+      headers: _authorizationHeaders(),
+      body: {'refreshToken': refreshToken},
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+  }
+
+  @override
   Future<AuthUser> fetchCurrentUser() async {
     final response = await _apiClient.get(
       '/api/v1/auth/me',
