@@ -886,7 +886,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Gestao principal de despesas'), findsOneWidget);
+        expect(find.text('Lista principal do household'), findsOneWidget);
         expect(find.text('Mercado'), findsOneWidget);
       },
     );
