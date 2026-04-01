@@ -4,11 +4,6 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_detail_
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
-import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
-import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
-import 'package:despesas_frontend/features/household_members/presentation/household_members_screen.dart';
-import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
-import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -86,7 +81,12 @@ void main() {
 
     expect(find.text('Conta de Luz'), findsOneWidget);
     expect(find.text('R\$ 129,90'), findsOneWidget);
-    expect(find.text('Mais recentes primeiro para facilitar localizar o ultimo lancamento.'), findsOneWidget);
+    expect(
+      find.text(
+        'Cada card destaca status, vencimento e saldo restante para reduzir leitura desnecessaria.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('highlights the recently created expense at the top of the list', (
@@ -135,8 +135,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Recem criada'), findsOneWidget);
-    expect(find.text('Recem criada · lancada em 30/03/2026'), findsOneWidget);
+    expect(find.text('Recem criada'), findsNWidgets(2));
 
     await tester.scrollUntilVisible(
       find.text('Mais antiga'),
@@ -145,7 +144,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final recemCriadaTop = tester.getTopLeft(find.text('Recem criada')).dy;
+    final recemCriadaTop = tester.getTopLeft(find.text('Recem criada').first).dy;
     final maisAntigaTop = tester.getTopLeft(find.text('Mais antiga')).dy;
     expect(recemCriadaTop, lessThan(maisAntigaTop));
   });
@@ -192,7 +191,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Despesa imediata'), findsOneWidget);
-      expect(find.textContaining('Recem criada · lancada em'), findsOneWidget);
+      expect(find.text('Recem criada'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
       await tester.pumpAndSettle();
@@ -425,7 +424,7 @@ void main() {
       expect(find.byType(ExpensesListScreen), findsOneWidget);
       expect(find.text('Pagamento registrado com sucesso.'), findsOneWidget);
       expect(repository.listCalls, 2);
-      expect(find.text('PARCIALMENTE_PAGA'), findsOneWidget);
+      expect(find.text('Parcialmente paga'), findsOneWidget);
     },
   );
 
@@ -541,69 +540,13 @@ void main() {
 
       expect(find.text('Despesa criada com sucesso.'), findsOneWidget);
       expect(find.text('Farmacia'), findsOneWidget);
-      expect(find.textContaining('Recem criada · lancada em'), findsOneWidget);
+      expect(find.text('Recem criada'), findsOneWidget);
       expect(repository.createCalls, 1);
       expect(repository.listCalls, greaterThanOrEqualTo(2));
     },
   );
 
-  testWidgets('opens review operations for owner', (tester) async {
-    final controller = SessionController(
-      authRepository: FakeAuthRepository(loginResult: fakeSession()),
-      sessionStore: MemorySessionStore(),
-    );
-    await controller.login(email: 'gil@example.com', password: 'Senha123!');
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExpensesListScreen(
-          sessionController: controller,
-          expensesRepository: FakeExpensesRepository(result: emptyPage()),
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
-          householdMembersRepository: FakeHouseholdMembersRepository(),
-          reportsRepository: FakeReportsRepository(),
-          reviewOperationsRepository: FakeReviewOperationsRepository(),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-
-    await tester.tap(find.text('Review operations'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ReviewOperationsListScreen), findsOneWidget);
-  });
-
-  testWidgets('opens reports from main expenses hub', (tester) async {
-    final controller = SessionController(
-      authRepository: FakeAuthRepository(loginResult: fakeSession()),
-      sessionStore: MemorySessionStore(),
-    );
-    await controller.login(email: 'gil@example.com', password: 'Senha123!');
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExpensesListScreen(
-          sessionController: controller,
-          expensesRepository: FakeExpensesRepository(result: emptyPage()),
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
-          householdMembersRepository: FakeHouseholdMembersRepository(),
-          reportsRepository: FakeReportsRepository(),
-          reviewOperationsRepository: FakeReviewOperationsRepository(),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-
-    await tester.tap(find.text('Relatorios'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ReportsScreen), findsOneWidget);
-  });
-
-  testWidgets('opens financial assistant from main expenses hub', (
+  testWidgets('keeps the local header focused on the expense list flow', (
     tester,
   ) async {
     final controller = SessionController(
@@ -627,38 +570,13 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.tap(find.text('Assistente financeiro'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(FinancialAssistantScreen), findsOneWidget);
-  });
-
-  testWidgets('opens household members flow for owner', (tester) async {
-    final controller = SessionController(
-      authRepository: FakeAuthRepository(loginResult: fakeSession()),
-      sessionStore: MemorySessionStore(),
-    );
-    await controller.login(email: 'gil@example.com', password: 'Senha123!');
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExpensesListScreen(
-          sessionController: controller,
-          expensesRepository: FakeExpensesRepository(result: emptyPage()),
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
-          householdMembersRepository: FakeHouseholdMembersRepository(),
-          reportsRepository: FakeReportsRepository(),
-          reviewOperationsRepository: FakeReviewOperationsRepository(),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-
-    await tester.tap(find.text('Membros do household'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(HouseholdMembersScreen), findsOneWidget);
+    expect(find.text('Lista principal do household'), findsOneWidget);
+    expect(find.byKey(const ValueKey('expenses-new-expense-button')), findsOneWidget);
+    expect(find.text('Assistente financeiro'), findsNothing);
+    expect(find.text('Relatorios'), findsNothing);
+    expect(find.text('Minha senha'), findsNothing);
+    expect(find.text('Membros do household'), findsNothing);
+    expect(find.text('Review operations'), findsNothing);
   });
 
   testWidgets('hides household members flow for non-owner', (tester) async {
@@ -688,9 +606,67 @@ void main() {
     expect(find.text('Membros do household'), findsNothing);
   });
 
-  testWidgets('remains stable with increased text scale in header', (
-    tester,
-  ) async {
+  testWidgets('shows clearer payment progress and status labels', (tester) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpensesListScreen(
+          sessionController: controller,
+          expensesRepository: FakeExpensesRepository(
+            result: PagedResult(
+              items: [
+                fakeExpense(
+                  id: 1,
+                  description: 'Streaming',
+                  status: 'ABERTA',
+                  dueDate: null,
+                ),
+                fakeExpense(
+                  id: 2,
+                  description: 'Celular',
+                  status: 'PARCIALMENTE_PAGA',
+                  amount: 59.9,
+                  paidAmount: 20,
+                  remainingAmount: 39.9,
+                ),
+                fakeExpense(
+                  id: 3,
+                  description: 'Internet',
+                  status: 'PAGA',
+                  paidAmount: 129.9,
+                  remainingAmount: 0,
+                ),
+              ],
+              page: 0,
+              size: 20,
+              totalElements: 3,
+              totalPages: 1,
+              hasNext: false,
+              hasPrevious: false,
+            ),
+          ),
+          financialAssistantRepository: FakeFinancialAssistantRepository(),
+          householdMembersRepository: FakeHouseholdMembersRepository(),
+          reportsRepository: FakeReportsRepository(),
+          reviewOperationsRepository: FakeReviewOperationsRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Em aberto'), findsOneWidget);
+    expect(find.text('Parcialmente paga'), findsOneWidget);
+    expect(find.text('Restante R\$ 129,90'), findsOneWidget);
+    expect(find.text('Pago R\$ 20,00 · Restam R\$ 39,90'), findsOneWidget);
+  });
+
+  testWidgets('remains stable with increased text scale in header', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(360, 740);
     addTearDown(tester.view.reset);
@@ -730,35 +706,5 @@ void main() {
 
     expect(find.text('Nome com zoom alto no Android'), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('opens account security from the authenticated hub', (
-    tester,
-  ) async {
-    final controller = SessionController(
-      authRepository: FakeAuthRepository(loginResult: fakeSession()),
-      sessionStore: MemorySessionStore(),
-    );
-    await controller.login(email: 'gil@example.com', password: 'Senha123!');
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExpensesListScreen(
-          sessionController: controller,
-          expensesRepository: FakeExpensesRepository(result: emptyPage()),
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
-          householdMembersRepository: FakeHouseholdMembersRepository(),
-          reportsRepository: FakeReportsRepository(),
-          reviewOperationsRepository: FakeReviewOperationsRepository(),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-
-    await tester.tap(find.byKey(const ValueKey('expenses-security-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ChangePasswordScreen), findsOneWidget);
   });
 }
