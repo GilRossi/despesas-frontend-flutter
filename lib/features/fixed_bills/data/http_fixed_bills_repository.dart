@@ -12,6 +12,27 @@ class HttpFixedBillsRepository implements FixedBillsRepository {
   final AuthorizedRequestExecutor _requestExecutor;
 
   @override
+  Future<List<FixedBillRecord>> listFixedBills() async {
+    final response = await _requestExecutor.run(
+      (headers) => _requestExecutor.apiClient.get(
+        '/api/v1/fixed-bills',
+        headers: headers,
+      ),
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] as List<dynamic>? ?? const [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(FixedBillRecord.fromJson)
+        .toList();
+  }
+
+  @override
   Future<FixedBillRecord> createFixedBill(CreateFixedBillInput input) async {
     final response = await _requestExecutor.run(
       (headers) => _requestExecutor.apiClient.postJson(

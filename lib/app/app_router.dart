@@ -11,6 +11,7 @@ import 'package:despesas_frontend/features/expenses/presentation/expense_payment
 import 'package:despesas_frontend/features/expenses/presentation/expenses_list_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
+import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bills_list_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/presentation/financial_assistant_screen.dart';
 import 'package:despesas_frontend/features/history_imports/domain/history_imports_repository.dart';
@@ -127,7 +128,7 @@ GoRouter createAppRouter({
                   context.go('/history/import');
                 }
                 if (primaryActionKey == 'OPEN_FIXED_BILLS') {
-                  context.go('/fixed-bills/new');
+                  context.go('/fixed-bills');
                 }
                 if (primaryActionKey == 'OPEN_REGISTER_INCOME') {
                   context.go('/incomes/new');
@@ -156,6 +157,12 @@ GoRouter createAppRouter({
               historyImportsRepository: historyImportsRepository,
               expensesRepository: expensesRepository,
               sessionController: sessionController,
+            ),
+          ),
+          GoRoute(
+            path: '/fixed-bills',
+            builder: (context, state) => FixedBillsListScreen(
+              fixedBillsRepository: fixedBillsRepository,
             ),
           ),
           GoRoute(

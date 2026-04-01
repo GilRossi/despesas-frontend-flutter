@@ -15,6 +15,77 @@ import 'package:http/testing.dart';
 import '../../../support/test_doubles.dart';
 
 void main() {
+  test('listFixedBills interpreta a lista autenticada de contas fixas', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': [
+            {
+              'id': 10,
+              'description': 'Internet fibra',
+              'amount': 129.9,
+              'firstDueDate': '2026-04-05',
+              'frequency': 'MONTHLY',
+              'category': {'id': 1, 'name': 'Casa'},
+              'subcategory': {'id': 11, 'name': 'Internet'},
+              'spaceReference': {'id': 7, 'name': 'Projeto Horizonte'},
+              'active': true,
+              'createdAt': '2026-03-28T12:00:00Z',
+            },
+            {
+              'id': 11,
+              'description': 'Faxina',
+              'amount': 90.0,
+              'firstDueDate': '2026-04-03',
+              'frequency': 'WEEKLY',
+              'category': {'id': 2, 'name': 'Moradia'},
+              'subcategory': {'id': 21, 'name': 'Condominio'},
+              'active': true,
+              'createdAt': '2026-03-29T12:00:00Z',
+            },
+          ],
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final repository = HttpFixedBillsRepository(
+      AuthorizedRequestExecutor(
+        apiClient: DespesasApiClient(
+          baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+          httpClient: client,
+        ),
+        sessionManager: sessionController,
+      ),
+    );
+
+    final fixedBills = await repository.listFixedBills();
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/fixed-bills',
+    );
+    expect(capturedRequest.headers['authorization'], 'Bearer access-token');
+    expect(fixedBills, hasLength(2));
+    expect(fixedBills.first.description, 'Internet fibra');
+    expect(fixedBills.first.spaceReference?.name, 'Projeto Horizonte');
+    expect(fixedBills.last.frequency, FixedBillFrequency.weekly);
+  });
+
   test(
     'createFixedBill envia payload autenticado e interpreta a resposta',
     () async {
