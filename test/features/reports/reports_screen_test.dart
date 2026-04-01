@@ -1,10 +1,18 @@
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/test_doubles.dart';
 
 void main() {
+  SessionController buildSessionController() {
+    return SessionController(
+      authRepository: FakeAuthRepository(),
+      sessionStore: MemorySessionStore(),
+    );
+  }
+
   void configureSmallViewport(WidgetTester tester) {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 640);
@@ -14,7 +22,10 @@ void main() {
   testWidgets('shows reports content when load succeeds', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: ReportsScreen(reportsRepository: FakeReportsRepository()),
+        home: ReportsScreen(
+          reportsRepository: FakeReportsRepository(),
+          sessionController: buildSessionController(),
+        ),
       ),
     );
 
@@ -60,6 +71,7 @@ void main() {
               recommendations: const [],
             ),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -82,6 +94,7 @@ void main() {
           reportsRepository: FakeReportsRepository(
             error: fakeApiException(message: 'Falha simulada'),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -99,7 +112,12 @@ void main() {
     final repository = FakeReportsRepository();
 
     await tester.pumpWidget(
-      MaterialApp(home: ReportsScreen(reportsRepository: repository)),
+      MaterialApp(
+        home: ReportsScreen(
+          reportsRepository: repository,
+          sessionController: buildSessionController(),
+        ),
+      ),
     );
 
     await tester.pumpAndSettle();
@@ -117,7 +135,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: ReportsScreen(reportsRepository: FakeReportsRepository()),
+        home: ReportsScreen(
+          reportsRepository: FakeReportsRepository(),
+          sessionController: buildSessionController(),
+        ),
       ),
     );
 

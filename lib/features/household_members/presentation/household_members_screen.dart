@@ -1,3 +1,5 @@
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
@@ -9,9 +11,11 @@ class HouseholdMembersScreen extends StatefulWidget {
   const HouseholdMembersScreen({
     super.key,
     required this.householdMembersRepository,
+    required this.sessionController,
   });
 
   final HouseholdMembersRepository householdMembersRepository;
+  final SessionController sessionController;
 
   @override
   State<HouseholdMembersScreen> createState() => _HouseholdMembersScreenState();
@@ -83,6 +87,13 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/expenses'),
             title: const Text('Membros do household'),
+            actions: buildAuthenticatedTopBarActions(
+              context: context,
+              sessionController: widget.sessionController,
+              currentLocation: '/household-members',
+              canReviewOperations:
+                  widget.sessionController.currentUser?.role == 'OWNER',
+            ),
           ),
           body: SafeArea(
             top: false,

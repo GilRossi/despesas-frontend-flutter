@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operations_list_screen.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_screen.dart';
@@ -7,6 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
+  SessionController buildSessionController() {
+    return SessionController(
+      authRepository: FakeAuthRepository(),
+      sessionStore: MemorySessionStore(),
+    );
+  }
+
   testWidgets('shows empty state when there are no pending reviews', (
     tester,
   ) async {
@@ -16,6 +24,7 @@ void main() {
           reviewOperationsRepository: FakeReviewOperationsRepository(
             listResult: emptyReviewPage(),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -32,6 +41,7 @@ void main() {
           reviewOperationsRepository: FakeReviewOperationsRepository(
             listError: fakeApiException(message: 'Falha simulada'),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -52,6 +62,7 @@ void main() {
               message: 'Access denied',
             ),
           ),
+          sessionController: buildSessionController(),
         ),
       ),
     );
@@ -82,6 +93,7 @@ void main() {
       MaterialApp(
         home: ReviewOperationsListScreen(
           reviewOperationsRepository: repository,
+          sessionController: buildSessionController(),
         ),
       ),
     );

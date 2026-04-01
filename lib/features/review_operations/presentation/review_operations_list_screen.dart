@@ -1,3 +1,5 @@
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_summary.dart';
@@ -12,9 +14,11 @@ class ReviewOperationsListScreen extends StatefulWidget {
   const ReviewOperationsListScreen({
     super.key,
     required this.reviewOperationsRepository,
+    required this.sessionController,
   });
 
   final ReviewOperationsRepository reviewOperationsRepository;
+  final SessionController sessionController;
 
   @override
   State<ReviewOperationsListScreen> createState() =>
@@ -45,6 +49,7 @@ class _ReviewOperationsListScreenState
       fallbackBuilder: () => ReviewOperationDetailScreen(
         ingestionId: review.ingestionId,
         reviewOperationsRepository: widget.reviewOperationsRepository,
+        sessionController: widget.sessionController,
       ),
     );
 
@@ -72,9 +77,9 @@ class _ReviewOperationsListScreenState
     try {
       return await context.push<T>(route);
     } catch (_) {
-      return Navigator.of(context).push<T>(
-        MaterialPageRoute(builder: (_) => fallbackBuilder()),
-      );
+      return Navigator.of(
+        context,
+      ).push<T>(MaterialPageRoute(builder: (_) => fallbackBuilder()));
     }
   }
 
@@ -89,6 +94,13 @@ class _ReviewOperationsListScreenState
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/expenses'),
             title: const Text('Review operations'),
+            actions: buildAuthenticatedTopBarActions(
+              context: context,
+              sessionController: widget.sessionController,
+              currentLocation: '/review-operations',
+              canReviewOperations:
+                  widget.sessionController.currentUser?.role == 'OWNER',
+            ),
           ),
           body: SafeArea(
             top: false,

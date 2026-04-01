@@ -1,6 +1,7 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:flutter/material.dart';
 
@@ -112,6 +113,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       appBar: AppBar(
         leading: const RouteBackButton(fallbackRoute: '/expenses'),
         title: const Text('Seguranca da conta'),
+        actions: buildAuthenticatedTopBarActions(
+          context: context,
+          sessionController: widget.sessionController,
+          currentLocation: '/change-password',
+          canReviewOperations:
+              widget.sessionController.currentUser?.role == 'OWNER',
+        ),
       ),
       body: SafeArea(
         child: ResponsiveScrollBody(
