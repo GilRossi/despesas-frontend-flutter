@@ -154,6 +154,7 @@ GoRouter createAppRouter({
             builder: (context, state) => HistoryImportFormScreen(
               historyImportsRepository: historyImportsRepository,
               expensesRepository: expensesRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(

@@ -116,6 +116,73 @@ void main() {
       expect(authRepository.logoutCalls, 1);
     });
 
+    testWidgets('dashboard oferece historico direto no menu principal', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/');
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/history/import'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Trazer meu historico'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HistoryImportFormScreen), findsOneWidget);
+    });
+
+    testWidgets('logout fica acessivel direto na dashboard', (tester) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/');
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('login'), findsOneWidget);
+      expect(authRepository.logoutCalls, 1);
+    });
+
     testWidgets('authenticated users can open /space/references', (
       tester,
     ) async {
@@ -180,6 +247,46 @@ void main() {
 
       expect(find.byType(HistoryImportFormScreen), findsOneWidget);
       expect(find.text('Trazer meu historico'), findsWidgets);
+    });
+
+    testWidgets('menu principal omite a tela atual no historico', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/history/import');
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(
+          const ValueKey('authenticated-top-bar-menu-item-/history/import'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/expenses')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('authenticated users can open /incomes/new', (tester) async {
