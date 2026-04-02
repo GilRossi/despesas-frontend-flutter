@@ -128,6 +128,7 @@ void main() {
       find.byKey(const ValueKey('dashboard-owner-household-summary-card')),
       findsOneWidget,
     );
+    expect(find.text('Mês de referência'), findsOneWidget);
     expect(find.text('Responsáveis'), findsOneWidget);
     expect(find.text('Convidados'), findsOneWidget);
     expect(

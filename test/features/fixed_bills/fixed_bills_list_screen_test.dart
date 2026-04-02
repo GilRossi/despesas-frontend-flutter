@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_generated_expense.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bills_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -70,6 +71,11 @@ void main() {
           description: 'Internet fibra',
           amount: 129.9,
           nextDueDate: DateTime.utc(2026, 4, 5),
+          lastGeneratedExpense: FixedBillGeneratedExpense(
+            expenseId: 91,
+            dueDate: DateTime.utc(2026, 4, 5),
+            createdAt: DateTime.utc(2026, 4, 1, 10),
+          ),
           spaceReference: fakeFixedBillReference(
             id: 7,
             name: 'Apartamento Centro',
@@ -98,6 +104,7 @@ void main() {
     expect(find.text('Faxina semanal'), findsOneWidget);
     expect(find.text('Lançar despesa'), findsNWidgets(2));
     expect(find.text('Editar regra'), findsNWidgets(2));
+    expect(find.text('Abrir última despesa'), findsOneWidget);
     expect(find.text('Excluir regra'), findsNWidgets(2));
   });
 

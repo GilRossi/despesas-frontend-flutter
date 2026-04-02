@@ -422,7 +422,7 @@ class _FixedBillCard extends StatelessWidget {
                   key: ValueKey('fixed-bills-open-latest-expense-${record.id}'),
                   onPressed: isBusy ? null : onOpenLatestExpense,
                   icon: const Icon(Icons.open_in_new_outlined),
-                  label: const Text('Abrir ultima despesa'),
+                  label: const Text('Abrir última despesa'),
                 ),
               TextButton.icon(
                 key: ValueKey('fixed-bills-delete-${record.id}'),
