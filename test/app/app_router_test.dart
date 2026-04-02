@@ -257,6 +257,55 @@ void main() {
       expect(find.text('Internet fibra'), findsOneWidget);
     });
 
+    testWidgets('minhas contas fixas mantem menu autenticado e omite a tela atual', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(
+        tester,
+        login: const Text('login'),
+        fixedBillsRepository: FakeFixedBillsRepository(
+          listResult: [fakeFixedBillRecord(description: 'Internet fibra')],
+        ),
+      );
+      router.go('/fixed-bills');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/fixed-bills')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/expenses')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('authenticated users can open /fixed-bills/:id/edit', (
       tester,
     ) async {
@@ -284,6 +333,98 @@ void main() {
 
       expect(find.byType(FixedBillFormScreen), findsOneWidget);
       expect(find.text('Editar conta fixa'), findsOneWidget);
+    });
+
+    testWidgets('cadastro de conta fixa mantem menu autenticado e navegacao coerente', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/fixed-bills/new');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/fixed-bills')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/expenses')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('edicao de conta fixa mantem menu autenticado e navegacao coerente', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(
+        tester,
+        login: const Text('login'),
+        fixedBillsRepository: FakeFixedBillsRepository(
+          getResult: fakeFixedBillRecord(id: 10, description: 'Internet fibra'),
+        ),
+      );
+      router.go('/fixed-bills/10/edit');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/fixed-bills')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('authenticated-top-bar-menu-item-/expenses')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('authenticated users can open /history/import', (tester) async {

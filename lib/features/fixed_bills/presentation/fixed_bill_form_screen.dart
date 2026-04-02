@@ -1,5 +1,8 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
@@ -23,12 +26,14 @@ enum _FixedBillFlowStep { collect, review, success }
 class FixedBillFormScreen extends StatefulWidget {
   const FixedBillFormScreen({
     super.key,
+    required this.sessionController,
     required this.fixedBillsRepository,
     required this.expensesRepository,
     required this.spaceReferencesRepository,
     this.fixedBillId,
   });
 
+  final SessionController sessionController;
   final FixedBillsRepository fixedBillsRepository;
   final ExpensesRepository expensesRepository;
   final SpaceReferencesRepository spaceReferencesRepository;
@@ -284,61 +289,62 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
   Widget build(BuildContext context) {
     final keyboardBottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const RouteBackButton(fallbackRoute: '/fixed-bills'),
-        title: Text(_isEditMode ? 'Editar conta fixa' : 'Cadastrar conta fixa'),
-      ),
-      body: SafeArea(
-        top: false,
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            return ResponsiveScrollBody(
-              maxWidth: 860,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                20 + keyboardBottomInset,
-              ),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _HeroCard(step: _step, isEditMode: _isEditMode),
-                  const SizedBox(height: 16),
-                  if (_isLoadingInitialRecord)
-                    const _StateCard(
-                      key: ValueKey('fixed-bill-loading-draft-card'),
-                      title: 'Carregando esta conta fixa',
-                      message:
-                          'Buscando a regra atual para você editar sem perder o contexto.',
-                      showProgress: true,
-                    ),
-                  if (!_isLoadingInitialRecord &&
-                      _loadInitialRecordMessage != null)
-                    _StateCard(
-                      key: const ValueKey('fixed-bill-load-draft-error-card'),
-                      title: 'Não foi possível abrir esta conta fixa',
-                      message: _loadInitialRecordMessage!,
-                      actionLabel: 'Tentar novamente',
-                      onAction: _loadInitialRecord,
-                    ),
-                  if (!_isLoadingInitialRecord &&
-                      _loadInitialRecordMessage == null) ...[
-                    if (_step == _FixedBillFlowStep.collect)
-                      _buildCollectStep(),
-                    if (_step == _FixedBillFlowStep.review) _buildReviewStep(),
-                    if (_step == _FixedBillFlowStep.success)
-                      _buildSuccessStep(),
-                  ],
+    return ListenableBuilder(
+      listenable: Listenable.merge([widget.sessionController, _viewModel]),
+      builder: (context, _) {
+        final user = widget.sessionController.currentUser;
+        final canReviewOperations = user?.role == 'OWNER';
+
+        return AppScaffold(
+          title: _isEditMode ? 'Editar conta fixa' : 'Cadastrar conta fixa',
+          subtitle: user?.name,
+          leading: const RouteBackButton(fallbackRoute: '/fixed-bills'),
+          actions: buildAuthenticatedTopBarActions(
+            context: context,
+            sessionController: widget.sessionController,
+            currentLocation: _isEditMode
+                ? '/fixed-bills/${widget.fixedBillId}/edit'
+                : '/fixed-bills/new',
+            canReviewOperations: canReviewOperations,
+          ),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + keyboardBottomInset),
+          body: ResponsiveScrollBody(
+            maxWidth: 860,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _HeroCard(step: _step, isEditMode: _isEditMode),
+                const SizedBox(height: 16),
+                if (_isLoadingInitialRecord)
+                  const _StateCard(
+                    key: ValueKey('fixed-bill-loading-draft-card'),
+                    title: 'Carregando esta conta fixa',
+                    message:
+                        'Buscando a regra atual para você editar sem perder o contexto.',
+                    showProgress: true,
+                  ),
+                if (!_isLoadingInitialRecord &&
+                    _loadInitialRecordMessage != null)
+                  _StateCard(
+                    key: const ValueKey('fixed-bill-load-draft-error-card'),
+                    title: 'Não foi possível abrir esta conta fixa',
+                    message: _loadInitialRecordMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: _loadInitialRecord,
+                  ),
+                if (!_isLoadingInitialRecord &&
+                    _loadInitialRecordMessage == null) ...[
+                  if (_step == _FixedBillFlowStep.collect) _buildCollectStep(),
+                  if (_step == _FixedBillFlowStep.review) _buildReviewStep(),
+                  if (_step == _FixedBillFlowStep.success)
+                    _buildSuccessStep(),
                 ],
-              ),
-            );
-          },
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
