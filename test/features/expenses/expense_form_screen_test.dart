@@ -509,7 +509,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(FixedBillFormScreen), findsOneWidget);
-    expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+    expect(find.text('Cadastrar conta fixa'), findsWidgets);
   });
 
   testWidgets('shows submit loading state while create request is pending', (

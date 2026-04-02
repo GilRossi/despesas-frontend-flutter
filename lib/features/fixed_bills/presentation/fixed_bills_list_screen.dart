@@ -1,8 +1,9 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
-import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
-import 'package:despesas_frontend/core/ui/components/summary_header.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_operational_status.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_record.dart';
@@ -11,9 +12,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class FixedBillsListScreen extends StatefulWidget {
-  const FixedBillsListScreen({super.key, required this.fixedBillsRepository});
+  const FixedBillsListScreen({
+    super.key,
+    required this.fixedBillsRepository,
+    required this.sessionController,
+  });
 
   final FixedBillsRepository fixedBillsRepository;
+  final SessionController sessionController;
 
   @override
   State<FixedBillsListScreen> createState() => _FixedBillsListScreenState();
@@ -168,42 +174,60 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: const RouteBackButton(fallbackRoute: '/'),
-        title: const Text('Minhas contas fixas'),
-        actions: [
-          FilledButton.tonalIcon(
-            key: const ValueKey('fixed-bills-list-create-button'),
-            onPressed: () => context.go('/fixed-bills/new'),
-            icon: const Icon(Icons.add),
-            label: const Text('Cadastrar'),
+    return ListenableBuilder(
+      listenable: widget.sessionController,
+      builder: (context, _) {
+        final user = widget.sessionController.currentUser;
+        final canReviewOperations = user?.role == 'OWNER';
+        final theme = Theme.of(context);
+
+        return AppScaffold(
+          title: 'Contas fixas',
+          subtitle: user?.name,
+          leading: const RouteBackButton(fallbackRoute: '/'),
+          actions: buildAuthenticatedTopBarActions(
+            context: context,
+            sessionController: widget.sessionController,
+            currentLocation: '/fixed-bills',
+            canReviewOperations: canReviewOperations,
           ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: RefreshIndicator(
-          onRefresh: _load,
-          child: ResponsiveScrollBody(
-            maxWidth: 940,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          body: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                const SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                SectionCard(
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    runSpacing: 16,
+                    spacing: 16,
                     children: [
-                      SummaryHeader(
-                        title: 'Regras recorrentes do household',
-                        subtitle:
-                            'Conta fixa nao e a despesa em si. Ela guarda a regra semanal ou mensal e mostra quando voce precisa lancar a proxima despesa real.',
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Minhas contas fixas',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Aqui o foco e localizar, ajustar e acompanhar regras recorrentes. O lancamento real continua em Despesas quando voce usa "Lancar despesa".',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF65727B),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      SizedBox(height: 12),
-                      Text(
-                        'Use esta lista para acompanhar proximo vencimento, editar a regra, excluir a recorrencia e lancar a despesa do dia a dia. Depois do lancamento, a despesa operacional aparece em Despesas.',
+                      FilledButton.icon(
+                        key: const ValueKey('fixed-bills-list-create-button'),
+                        onPressed: () => context.go('/fixed-bills/new'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Cadastrar conta fixa'),
                       ),
                     ],
                   ),
@@ -236,6 +260,30 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
                   ),
                 if (!_isLoading && _errorMessage == null && _records.isNotEmpty)
                   ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Contas fixas do household atual',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Cada card destaca status, proximo vencimento e acoes da regra para manter o mesmo eixo visual de Despesas.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFF65727B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     for (final record in _records) ...[
                       _FixedBillCard(
                         record: record,
@@ -255,8 +303,8 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
               ],
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -479,7 +527,14 @@ class _StateCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SummaryHeader(title: title, subtitle: message),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFF65727B),
+            ),
+          ),
           if (showProgress) ...[
             const SizedBox(height: 16),
             const LinearProgressIndicator(minHeight: 6),

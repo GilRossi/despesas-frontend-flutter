@@ -226,7 +226,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(FixedBillFormScreen), findsOneWidget);
-      expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+      expect(find.text('Cadastrar conta fixa'), findsWidgets);
     });
 
     testWidgets('authenticated users can open /fixed-bills', (tester) async {
@@ -1219,7 +1219,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(FixedBillFormScreen), findsOneWidget);
-        expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+        expect(find.text('Cadastrar conta fixa'), findsWidgets);
       },
     );
   });

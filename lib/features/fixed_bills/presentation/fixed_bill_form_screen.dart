@@ -284,17 +284,8 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       appBar: AppBar(
         leading: const RouteBackButton(fallbackRoute: '/fixed-bills'),
         title: Text(
-          _isEditMode ? 'Editar conta fixa' : 'Cadastrar minhas contas fixas',
+          _isEditMode ? 'Editar conta fixa' : 'Cadastrar conta fixa',
         ),
-        actions: [
-          TextButton.icon(
-            key: const ValueKey('fixed-bill-open-list-button'),
-            onPressed: () => context.go('/fixed-bills'),
-            icon: const Icon(Icons.list_alt_outlined),
-            label: const Text('Minhas contas'),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         top: false,
@@ -606,10 +597,11 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             const SizedBox(height: 24),
             _ActionBar(
               secondary: OutlinedButton(
+                key: const ValueKey('fixed-bill-form-open-list-button'),
                 onPressed: _viewModel.isSubmitting
                     ? null
-                    : () => context.go('/assistant'),
-                child: const Text('Voltar ao assistente'),
+                    : () => context.go('/fixed-bills'),
+                child: const Text('Ver minhas contas'),
               ),
               primary: FilledButton.icon(
                 key: const ValueKey('fixed-bill-form-continue-button'),
