@@ -154,12 +154,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Lista principal do espaço',
+                              'Suas despesas',
                               style: theme.textTheme.titleLarge,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Aqui o foco é localizar, abrir e acompanhar despesas. A navegação global continua no menu superior.',
+                              'Abra uma despesa para ver detalhes, acompanhar o vencimento e registrar pagamentos.',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -183,7 +183,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                 ] else if (_viewModel.errorMessage != null) ...[
                   SectionCard(
                     child: EmptyState(
-                      title: 'Não foi possível carregar as despesas.',
+                      title: 'Não conseguimos carregar suas despesas.',
                       message: _viewModel.errorMessage!,
                       actionLabel: 'Tentar novamente',
                       onAction: _viewModel.load,
@@ -192,9 +192,8 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                 ] else if (_viewModel.isEmpty) ...[
                   const SectionCard(
                     child: EmptyState(
-                      title: 'Nenhuma despesa encontrada',
-                      message:
-                          'Crie a primeira despesa do seu espaço para começar a acompanhar seus lançamentos.',
+                      title: 'Ainda não há despesas',
+                      message: 'Crie a primeira despesa do seu espaço.',
                     ),
                   ),
                 ] else ...[
@@ -210,12 +209,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Despesas do espaço atual',
+                              'Despesas registradas',
                               style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Cada card destaca status, vencimento e saldo restante para facilitar a leitura.',
+                              'Cada item mostra status, vencimento e quanto falta pagar.',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -360,9 +359,9 @@ class _ExpenseCard extends StatelessWidget {
       return 'Pago ${formatCurrency(expense.paidAmount)}';
     }
     if (expense.paidAmount > 0) {
-      return 'Pago ${formatCurrency(expense.paidAmount)} · Restam ${formatCurrency(expense.remainingAmount)}';
+      return 'Pago ${formatCurrency(expense.paidAmount)} · Falta ${formatCurrency(expense.remainingAmount)}';
     }
-    return 'Restante ${formatCurrency(expense.remainingAmount)}';
+    return 'Falta pagar ${formatCurrency(expense.remainingAmount)}';
   }
 }
 

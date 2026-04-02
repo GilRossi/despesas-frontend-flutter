@@ -44,7 +44,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Nenhuma despesa encontrada'), findsOneWidget);
+    expect(find.text('Ainda não há despesas'), findsOneWidget);
+    expect(find.text('Crie a primeira despesa do seu espaço.'), findsOneWidget);
   });
 
   testWidgets('shows loaded expenses from the repository', (tester) async {
@@ -83,7 +84,7 @@ void main() {
     expect(find.text('R\$ 129,90'), findsOneWidget);
     expect(
       find.text(
-        'Cada card destaca status, vencimento e saldo restante para facilitar a leitura.',
+        'Cada item mostra status, vencimento e quanto falta pagar.',
       ),
       findsOneWidget,
     );
@@ -573,7 +574,13 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Lista principal do espaço'), findsOneWidget);
+    expect(find.text('Suas despesas'), findsOneWidget);
+    expect(
+      find.text(
+        'Abra uma despesa para ver detalhes, acompanhar o vencimento e registrar pagamentos.',
+      ),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('expenses-new-expense-button')),
       findsOneWidget,
@@ -670,8 +677,8 @@ void main() {
 
     expect(find.text('Em aberto'), findsOneWidget);
     expect(find.text('Parcialmente paga'), findsOneWidget);
-    expect(find.text('Restante R\$ 129,90'), findsOneWidget);
-    expect(find.text('Pago R\$ 20,00 · Restam R\$ 39,90'), findsOneWidget);
+    expect(find.text('Falta pagar R\$ 129,90'), findsOneWidget);
+    expect(find.text('Pago R\$ 20,00 · Falta R\$ 39,90'), findsOneWidget);
   });
 
   testWidgets('remains stable with increased text scale in header', (
