@@ -57,7 +57,7 @@ void main() {
     expect(repository.listCalls, 1);
     expect(find.text('Projeto Acme'), findsOneWidget);
     expect(find.text('Casa da Praia'), findsOneWidget);
-    expect(find.text('Criar nova referencia'), findsOneWidget);
+    expect(find.text('Criar nova referência'), findsOneWidget);
   });
 
   testWidgets('filtrar e limpar filtros reabre a listagem original', (
@@ -93,7 +93,9 @@ void main() {
     expect(find.text('Projeto Horizonte'), findsOneWidget);
     expect(find.text('Casa da Praia'), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('space-references-clear-filters')));
+    await tester.tap(
+      find.byKey(const ValueKey('space-references-clear-filters')),
+    );
     await tester.pumpAndSettle();
 
     expect(repository.lastQuery, isEmpty);
@@ -123,7 +125,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.listCalls, 2);
-    expect(find.text('Criar nova referencia'), findsWidgets);
+    expect(find.text('Criar nova referência'), findsWidgets);
   });
 
   testWidgets('criacao guiada minima trata CREATED e atualiza a selecao', (
@@ -149,7 +151,7 @@ void main() {
 
     expect(repository.createCalls, 1);
     expect(repository.lastCreatedInput?.name, 'Projeto Horizonte');
-    expect(find.text('Referencia em uso agora'), findsOneWidget);
+    expect(find.text('Referência em uso agora'), findsOneWidget);
     expect(find.text('Projeto Horizonte'), findsWidgets);
   });
 
@@ -163,7 +165,7 @@ void main() {
           result: SpaceReferenceCreateResultType.duplicateSuggestion,
           suggestedReference: suggested,
           message:
-              'Encontrei uma referencia parecida no seu Espaco. Quer usar essa para evitar duplicidade?',
+              'Encontrei uma referência parecida no seu espaço. Quer usar esta para evitar duplicidade?',
         ),
       );
 
@@ -188,7 +190,7 @@ void main() {
       );
       expect(
         find.text(
-          'Encontrei uma referencia parecida no seu Espaco. Quer usar essa para evitar duplicidade?',
+          'Encontrei uma referência parecida no seu espaço. Quer usar esta para evitar duplicidade?',
         ),
         findsOneWidget,
       );
@@ -199,7 +201,7 @@ void main() {
       await tester.pumpAndSettle();
       await scrollToTop(tester);
 
-      expect(find.text('Referencia em uso agora'), findsOneWidget);
+      expect(find.text('Referência em uso agora'), findsOneWidget);
       expect(find.text('Projeto Acme'), findsWidgets);
     },
   );

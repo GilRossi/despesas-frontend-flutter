@@ -53,7 +53,7 @@ class ReportsViewModel extends ChangeNotifier {
       _errorMessage = error.message;
       _errorStatusCode = error.statusCode;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar os relatorios.';
+      _errorMessage = 'Não foi possível carregar os relatórios.';
     } finally {
       _isLoading = false;
       notifyListeners();

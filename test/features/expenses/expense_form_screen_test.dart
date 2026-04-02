@@ -81,7 +81,7 @@ void main() {
         id: 7,
         description: 'Plano antigo',
         amount: 89.9,
-        notes: 'Antiga observacao',
+        notes: 'Antiga observação',
       ),
     );
     Future<ExpenseFlowResult?>? resultFuture;
@@ -103,7 +103,7 @@ void main() {
                                 id: 7,
                                 description: 'Plano antigo',
                                 amount: 89.9,
-                                notes: 'Antiga observacao',
+                                notes: 'Antiga observação',
                               ),
                             ),
                           ),
@@ -214,7 +214,7 @@ void main() {
     expect(repository.createCalls, 1);
     expect(repository.lastCreatedInput?.initialPayment, isNotNull);
     expect(repository.lastCreatedInput?.initialPayment?.method, 'PIX');
-    expect(find.text('Despesa lancada e quitada'), findsOneWidget);
+    expect(find.text('Despesa lançada e quitada'), findsOneWidget);
   });
 
   testWidgets('standalone flow shows success state with clear CTAs', (
@@ -246,7 +246,7 @@ void main() {
 
     await tester.enterText(
       find.byKey(const ValueKey('expense-form-description-field')),
-      'Cafe da tarde',
+      'Café da tarde',
     );
     await tester.enterText(
       find.byKey(const ValueKey('expense-form-amount-field')),
@@ -266,7 +266,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.createCalls, 1);
-    expect(find.text('Despesa lancada com sucesso'), findsOneWidget);
+    expect(find.text('Despesa lançada com sucesso'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('expense-form-success-create-another-button')),
       findsOneWidget,
@@ -340,7 +340,7 @@ void main() {
       find.byKey(const ValueKey('expense-form-occurred-on-field')),
     );
 
-    expect(find.text('Despesa lancada com sucesso'), findsNothing);
+    expect(find.text('Despesa lançada com sucesso'), findsNothing);
     expect(descriptionField.controller?.text, isEmpty);
     expect(amountField.controller?.text, isEmpty);
     expect(occurredOnField.controller?.text, isNotEmpty);
@@ -406,7 +406,7 @@ void main() {
     final repository = FakeExpensesRepository(
       createError: fakeApiException(
         message: 'Request validation failed',
-        fieldErrors: const {'description': 'Descricao ja utilizada.'},
+        fieldErrors: const {'description': 'Descrição já utilizada.'},
       ),
     );
 
@@ -432,7 +432,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Request validation failed'), findsOneWidget);
-    expect(find.text('Descricao ja utilizada.'), findsOneWidget);
+    expect(find.text('Descrição já utilizada.'), findsOneWidget);
   });
 
   testWidgets('shows generic submit error when request fails unexpectedly', (
@@ -466,7 +466,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('expense-form-submit-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Nao foi possivel salvar a despesa.'), findsOneWidget);
+    expect(find.text('Não foi possível salvar a despesa.'), findsOneWidget);
   });
 
   testWidgets('atalho de conta fixa entra primeiro no formulario', (
@@ -532,7 +532,7 @@ void main() {
 
     await tester.enterText(
       find.byKey(const ValueKey('expense-form-description-field')),
-      'Conta de agua',
+      'Conta de água',
     );
     await tester.enterText(
       find.byKey(const ValueKey('expense-form-amount-field')),
@@ -558,7 +558,7 @@ void main() {
     completer.complete();
     await tester.pumpAndSettle();
 
-    expect(find.text('Despesa lancada com sucesso'), findsOneWidget);
+    expect(find.text('Despesa lançada com sucesso'), findsOneWidget);
   });
 
   testWidgets('stays usable on small heights with keyboard inset', (
@@ -579,7 +579,9 @@ void main() {
       find.byKey(const ValueKey('expense-form-description-field')),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('expense-form-description-field')));
+    await tester.tap(
+      find.byKey(const ValueKey('expense-form-description-field')),
+    );
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Criar despesa'),
@@ -595,7 +597,7 @@ void main() {
   testWidgets('shows catalog load error and retry action', (tester) async {
     final repository = FakeExpensesRepository(
       catalogError: fakeApiException(
-        message: 'Nao foi possivel carregar categorias agora.',
+        message: 'Não foi possível carregar categorias agora.',
       ),
     );
 
@@ -604,9 +606,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Nao foi possivel carregar o catalogo.'), findsOneWidget);
+    expect(find.text('Não foi possível carregar o catálogo.'), findsOneWidget);
     expect(
-      find.text('Nao foi possivel carregar categorias agora.'),
+      find.text('Não foi possível carregar categorias agora.'),
       findsOneWidget,
     );
 
@@ -616,7 +618,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.catalogCalls, 2);
-    expect(find.text('Nao foi possivel carregar o catalogo.'), findsNothing);
+    expect(find.text('Não foi possível carregar o catálogo.'), findsNothing);
     expect(find.text('Criar despesa'), findsOneWidget);
   });
 }

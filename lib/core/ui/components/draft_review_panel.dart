@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class DraftReviewPanel extends StatelessWidget {
   const DraftReviewPanel({
     super.key,
-    this.title = 'Revisao de rascunho',
+    this.title = 'Revisão do rascunho',
     required this.child,
     this.onSubmit,
   });

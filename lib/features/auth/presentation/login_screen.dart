@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text('Entrar', style: theme.textTheme.headlineSmall),
                     const SizedBox(height: 8),
                     Text(
-                      'Use sua conta para acessar as despesas do household atual.',
+                      'Use sua conta para acessar as despesas do seu espaço.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: const Color(0xFF58616A),
                       ),
@@ -83,15 +83,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.username],
-                      decoration: const InputDecoration(
-                        labelText: 'E-mail',
-                      ),
+                      decoration: const InputDecoration(labelText: 'E-mail'),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Informe seu e-mail.';
                         }
                         if (!value.contains('@')) {
-                          return 'Informe um e-mail valido.';
+                          return 'Informe um e-mail válido.';
                         }
                         return null;
                       },

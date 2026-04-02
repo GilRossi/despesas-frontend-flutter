@@ -224,14 +224,14 @@ class _FirstUseCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Primeiro uso: comece pelo lancamento manual',
+            'Primeiro uso: comece pelo lançamento manual',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
-            'O caminho mais simples e lancar sua primeira despesa agora. O assistente continua disponivel como ajuda opcional, reabrivel e contextual.',
+            'O caminho mais simples é lançar sua primeira despesa agora. O assistente continua disponível como ajuda opcional, reaberta quando você precisar.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -251,8 +251,8 @@ class _FirstUseCard extends StatelessWidget {
                     : const Icon(Icons.add_circle_outline),
                 label: Text(
                   isCompletingOnboarding
-                      ? 'Abrindo lancamento...'
-                      : 'Lancar minha primeira despesa',
+                      ? 'Abrindo lançamento...'
+                      : 'Lançar minha primeira despesa',
                 ),
               ),
               FilledButton.tonalIcon(
@@ -300,7 +300,7 @@ class _DashboardErrorState extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, size: 32, color: Colors.redAccent),
           const SizedBox(height: 8),
-          const Text('Nao foi possivel carregar seu dashboard agora.'),
+          const Text('Não foi possível carregar seu painel agora.'),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
@@ -328,7 +328,7 @@ class _DashboardHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final roleLabel = dashboard.isOwner ? 'Visao do Espaço' : 'Visao pessoal';
+    final roleLabel = dashboard.isOwner ? 'Visão do espaço' : 'Visão pessoal';
 
     return Container(
       width: double.infinity,
@@ -359,7 +359,7 @@ class _DashboardHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Comece pelo caminho certo, sem tela fria',
+                  'Comece pelo caminho certo, sem complicação',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -367,7 +367,7 @@ class _DashboardHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'A home precisa orientar de verdade: lance uma despesa, abra o assistente ou reative o tour guiado sempre que quiser revisar os primeiros passos.',
+                  'A tela inicial precisa orientar de verdade: lance uma despesa, abra o assistente ou retome o tour guiado sempre que quiser rever os primeiros passos.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.86),
                   ),
@@ -379,7 +379,7 @@ class _DashboardHero extends StatelessWidget {
                   children: const [
                     _HeroBadge(label: 'Avulsa sem vencimento'),
                     _HeroBadge(label: 'Conta com vencimento'),
-                    _HeroBadge(label: 'Conta fixa e historico separados'),
+                    _HeroBadge(label: 'Conta fixa e histórico separados'),
                   ],
                 ),
               ],
@@ -393,7 +393,7 @@ class _DashboardHero extends StatelessWidget {
                 key: const ValueKey('dashboard-hero-new-expense-button'),
                 onPressed: onNewExpenseTap,
                 icon: const Icon(Icons.add_circle_outline),
-                label: const Text('Lancar despesa'),
+                label: const Text('Lançar despesa'),
               ),
               FilledButton.tonalIcon(
                 key: const ValueKey('dashboard-hero-assistant-button'),
@@ -802,7 +802,7 @@ class _HouseholdSummaryCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Resumo do Espaço',
-            subtitle: 'Visão rápida da estrutura do seu household',
+            subtitle: 'Visão rápida da estrutura do seu espaço',
           ),
           const SizedBox(height: 16),
           if (householdSummary == null)

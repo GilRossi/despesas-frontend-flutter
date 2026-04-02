@@ -86,7 +86,7 @@ class SessionController extends ChangeNotifier implements SessionManager {
       notifyListeners();
       return false;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel fazer login agora.';
+      _errorMessage = 'Não foi possível fazer login agora.';
       _status = SessionStatus.unauthenticated;
       notifyListeners();
       return false;
@@ -137,7 +137,7 @@ class SessionController extends ChangeNotifier implements SessionManager {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_UNAVAILABLE',
-        message: 'A sessao nao esta disponivel.',
+        message: 'A sessão não está disponível.',
       );
     }
 

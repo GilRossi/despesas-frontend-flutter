@@ -140,7 +140,7 @@ void main() {
 
       expect(success, isFalse);
       expect(controller.status, SessionStatus.unauthenticated);
-      expect(controller.errorMessage, 'Nao foi possivel fazer login agora.');
+      expect(controller.errorMessage, 'Não foi possível fazer login agora.');
       expect(controller.isSubmitting, isFalse);
     },
   );

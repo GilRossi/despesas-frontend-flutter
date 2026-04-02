@@ -217,7 +217,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                 const SummaryHeader(
                   title: 'Conte de um jeito simples',
                   subtitle:
-                      'Vamos registrar o que entrou, quando caiu e, se fizer sentido, ligar esse ganho a uma referencia do seu Espaco.',
+                      'Vamos registrar o que entrou, quando caiu e, se fizer sentido, ligar esse ganho a uma referência do seu espaço.',
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -226,17 +226,17 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                   textInputAction: TextInputAction.next,
                   maxLength: 140,
                   decoration: InputDecoration(
-                    labelText: 'Como voce quer identificar esse ganho?',
-                    hintText: 'Ex.: Salario principal, Freelance de marco',
+                    labelText: 'Como você quer identificar esse ganho?',
+                    hintText: 'Ex.: Salário principal, freelance de março',
                     errorText: _viewModel.fieldError('description'),
                   ),
                   validator: (value) {
                     final trimmed = value?.trim() ?? '';
                     if (trimmed.isEmpty) {
-                      return 'Informe uma descricao para o ganho.';
+                      return 'Informe uma descrição para o ganho.';
                     }
                     if (trimmed.length > 140) {
-                      return 'Use no maximo 140 caracteres.';
+                      return 'Use no máximo 140 caracteres.';
                     }
                     return null;
                   },
@@ -326,7 +326,7 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                         ? null
                         : _continueToReview,
                     icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Continuar para revisao'),
+                    label: const Text('Continuar para revisão'),
                   ),
                 ),
               ],
@@ -351,22 +351,22 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Backend continua como fonte de verdade. Aqui voce so confere se esta tudo certo antes de gravar.',
+                'Confira os dados antes de confirmar o cadastro do ganho.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
               ),
               const SizedBox(height: 16),
               _ReviewRow(
-                label: 'Descricao',
+                label: 'Descrição',
                 value: _descriptionController.text.trim(),
               ),
               _ReviewRow(label: 'Valor', value: formatCurrency(amount)),
               _ReviewRow(label: 'Recebido em', value: _formatDate(_receivedOn)),
               _ReviewRow(
-                label: 'Referencia do Espaco',
+                label: 'Referência do espaço',
                 value:
-                    _selectedReference?.name ?? 'Sem referencia por enquanto',
+                    _selectedReference?.name ?? 'Sem referência por enquanto',
               ),
             ],
           ),
@@ -433,13 +433,13 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
                 child: SummaryHeader(
                   title: 'Ganho registrado',
                   subtitle:
-                      'Seu ganho ja foi salvo no household atual e ficou pronto para o restante do app consumir.',
+                      'Seu ganho já foi salvo no espaço atual e ficou pronto para aparecer nas demais telas.',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _ReviewRow(label: 'Descricao', value: createdIncome.description),
+          _ReviewRow(label: 'Descrição', value: createdIncome.description),
           _ReviewRow(
             label: 'Valor',
             value: formatCurrency(createdIncome.amount),
@@ -449,10 +449,10 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
             value: _formatDate(createdIncome.receivedOn),
           ),
           _ReviewRow(
-            label: 'Referencia do Espaco',
+            label: 'Referência do espaço',
             value:
                 createdIncome.spaceReference?.name ??
-                'Sem referencia vinculada',
+                'Sem referência vinculada',
           ),
           _ReviewRow(
             label: 'Registrado em',
@@ -519,7 +519,7 @@ class _HeroCard extends StatelessWidget {
           const SummaryHeader(
             title: 'Cadastrar meus ganhos',
             subtitle:
-                'Um fluxo curto para registrar entradas reais sem te prender em um formulario frio.',
+                'Um fluxo curto para registrar entradas reais sem complicação.',
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -531,11 +531,11 @@ class _HeroCard extends StatelessWidget {
                 isActive: step == _IncomeFlowStep.collect,
               ),
               _StepChip(
-                label: '2. Revisao',
+                label: '2. Revisão',
                 isActive: step == _IncomeFlowStep.review,
               ),
               _StepChip(
-                label: '3. Confirmacao',
+                label: '3. Confirmação',
                 isActive: step == _IncomeFlowStep.success,
               ),
             ],
@@ -543,10 +543,10 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             step == _IncomeFlowStep.collect
-                ? 'Preencha so o essencial: descricao, valor, data e, se fizer sentido, uma referencia opcional do seu Espaco.'
+                ? 'Preencha só o essencial: descrição, valor, data e, se fizer sentido, uma referência opcional do seu espaço.'
                 : step == _IncomeFlowStep.review
-                ? 'Agora confira tudo com calma. A gravacao real so acontece depois da sua confirmacao.'
-                : 'Tudo certo. O backend confirmou o cadastro do ganho.',
+                ? 'Agora confira tudo com calma. O salvamento só acontece depois da sua confirmação.'
+                : 'Tudo certo. O ganho foi cadastrado.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -583,10 +583,10 @@ class _ReferenceFieldSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Referencia opcional', style: theme.textTheme.titleMedium),
+        Text('Referência opcional', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         Text(
-          'Se esse ganho estiver ligado a cliente, projeto ou outra referencia do seu Espaco, voce pode conectar agora. Se nao fizer sentido, siga sem isso.',
+          'Se esse ganho estiver ligado a cliente, projeto ou outra referência do seu espaço, você pode conectar agora. Se não fizer sentido, siga sem isso.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF65727B),
           ),
@@ -596,7 +596,7 @@ class _ReferenceFieldSection extends StatelessWidget {
           const LinearProgressIndicator(),
           const SizedBox(height: 8),
           Text(
-            'Carregando referencias do seu Espaco...',
+            'Carregando referências do seu espaço...',
             style: theme.textTheme.bodySmall?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -615,7 +615,7 @@ class _ReferenceFieldSection extends StatelessWidget {
           ),
         ] else if (references.isEmpty) ...[
           Text(
-            'Ainda nao ha referencias cadastradas no seu Espaco. Voce pode seguir sem vincular nenhuma agora.',
+            'Ainda não há referências cadastradas no seu espaço. Você pode seguir sem vincular nenhuma agora.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -628,13 +628,13 @@ class _ReferenceFieldSection extends StatelessWidget {
             initialValue: selectedReferenceId,
             isExpanded: true,
             decoration: InputDecoration(
-              labelText: 'Referencia do Espaco',
+              labelText: 'Referência do espaço',
               errorText: fieldError,
             ),
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
-                child: Text('Sem referencia por enquanto'),
+                child: Text('Sem referência por enquanto'),
               ),
               for (final reference in references)
                 DropdownMenuItem<int?>(

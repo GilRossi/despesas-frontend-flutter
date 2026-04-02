@@ -50,7 +50,7 @@ void main() {
 
     expect(
       viewModel.errorMessage,
-      'Nao foi possivel carregar o detalhe da despesa.',
+      'Não foi possível carregar o detalhe da despesa.',
     );
     expect(viewModel.isNotFound, isFalse);
   });

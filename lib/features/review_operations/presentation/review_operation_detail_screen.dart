@@ -62,7 +62,7 @@ class _ReviewOperationDetailScreenState
 
     Navigator.of(context).pop(
       ReviewOperationsFlowResult.reload(
-        message: 'Pendencia aprovada com sucesso.',
+        message: 'Revisão aprovada com sucesso.',
       ),
     );
   }
@@ -84,7 +84,7 @@ class _ReviewOperationDetailScreenState
 
     Navigator.of(context).pop(
       ReviewOperationsFlowResult.reload(
-        message: 'Pendencia rejeitada com sucesso.',
+        message: 'Revisão rejeitada com sucesso.',
       ),
     );
   }
@@ -99,7 +99,7 @@ class _ReviewOperationDetailScreenState
         return Scaffold(
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/review-operations'),
-            title: const Text('Detalhe da review'),
+            title: const Text('Detalhe da revisão'),
             actions: buildAuthenticatedTopBarActions(
               context: context,
               sessionController: widget.sessionController,
@@ -118,9 +118,9 @@ class _ReviewOperationDetailScreenState
 
                 if (_viewModel.isNotFound) {
                   return _StateCard(
-                    title: 'Pendencia nao encontrada',
+                    title: 'Revisão não encontrada',
                     message:
-                        'Esse item pode ter sido resolvido ou nao pertence ao household atual.',
+                        'Esse item pode ter sido resolvido ou não pertence ao espaço atual.',
                     actionLabel: 'Voltar às revisoes',
                     onAction: () => context.go('/review-operations'),
                   );
@@ -131,8 +131,8 @@ class _ReviewOperationDetailScreenState
                     title: _viewModel.isForbidden
                         ? 'Acesso negado'
                         : _viewModel.isUnauthorized
-                        ? 'Sessao expirada'
-                        : 'Nao foi possivel carregar a review.',
+                        ? 'Sessão expirada'
+                        : 'Não foi possível carregar a revisão.',
                     message: _viewModel.errorMessage!,
                     actionLabel: 'Tentar novamente',
                     onAction: _viewModel.load,
@@ -177,7 +177,7 @@ class _ReviewOperationDetailScreenState
                                   ),
                                   _MetaChip(
                                     label:
-                                        'Confianca ${detail.confidence.toStringAsFixed(2)}',
+                                        'Confiança ${detail.confidence.toStringAsFixed(2)}',
                                   ),
                                   _MetaChip(
                                     label: _formatEnumLabel(
@@ -198,7 +198,7 @@ class _ReviewOperationDetailScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Dados da ingestao',
+                                'Dados da importação',
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 16),
@@ -238,15 +238,15 @@ class _ReviewOperationDetailScreenState
                                   value: _formatDate(detail.occurredOn!),
                                 ),
                               _DetailField(
-                                label: 'Decisao desejada',
+                                label: 'Decisão desejada',
                                 value: _formatEnumLabel(detail.desiredDecision),
                               ),
                               _DetailField(
-                                label: 'Motivo da decisao',
+                                label: 'Motivo da decisão',
                                 value: _formatEnumLabel(detail.decisionReason),
                               ),
                               _DetailField(
-                                label: 'Referencia bruta',
+                                label: 'Referência bruta',
                                 value: detail.rawReference,
                               ),
                               _DetailField(
@@ -265,13 +265,13 @@ class _ReviewOperationDetailScreenState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Itens extraidos',
+                                'Itens extraídos',
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 16),
                               if (!detail.hasItems)
                                 Text(
-                                  'Nenhum item estruturado foi extraido para esta ingestao.',
+                                  'Nenhum item estruturado foi extraído para esta importação.',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: const Color(0xFF65727B),
                                   ),

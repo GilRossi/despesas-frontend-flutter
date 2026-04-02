@@ -303,7 +303,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Selecione o metodo de pagamento do lote.'),
+      find.text('Selecione a forma de pagamento do lote.'),
       findsOneWidget,
     );
     expect(
@@ -400,7 +400,7 @@ void main() {
       find.byKey(const ValueKey('history-import-success-card')),
       findsOneWidget,
     );
-    expect(find.text('Historico importado'), findsOneWidget);
+    expect(find.text('Histórico importado'), findsOneWidget);
     expect(find.text('Importar outro lote'), findsOneWidget);
   });
 

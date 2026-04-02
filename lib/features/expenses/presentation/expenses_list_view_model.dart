@@ -54,7 +54,7 @@ class ExpensesListViewModel extends ChangeNotifier {
     } on ApiException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar suas despesas.';
+      _errorMessage = 'Não foi possível carregar suas despesas.';
     } finally {
       _isLoading = false;
       notifyListeners();

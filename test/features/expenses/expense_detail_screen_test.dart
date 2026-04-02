@@ -48,15 +48,15 @@ void main() {
     await tester.ensureVisible(registerPaymentButton);
     await tester.pumpAndSettle();
     expect(registerPaymentButton, findsOneWidget);
-    await tester.ensureVisible(find.text('Historico de pagamentos'));
+    await tester.ensureVisible(find.text('Histórico de pagamentos'));
     await tester.pumpAndSettle();
-    expect(find.text('Historico de pagamentos'), findsOneWidget);
+    expect(find.text('Histórico de pagamentos'), findsOneWidget);
     expect(find.text('20/03/2026'), findsOneWidget);
     expect(find.text('Pix'), findsAtLeastNWidgets(1));
     expect(find.text('Pagamento parcial'), findsOneWidget);
-    await tester.ensureVisible(find.text('Observacoes'));
+    await tester.ensureVisible(find.text('Observações'));
     await tester.pumpAndSettle();
-    expect(find.text('Observacoes'), findsOneWidget);
+    expect(find.text('Observações'), findsOneWidget);
     expect(find.text('Cobrar no cartao.'), findsOneWidget);
   });
 
@@ -101,7 +101,7 @@ void main() {
       '49,90',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Observacoes do pagamento'),
+      find.widgetWithText(TextFormField, 'Observações do pagamento'),
       'Pagamento avulso',
     );
     final submitButton = find.widgetWithText(
@@ -116,7 +116,7 @@ void main() {
 
     expect(repository.registerPaymentCalls, 1);
     expect(find.text('Pagamento registrado com sucesso.'), findsOneWidget);
-    await tester.ensureVisible(find.text('Historico de pagamentos'));
+    await tester.ensureVisible(find.text('Histórico de pagamentos'));
     await tester.pumpAndSettle();
     expect(find.text('Parcialmente Paga'), findsOneWidget);
     expect(find.text('R\$ 80,00'), findsAtLeastNWidgets(1));
@@ -158,7 +158,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('O valor nao pode ser maior que o saldo restante.'),
+        find.text('O valor não pode ser maior que o saldo restante.'),
         findsOneWidget,
       );
     },
@@ -185,9 +185,9 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Historico de pagamentos'));
+    await tester.ensureVisible(find.text('Histórico de pagamentos'));
     await tester.pumpAndSettle();
-    expect(find.text('Historico de pagamentos'), findsOneWidget);
+    expect(find.text('Histórico de pagamentos'), findsOneWidget);
     expect(
       find.text('Nenhum pagamento registrado para esta despesa.'),
       findsOneWidget,
@@ -213,7 +213,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Despesa nao encontrada'), findsOneWidget);
+    expect(find.text('Despesa não encontrada'), findsOneWidget);
     expect(find.text('Voltar às despesas'), findsOneWidget);
   });
 
@@ -237,7 +237,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Esta despesa ja foi quitada.'), findsOneWidget);
+    expect(find.textContaining('Esta despesa já foi quitada.'), findsOneWidget);
     expect(
       find.widgetWithText(FilledButton, 'Registrar pagamento'),
       findsNothing,
@@ -262,10 +262,10 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Observacoes'));
+    await tester.ensureVisible(find.text('Observações'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Observacoes'), findsOneWidget);
+    expect(find.text('Observações'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -293,7 +293,7 @@ void main() {
     await tester.pumpAndSettle();
     final notesField = find.widgetWithText(
       TextFormField,
-      'Observacoes do pagamento',
+      'Observações do pagamento',
     );
     await tester.ensureVisible(notesField);
     await tester.pumpAndSettle();
@@ -331,7 +331,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Despesa nao encontrada'), findsOneWidget);
+    expect(find.text('Despesa não encontrada'), findsOneWidget);
   });
 
   testWidgets('shows retry state when loading detail fails', (tester) async {
@@ -348,7 +348,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Nao foi possivel carregar a despesa.'), findsOneWidget);
+    expect(find.text('Não foi possível carregar a despesa.'), findsOneWidget);
     expect(find.text('Tentar novamente'), findsOneWidget);
   });
 
@@ -458,9 +458,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/expenses',
-          builder: (context, state) => const Scaffold(
-            body: Text('expenses-root-page'),
-          ),
+          builder: (context, state) =>
+              const Scaffold(body: Text('expenses-root-page')),
         ),
         GoRoute(
           path: '/expenses/:expenseId',

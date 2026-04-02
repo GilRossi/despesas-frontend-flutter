@@ -84,7 +84,7 @@ void main() {
 
     expect(repository.createCalls, 1);
     expect(
-      find.text('Membro criado. O novo login ja pode usar a tela oficial.'),
+      find.text('Membro criado. O novo login já pode usar a tela oficial.'),
       findsOneWidget,
     );
     expect(find.text('bia@example.com'), findsOneWidget);

@@ -44,7 +44,7 @@ class HistoryImportFormViewModel extends ChangeNotifier {
       _loadCatalogErrorMessage = error.message;
     } catch (_) {
       _loadCatalogErrorMessage =
-          'Nao foi possivel carregar o catalogo para importar seu historico agora.';
+          'Não foi possível carregar o catálogo para importar seu histórico agora.';
     } finally {
       _isLoadingCatalog = false;
       notifyListeners();
@@ -66,7 +66,7 @@ class HistoryImportFormViewModel extends ChangeNotifier {
       _fieldErrors = error.fieldErrors;
       return null;
     } catch (_) {
-      _submitErrorMessage = 'Nao foi possivel importar seu historico agora.';
+      _submitErrorMessage = 'Não foi possível importar seu histórico agora.';
       return null;
     } finally {
       _isSubmitting = false;

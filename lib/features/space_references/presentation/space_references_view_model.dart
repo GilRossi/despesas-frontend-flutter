@@ -54,7 +54,7 @@ class SpaceReferencesViewModel extends ChangeNotifier {
       _loadErrorMessage = error.message;
       _loadErrorStatusCode = error.statusCode;
     } catch (_) {
-      _loadErrorMessage = 'Nao foi possivel carregar as referencias agora.';
+      _loadErrorMessage = 'Não foi possível carregar as referências agora.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -105,7 +105,7 @@ class SpaceReferencesViewModel extends ChangeNotifier {
       _fieldErrors = error.fieldErrors;
       return null;
     } catch (_) {
-      _submitErrorMessage = 'Nao foi possivel salvar a referencia agora.';
+      _submitErrorMessage = 'Não foi possível salvar a referência agora.';
       return null;
     } finally {
       _isSubmitting = false;

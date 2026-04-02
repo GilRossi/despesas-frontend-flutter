@@ -57,7 +57,7 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
         return;
       }
       setState(() {
-        _errorMessage = 'Nao foi possivel carregar suas contas fixas agora.';
+        _errorMessage = 'Não foi possível carregar suas contas fixas agora.';
         _isLoading = false;
       });
     }
@@ -66,9 +66,8 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
   Future<void> _launchExpense(FixedBillRecord record) async {
     setState(() => _busyRecordId = record.id);
     try {
-      final createdExpense = await widget.fixedBillsRepository.launchNextExpense(
-        record.id,
-      );
+      final createdExpense = await widget.fixedBillsRepository
+          .launchNextExpense(record.id);
       if (!mounted) {
         return;
       }
@@ -93,7 +92,7 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
       }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nao foi possivel lancar a proxima despesa agora.'),
+          content: Text('Não foi possível lançar a próxima despesa agora.'),
         ),
       );
     } finally {
@@ -111,7 +110,7 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
             return AlertDialog(
               title: const Text('Excluir conta fixa'),
               content: Text(
-                'Excluir a regra "${record.description}" para impedir novos lancamentos automaticos desta recorrencia? As despesas ja geradas continuam em Despesas.',
+                'Excluir a regra "${record.description}" para encerrar os próximos lançamentos desta recorrência? As despesas já geradas continuam em Despesas.',
               ),
               actions: [
                 TextButton(
@@ -145,7 +144,7 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Conta fixa "${record.description}" removida. As despesas ja lancadas foram preservadas.',
+            'Conta fixa "${record.description}" removida. As despesas já lançadas foram preservadas.',
           ),
         ),
       );
@@ -162,7 +161,7 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
       }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nao foi possivel excluir a conta fixa agora.'),
+          content: Text('Não foi possível excluir a conta fixa agora.'),
         ),
       );
     } finally {
@@ -215,7 +214,7 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Aqui o foco e localizar, ajustar e acompanhar regras recorrentes. O lancamento real continua em Despesas quando voce usa "Lancar despesa".',
+                              'Aqui o foco é localizar, ajustar e acompanhar regras recorrentes. O lançamento real continua em Despesas quando você usa "Lançar despesa".',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -238,13 +237,13 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
                     key: ValueKey('fixed-bills-list-loading-card'),
                     title: 'Carregando contas fixas',
                     message:
-                        'Buscando regras recorrentes, proximos vencimentos e ultimo lancamento operacional.',
+                        'Buscando regras recorrentes, próximos vencimentos e o último lançamento do dia a dia.',
                     showProgress: true,
                   ),
                 if (_errorMessage != null)
                   _StateCard(
                     key: const ValueKey('fixed-bills-list-error-card'),
-                    title: 'Nao foi possivel abrir suas contas fixas',
+                    title: 'Não foi possível abrir suas contas fixas',
                     message: _errorMessage!,
                     actionLabel: 'Tentar novamente',
                     onAction: _load,
@@ -254,52 +253,54 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
                     key: const ValueKey('fixed-bills-list-empty-card'),
                     title: 'Nenhuma conta fixa cadastrada ainda',
                     message:
-                        'Quando voce registrar uma regra semanal ou mensal, ela aparece aqui para acompanhamento e lancamento operacional.',
+                        'Quando você registrar uma regra semanal ou mensal, ela aparece aqui para acompanhamento e lançamento do dia a dia.',
                     actionLabel: 'Cadastrar conta fixa',
                     onAction: () => context.go('/fixed-bills/new'),
                   ),
-                if (!_isLoading && _errorMessage == null && _records.isNotEmpty)
-                  ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Contas fixas do household atual',
-                                style: theme.textTheme.titleMedium,
+                if (!_isLoading &&
+                    _errorMessage == null &&
+                    _records.isNotEmpty) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Contas fixas do espaço atual',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Cada card destaca status, próximo vencimento e ações da regra para manter o mesmo eixo visual de Despesas.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: const Color(0xFF65727B),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Cada card destaca status, proximo vencimento e acoes da regra para manter o mesmo eixo visual de Despesas.',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: const Color(0xFF65727B),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    for (final record in _records) ...[
-                      _FixedBillCard(
-                        record: record,
-                        isBusy: _busyRecordId == record.id,
-                        onLaunchExpense: () => _launchExpense(record),
-                        onEdit: () => context.go('/fixed-bills/${record.id}/edit'),
-                        onDelete: () => _confirmDelete(record),
-                        onOpenLatestExpense: record.lastGeneratedExpense == null
-                            ? null
-                            : () => context.go(
-                                '/expenses/${record.lastGeneratedExpense!.expenseId}',
-                              ),
                       ),
-                      const SizedBox(height: 12),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  for (final record in _records) ...[
+                    _FixedBillCard(
+                      record: record,
+                      isBusy: _busyRecordId == record.id,
+                      onLaunchExpense: () => _launchExpense(record),
+                      onEdit: () =>
+                          context.go('/fixed-bills/${record.id}/edit'),
+                      onDelete: () => _confirmDelete(record),
+                      onOpenLatestExpense: record.lastGeneratedExpense == null
+                          ? null
+                          : () => context.go(
+                              '/expenses/${record.lastGeneratedExpense!.expenseId}',
+                            ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
+                ],
               ],
             ),
           ),
@@ -379,23 +380,23 @@ class _FixedBillCard extends StatelessWidget {
               _InfoChip(label: _nextDueLabel(record)),
               _InfoChip(label: 'Primeiro vencimento $firstDueDate'),
               if (record.spaceReference != null)
-                _InfoChip(label: 'Referencia ${record.spaceReference!.name}'),
+                _InfoChip(label: 'Referência ${record.spaceReference!.name}'),
               _InfoChip(label: 'Criada em $createdAt'),
             ],
           ),
           const SizedBox(height: 14),
           Text(
             record.operationalStatus == FixedBillOperationalStatus.overdue
-                ? 'A regra esta atrasada desde $nextDueDate. Use "Lancar despesa" para criar a proxima despesa operacional em Despesas.'
+                ? 'A regra está atrasada desde $nextDueDate. Use "Lançar despesa" para criar a próxima despesa em Despesas.'
                 : record.operationalStatus ==
                       FixedBillOperationalStatus.dueToday
-                ? 'Esta regra vence hoje. Use "Lancar despesa" para mandar o lancamento real para Despesas.'
-                : 'Proximo vencimento em $nextDueDate. A despesa real so entra em Despesas quando voce lancar esta regra.',
+                ? 'Esta regra vence hoje. Use "Lançar despesa" para mandar o lançamento real para Despesas.'
+                : 'Próximo vencimento em $nextDueDate. A despesa real só entra em Despesas quando você lançar esta regra.',
           ),
           if (latestExpense != null) ...[
             const SizedBox(height: 12),
             Text(
-              'Ultima despesa gerada em ${_formatDate(latestExpense.dueDate)}.',
+              'Última despesa gerada em ${_formatDate(latestExpense.dueDate)}.',
               style: theme.textTheme.bodyMedium,
             ),
           ],
@@ -408,9 +409,7 @@ class _FixedBillCard extends StatelessWidget {
                 key: ValueKey('fixed-bills-launch-expense-${record.id}'),
                 onPressed: isBusy ? null : onLaunchExpense,
                 icon: const Icon(Icons.receipt_long_outlined),
-                label: Text(
-                  isBusy ? 'Processando...' : 'Lancar despesa',
-                ),
+                label: Text(isBusy ? 'Processando...' : 'Lançar despesa'),
               ),
               OutlinedButton.icon(
                 key: ValueKey('fixed-bills-edit-${record.id}'),
@@ -531,9 +530,9 @@ class _StateCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF65727B),
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF65727B)),
           ),
           if (showProgress) ...[
             const SizedBox(height: 16),

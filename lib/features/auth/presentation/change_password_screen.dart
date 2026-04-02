@@ -93,7 +93,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         return;
       }
       setState(() {
-        _errorMessage = 'Nao foi possivel trocar a senha agora.';
+        _errorMessage = 'Não foi possível trocar a senha agora.';
       });
     } finally {
       if (mounted) {
@@ -142,7 +142,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     const SizedBox(height: 8),
                     Text(
                       user == null
-                          ? 'Atualize a senha da sessao atual e entre novamente depois da confirmacao.'
+                          ? 'Atualize a senha da sessão atual e entre novamente depois da confirmação.'
                           : 'Conta ativa: ${user.email}. A troca invalida as sessoes antigas e exige novo login.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: const Color(0xFF65727B),
@@ -201,7 +201,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.newPassword],
                       decoration: InputDecoration(
-                        labelText: 'Confirmacao da nova senha',
+                        labelText: 'Confirmação da nova senha',
                         errorText: _fieldErrors['newPasswordConfirmation'],
                       ),
                       validator: (value) {
@@ -209,7 +209,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           return 'Confirme a nova senha.';
                         }
                         if (value != _newPasswordController.text) {
-                          return 'A confirmacao deve ser igual a nova senha.';
+                          return 'A confirmação deve ser igual à nova senha.';
                         }
                         return null;
                       },

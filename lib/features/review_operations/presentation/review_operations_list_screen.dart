@@ -93,7 +93,7 @@ class _ReviewOperationsListScreenState
         return Scaffold(
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/expenses'),
-            title: const Text('Review operations'),
+            title: const Text('Revisões pendentes'),
             actions: buildAuthenticatedTopBarActions(
               context: context,
               sessionController: widget.sessionController,
@@ -116,12 +116,12 @@ class _ReviewOperationsListScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Pendencias operacionais do household',
+                            'Revisões pendentes do espaço',
                             style: theme.textTheme.titleLarge,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Revise ingestoes que ainda dependem de decisao humana antes da importacao final.',
+                            'Revise as importações que ainda dependem de decisão humana antes da confirmação final.',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: const Color(0xFF65727B),
                             ),
@@ -139,8 +139,8 @@ class _ReviewOperationsListScreenState
                       title: _viewModel.isForbidden
                           ? 'Acesso negado'
                           : _viewModel.isUnauthorized
-                          ? 'Sessao expirada'
-                          : 'Nao foi possivel carregar as revisoes.',
+                          ? 'Sessão expirada'
+                          : 'Não foi possível carregar as revisões.',
                       message: _viewModel.errorMessage!,
                       actionLabel: 'Tentar novamente',
                       onAction: () =>
@@ -148,13 +148,13 @@ class _ReviewOperationsListScreenState
                     ),
                   ] else if (_viewModel.isEmpty) ...[
                     const _StateCard(
-                      title: 'Nenhuma pendencia de review',
+                      title: 'Nenhuma revisão pendente',
                       message:
-                          'Nao ha ingestoes aguardando decisao manual no household atual.',
+                          'Não há importações aguardando decisão manual no espaço atual.',
                     ),
                   ] else ...[
                     Text(
-                      'Pendencias encontradas',
+                      'Revisões encontradas',
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
@@ -247,7 +247,7 @@ class _ReviewSummaryCard extends StatelessWidget {
                   _MetaChip(label: review.merchantOrPayee),
                   _MetaChip(label: _formatEnumLabel(review.classification)),
                   _MetaChip(
-                    label: 'Confianca ${review.confidence.toStringAsFixed(2)}',
+                    label: 'Confiança ${review.confidence.toStringAsFixed(2)}',
                   ),
                   _MetaChip(label: review.sourceAccount),
                   _MetaChip(label: _formatDateTime(review.receivedAt)),
@@ -278,7 +278,7 @@ class _PaginationBar extends StatelessWidget {
           spacing: 12,
           children: [
             Text(
-              'Pagina ${viewModel.currentPage + 1} de ${viewModel.totalPages == 0 ? 1 : viewModel.totalPages} · ${viewModel.totalElements} pendencia(s)',
+              'Página ${viewModel.currentPage + 1} de ${viewModel.totalPages == 0 ? 1 : viewModel.totalPages} · ${viewModel.totalElements} pendência(s)',
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -294,7 +294,7 @@ class _PaginationBar extends StatelessWidget {
                   onPressed: viewModel.hasNextPage
                       ? viewModel.loadNextPage
                       : null,
-                  child: const Text('Proxima'),
+                  child: const Text('Próxima'),
                 ),
               ],
             ),

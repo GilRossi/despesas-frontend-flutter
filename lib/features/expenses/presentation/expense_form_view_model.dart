@@ -50,7 +50,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
       _loadErrorMessage = error.message;
     } catch (_) {
       _loadErrorMessage =
-          'Nao foi possivel carregar categorias e subcategorias.';
+          'Não foi possível carregar categorias e subcategorias.';
     } finally {
       _isLoadingCatalog = false;
       notifyListeners();
@@ -76,7 +76,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
       _loadReferencesErrorMessage = error.message;
     } catch (_) {
       _loadReferencesErrorMessage =
-          'Nao foi possivel carregar as referencias do seu Espaco.';
+          'Não foi possível carregar as referências do seu espaço.';
     } finally {
       _isLoadingReferences = false;
       notifyListeners();
@@ -92,7 +92,10 @@ class ExpenseFormViewModel extends ChangeNotifier {
     required SaveExpenseInput input,
   }) async {
     final result = await _submit<bool>(() async {
-      await _expensesRepository.updateExpense(expenseId: expenseId, input: input);
+      await _expensesRepository.updateExpense(
+        expenseId: expenseId,
+        input: input,
+      );
       return true;
     });
     return result ?? false;
@@ -120,7 +123,7 @@ class ExpenseFormViewModel extends ChangeNotifier {
       _fieldErrors = error.fieldErrors;
       return null;
     } catch (_) {
-      _submitErrorMessage = 'Nao foi possivel salvar a despesa.';
+      _submitErrorMessage = 'Não foi possível salvar a despesa.';
       return null;
     } finally {
       _isSubmitting = false;

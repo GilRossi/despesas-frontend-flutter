@@ -22,7 +22,7 @@ List<Widget> buildAuthenticatedTopBarActions({
             ),
             const _TopBarMenuEntry(
               route: '/history/import',
-              label: 'Trazer meu historico',
+              label: 'Trazer meu histórico',
               icon: Icons.history_outlined,
             ),
             const _TopBarMenuEntry(
@@ -32,7 +32,7 @@ List<Widget> buildAuthenticatedTopBarActions({
             ),
             const _TopBarMenuEntry(
               route: '/reports',
-              label: 'Relatorios',
+              label: 'Relatórios',
               icon: Icons.insert_chart_outlined,
             ),
             const _TopBarMenuEntry(
@@ -43,13 +43,13 @@ List<Widget> buildAuthenticatedTopBarActions({
             if (canReviewOperations)
               const _TopBarMenuEntry(
                 route: '/household-members',
-                label: 'Membros do household',
+                label: 'Membros do espaço',
                 icon: Icons.group_outlined,
               ),
             if (canReviewOperations)
               const _TopBarMenuEntry(
                 route: '/review-operations',
-                label: 'Review operations',
+                label: 'Revisões pendentes',
                 icon: Icons.fact_check_outlined,
               ),
           ]

@@ -22,7 +22,7 @@ class ApiException implements Exception {
   factory ApiException.fromResponse(http.Response response) {
     final fallback = ApiException(
       statusCode: response.statusCode,
-      message: 'Nao foi possivel concluir a solicitacao.',
+      message: 'Não foi possível concluir a solicitação.',
     );
 
     if (response.body.isEmpty) {

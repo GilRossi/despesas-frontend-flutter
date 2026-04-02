@@ -31,7 +31,7 @@ class AuthorizedRequestExecutor {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_UNAVAILABLE',
-        message: 'A sessao nao esta disponivel.',
+        message: 'A sessão não está disponível.',
       );
     }
 
@@ -46,7 +46,7 @@ class AuthorizedRequestExecutor {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_EXPIRED',
-        message: 'Sua sessao expirou. Faca login novamente.',
+        message: 'Sua sessão expirou. Faça login novamente.',
       );
     }
 
@@ -56,7 +56,7 @@ class AuthorizedRequestExecutor {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_EXPIRED',
-        message: 'Sua sessao expirou. Faca login novamente.',
+        message: 'Sua sessão expirou. Faça login novamente.',
       );
     }
 
@@ -66,7 +66,7 @@ class AuthorizedRequestExecutor {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_EXPIRED',
-        message: 'Sua sessao expirou. Faca login novamente.',
+        message: 'Sua sessão expirou. Faça login novamente.',
       );
     }
 

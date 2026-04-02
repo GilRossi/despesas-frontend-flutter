@@ -6,34 +6,37 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
-  test('loadReferences populates data and toJson serializes the payload', () async {
-    final repository = FakeSpaceReferencesRepository(
-      references: [fakeSpaceReferenceItem(name: 'Projeto Horizonte')],
-    );
-    final viewModel = IncomeFormViewModel(
-      incomesRepository: FakeIncomesRepository(),
-      spaceReferencesRepository: repository,
-    );
+  test(
+    'loadReferences populates data and toJson serializes the payload',
+    () async {
+      final repository = FakeSpaceReferencesRepository(
+        references: [fakeSpaceReferenceItem(name: 'Projeto Horizonte')],
+      );
+      final viewModel = IncomeFormViewModel(
+        incomesRepository: FakeIncomesRepository(),
+        spaceReferencesRepository: repository,
+      );
 
-    await viewModel.loadReferences();
+      await viewModel.loadReferences();
 
-    expect(viewModel.references.single.name, 'Projeto Horizonte');
-    expect(viewModel.loadReferencesErrorMessage, isNull);
-    expect(
-      CreateIncomeInput(
-        description: 'Salario',
-        amount: 1500,
-        receivedOn: DateTime(2026, 3, 5),
-        spaceReferenceId: 7,
-      ).toJson(),
-      {
-        'description': 'Salario',
-        'amount': 1500,
-        'receivedOn': '2026-03-05',
-        'spaceReferenceId': 7,
-      },
-    );
-  });
+      expect(viewModel.references.single.name, 'Projeto Horizonte');
+      expect(viewModel.loadReferencesErrorMessage, isNull);
+      expect(
+        CreateIncomeInput(
+          description: 'Salario',
+          amount: 1500,
+          receivedOn: DateTime(2026, 3, 5),
+          spaceReferenceId: 7,
+        ).toJson(),
+        {
+          'description': 'Salario',
+          'amount': 1500,
+          'receivedOn': '2026-03-05',
+          'spaceReferenceId': 7,
+        },
+      );
+    },
+  );
 
   test('loadReferences and createIncome expose fallback errors', () async {
     final viewModel = IncomeFormViewModel(
@@ -52,7 +55,7 @@ void main() {
     await viewModel.loadReferences();
     expect(
       viewModel.loadReferencesErrorMessage,
-      'Nao foi possivel carregar as referencias do seu Espaco agora.',
+      'Não foi possível carregar as referências do seu espaço agora.',
     );
 
     final result = await viewModel.createIncome(
@@ -72,25 +75,28 @@ void main() {
     expect(viewModel.submitErrorMessage, isNull);
   });
 
-  test('createIncome returns the created record and balances loading state', () async {
-    final repository = FakeIncomesRepository(
-      createResult: fakeIncomeRecord(description: 'Salario', amount: 1500),
-    );
-    final viewModel = IncomeFormViewModel(
-      incomesRepository: repository,
-      spaceReferencesRepository: FakeSpaceReferencesRepository(),
-    );
+  test(
+    'createIncome returns the created record and balances loading state',
+    () async {
+      final repository = FakeIncomesRepository(
+        createResult: fakeIncomeRecord(description: 'Salario', amount: 1500),
+      );
+      final viewModel = IncomeFormViewModel(
+        incomesRepository: repository,
+        spaceReferencesRepository: FakeSpaceReferencesRepository(),
+      );
 
-    final result = await viewModel.createIncome(
-      CreateIncomeInput(
-        description: 'Salario',
-        amount: 1500,
-        receivedOn: DateTime(2026, 3, 5),
-      ),
-    );
+      final result = await viewModel.createIncome(
+        CreateIncomeInput(
+          description: 'Salario',
+          amount: 1500,
+          receivedOn: DateTime(2026, 3, 5),
+        ),
+      );
 
-    expect(repository.createCalls, 1);
-    expect(result?.description, 'Salario');
-    expect(viewModel.isSubmitting, isFalse);
-  });
+      expect(repository.createCalls, 1);
+      expect(result?.description, 'Salario');
+      expect(viewModel.isSubmitting, isFalse);
+    },
+  );
 }

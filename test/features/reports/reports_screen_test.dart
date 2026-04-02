@@ -31,21 +31,21 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Leitura clara do mes financeiro'), findsOneWidget);
+    expect(find.text('Leitura clara do mês financeiro'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Breakdown por categoria'),
+      find.text('Distribuição por categoria'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Breakdown por categoria'), findsOneWidget);
+    expect(find.text('Distribuição por categoria'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Recomendacoes'),
+      find.text('Recomendações'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Recomendacoes'), findsOneWidget);
+    expect(find.text('Recomendações'), findsOneWidget);
   });
 
   testWidgets('shows empty message when selected month has no expenses', (
@@ -78,13 +78,13 @@ void main() {
 
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Periodo sem dados'),
+      find.text('Período sem dados'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Periodo sem dados'), findsOneWidget);
+    expect(find.text('Período sem dados'), findsOneWidget);
   });
 
   testWidgets('shows error state when reports request fails', (tester) async {
@@ -102,7 +102,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Nao foi possivel carregar os relatorios.'),
+      find.text('Não foi possível carregar os relatórios.'),
       findsOneWidget,
     );
     expect(find.text('Falha simulada'), findsOneWidget);
@@ -123,7 +123,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.loadCalls, 1);
 
-    await tester.tap(find.text('Comparar com mes anterior'));
+    await tester.tap(find.text('Comparar com mês anterior'));
     await tester.pumpAndSettle();
 
     expect(repository.loadCalls, 2);
@@ -144,7 +144,7 @@ void main() {
 
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('Recomendacoes'),
+      find.text('Recomendações'),
       200,
       scrollable: find.byType(Scrollable).first,
     );

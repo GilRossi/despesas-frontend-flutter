@@ -316,7 +316,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           description: createdExpense.description,
           amount: createdExpense.amount,
           hasDueDate: createdExpense.hasDueDate,
-          paidNow: createdExpense.paidAmount > 0 && createdExpense.remainingAmount <= 0,
+          paidNow:
+              createdExpense.paidAmount > 0 &&
+              createdExpense.remainingAmount <= 0,
         );
       });
       return;
@@ -350,7 +352,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final title = _isEditing
         ? 'Editar despesa'
         : widget.standalone
-        ? 'Lancar despesa'
+        ? 'Lançar despesa'
         : 'Nova despesa';
 
     return RoutePopScope<Object?>(
@@ -369,8 +371,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 return _ExpenseFormSuccessState(
                   successState: successState,
                   onCreateAnother: _startAnotherExpense,
-                  onOpenExpenses: () =>
-                      context.go('/expenses?highlight=${successState.expenseId}'),
+                  onOpenExpenses: () => context.go(
+                    '/expenses?highlight=${successState.expenseId}',
+                  ),
                 );
               }
 
@@ -382,7 +385,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               if (_viewModel.loadErrorMessage != null &&
                   !_viewModel.hasCatalogOptions) {
                 return _FormStateCard(
-                  title: 'Nao foi possivel carregar o catalogo.',
+                  title: 'Não foi possível carregar o catálogo.',
                   message: _viewModel.loadErrorMessage!,
                   actionLabel: 'Tentar novamente',
                   onAction: _loadDependencies,
@@ -391,7 +394,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
 
               if (!_viewModel.hasCatalogOptions) {
                 return const _FormStateCard(
-                  title: 'Catalogo indisponivel',
+                  title: 'Catálogo indisponível',
                   message:
                       'Cadastre ao menos uma categoria e subcategoria ativas antes de criar despesas.',
                 );
@@ -415,8 +418,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         children: [
                           Text(
                             _isEditing
-                                ? 'Ajuste o lancamento e mantenha o dado coerente com o que realmente aconteceu.'
-                                : 'Escolha o tipo de lancamento e registre a despesa do jeito certo, sem forcar vencimento quando ele nao existe.',
+                                ? 'Ajuste o lançamento e mantenha o dado coerente com o que realmente aconteceu.'
+                                : 'Escolha o tipo de lançamento e registre a despesa do jeito certo, sem forçar vencimento quando ele não existe.',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: const Color(0xFF58616A),
                             ),
@@ -504,7 +507,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                               padding: const EdgeInsets.all(16),
                               child: Text(
                                 _launchMode == _ExpenseLaunchMode.oneOff
-                                    ? 'Use avulsa/pontual para casos como combustivel, mercado rapido ou qualquer gasto do dia que nao tenha vencimento formal.'
+                                    ? 'Use avulsa/pontual para casos como combustível, mercado rápido ou qualquer gasto do dia que não tenha vencimento formal.'
                                     : 'Use com vencimento quando existe uma data clara para pagar ou acompanhar atraso.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: const Color(0xFF58616A),
@@ -520,13 +523,13 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             controller: _descriptionController,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              labelText: 'Descricao',
+                              labelText: 'Descrição',
                               errorText: _viewModel.fieldError('description'),
                             ),
                             maxLength: 140,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Informe a descricao da despesa.';
+                                return 'Informe a descrição da despesa.';
                               }
                               return null;
                             },
@@ -568,7 +571,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             readOnly: true,
                             onTap: _pickOccurredOn,
                             decoration: InputDecoration(
-                              labelText: 'Data da ocorrencia',
+                              labelText: 'Data da ocorrência',
                               errorText: _viewModel.fieldError('occurredOn'),
                               suffixIcon: IconButton(
                                 tooltip: 'Selecionar data',
@@ -620,7 +623,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             _InlineInfoCard(
                               title: 'Sem vencimento obrigatório',
                               message:
-                                  'Esta despesa vai usar a data da ocorrencia como referencia principal e nao sera tratada como vencida automaticamente.',
+                                  'Esta despesa vai usar a data da ocorrência como referência principal e não será tratada como vencida automaticamente.',
                             ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<int?>(
@@ -629,11 +632,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             ),
                             initialValue: _selectedSpaceReferenceId,
                             decoration: InputDecoration(
-                              labelText: 'Referencia do Espaco',
+                              labelText: 'Referência do espaço',
                               helperText: _viewModel.hasReferences
-                                  ? 'Opcional. Use quando o gasto estiver ligado a casa, veiculo, cliente, projeto ou outra referencia cadastrada.'
+                                  ? 'Opcional. Use quando o gasto estiver ligado à casa, veículo, cliente, projeto ou outra referência cadastrada.'
                                   : _viewModel.loadReferencesErrorMessage ??
-                                        'Nenhuma referencia cadastrada ainda. Voce pode seguir sem isso ou abrir o Espaço para cadastrar.',
+                                        'Nenhuma referência cadastrada ainda. Você pode seguir sem isso ou abrir o Espaço para cadastrar.',
                               errorText: _viewModel.fieldError(
                                 'spaceReferenceId',
                               ),
@@ -641,7 +644,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             items: [
                               const DropdownMenuItem<int?>(
                                 value: null,
-                                child: Text('Sem referencia'),
+                                child: Text('Sem referência'),
                               ),
                               for (final reference in _viewModel.references)
                                 DropdownMenuItem<int?>(
@@ -721,7 +724,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             decoration: InputDecoration(
                               labelText: 'Subcategoria',
                               helperText: category != null && !hasSubcategories
-                                  ? 'A categoria selecionada nao possui subcategorias ativas.'
+                                  ? 'A categoria selecionada não possui subcategorias ativas.'
                                   : null,
                               errorText: _viewModel.fieldError('subcategoryId'),
                             ),
@@ -757,7 +760,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             minLines: 3,
                             maxLines: 5,
                             decoration: InputDecoration(
-                              labelText: 'Observacoes',
+                              labelText: 'Observações',
                               alignLabelWithHint: true,
                               errorText: _viewModel.fieldError('notes'),
                             ),
@@ -767,7 +770,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Opcional. Use para posto, motivo, detalhes do gasto ou alguma anotacao util.',
+                            'Opcional. Use para posto, motivo, detalhes do gasto ou alguma anotação útil.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: const Color(0xFF65727B),
                             ),
@@ -801,9 +804,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                           }
                                         });
                                       },
-                                      title: const Text('Ja foi paga?'),
+                                      title: const Text('Já foi paga?'),
                                       subtitle: const Text(
-                                        'Marque apenas quando esta despesa ja estiver totalmente quitada. Pagamento parcial continua no fluxo de pagamento separado.',
+                                        'Marque apenas quando esta despesa já estiver totalmente quitada. Pagamento parcial continua no fluxo de pagamento separado.',
                                       ),
                                     ),
                                     if (_registerInitialPayment) ...[
@@ -843,16 +846,19 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                         ),
                                         initialValue: _initialPaymentMethod,
                                         decoration: const InputDecoration(
-                                          labelText: 'Metodo do pagamento',
+                                          labelText: 'Método do pagamento',
                                         ),
                                         items: expensePaymentMethods
                                             .map(
-                                              (method) => DropdownMenuItem<String>(
-                                                value: method,
-                                                child: Text(
-                                                  formatExpenseEnumLabel(method),
-                                                ),
-                                              ),
+                                              (method) =>
+                                                  DropdownMenuItem<String>(
+                                                    value: method,
+                                                    child: Text(
+                                                      formatExpenseEnumLabel(
+                                                        method,
+                                                      ),
+                                                    ),
+                                                  ),
                                             )
                                             .toList(growable: false),
                                         onChanged: (value) {
@@ -860,17 +866,17 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                             return;
                                           }
                                           setState(
-                                            () =>
-                                                _initialPaymentMethod = value,
+                                            () => _initialPaymentMethod = value,
                                           );
                                         },
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
                                         'O sistema vai registrar um pagamento integral com o mesmo valor desta despesa.',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: const Color(0xFF65727B),
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF65727B),
+                                            ),
                                       ),
                                     ],
                                   ],
@@ -1022,12 +1028,12 @@ class _FlowGuidanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Antes de lancar, confirme o tipo certo',
+              'Antes de lançar, confirme o tipo certo',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Despesa avulsa e pontual fica aqui. Conta fixa vai para contas fixas. Lancamento antigo ou lote passado vai para historico. Referencia do Espaco pode ser criada antes ou escolhida aqui quando existir.',
+              'Despesa avulsa e pontual fica aqui. Conta fixa vai para Minhas contas fixas. Lançamento antigo ou lote passado vai para Trazer meu histórico. Referência do espaço pode ser criada antes ou escolhida aqui quando existir.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF58616A),
               ),
@@ -1046,13 +1052,13 @@ class _FlowGuidanceCard extends StatelessWidget {
                   buildActionButton(
                     onPressed: onOpenHistoryImport,
                     icon: Icons.history_outlined,
-                    label: 'Historico',
+                    label: 'Histórico',
                     expanded: stackButtons,
                   ),
                   buildActionButton(
                     onPressed: onOpenReferences,
                     icon: Icons.place_outlined,
-                    label: 'Referencias',
+                    label: 'Referências',
                     expanded: stackButtons,
                   ),
                 ];
@@ -1167,22 +1173,22 @@ class _ExpenseFormSuccessState extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 successState.paidNow
-                    ? 'Despesa lancada e quitada'
-                    : 'Despesa lancada com sucesso',
+                    ? 'Despesa lançada e quitada'
+                    : 'Despesa lançada com sucesso',
                 style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
                 successState.paidNow
-                    ? '"${successState.description}" entrou como lancamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')} e ja foi marcada como paga no mesmo fluxo.'
-                    : '"${successState.description}" entrou como lancamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')}.',
+                    ? '"${successState.description}" entrou como lançamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')} e já foi marcada como paga no mesmo fluxo.'
+                    : '"${successState.description}" entrou como lançamento $typeLabel por R\$ ${successState.amount.toStringAsFixed(2).replaceAll('.', ',')}.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Se quiser, voce pode registrar a proxima sem voltar para a lista.',
+                'Se quiser, você pode registrar a próxima sem voltar para a lista.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),

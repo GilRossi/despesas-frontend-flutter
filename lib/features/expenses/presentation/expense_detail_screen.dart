@@ -100,7 +100,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
             return AlertDialog(
               title: const Text('Excluir despesa'),
               content: Text(
-                'Tem certeza que deseja excluir "${expense.description}"? Essa acao nao pode ser desfeita.',
+                'Tem certeza que deseja excluir "${expense.description}"? Essa ação não pode ser desfeita.',
               ),
               actions: [
                 TextButton(
@@ -143,7 +143,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nao foi possivel excluir a despesa.')),
+        const SnackBar(content: Text('Não foi possível excluir a despesa.')),
       );
     } finally {
       if (mounted) {
@@ -207,7 +207,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Pagamento removido. Voce ja pode registrar o valor correto.',
+            'Pagamento removido. Você já pode registrar o valor correto.',
           ),
         ),
       );
@@ -274,9 +274,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                   if (_viewModel.isNotFound) {
                     return _DetailStateCard(
-                      title: 'Despesa nao encontrada',
+                      title: 'Despesa não encontrada',
                       message:
-                          'Esse lancamento pode ter sido removido ou nao pertence ao household atual.',
+                          'Esse lançamento pode ter sido removido ou não pertence ao espaço atual.',
                       primaryActionLabel: 'Voltar às despesas',
                       onPrimaryAction: _close,
                     );
@@ -284,7 +284,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
                   if (_viewModel.hasError) {
                     return _DetailStateCard(
-                      title: 'Nao foi possivel carregar a despesa.',
+                      title: 'Não foi possível carregar a despesa.',
                       message: _viewModel.errorMessage!,
                       primaryActionLabel: 'Tentar novamente',
                       onPrimaryAction: _viewModel.load,
@@ -414,7 +414,7 @@ class _DetailContent extends StatelessWidget {
                   ),
                   if (expense.reference != null)
                     _DetailField(
-                      label: 'Referencia do Espaco',
+                      label: 'Referência do espaço',
                       value: expense.reference!.name,
                     ),
                 ],
@@ -437,12 +437,12 @@ class _DetailContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Esta despesa ja foi quitada.',
+                      'Esta despesa já foi quitada.',
                       style: theme.textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Nao existe saldo pendente para um novo pagamento. Use o historico abaixo para conferir o que ja foi registrado.',
+                      'Não existe saldo pendente para um novo pagamento. Use o histórico abaixo para conferir o que já foi registrado.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: const Color(0xFF65727B),
                       ),
@@ -459,7 +459,7 @@ class _DetailContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Historico de pagamentos',
+                    'Histórico de pagamentos',
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
@@ -501,7 +501,7 @@ class _DetailContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Observacoes', style: theme.textTheme.titleLarge),
+                    Text('Observações', style: theme.textTheme.titleLarge),
                     const SizedBox(height: 12),
                     Text(
                       expense.notes,
@@ -580,7 +580,7 @@ class _PaymentEntry extends StatelessWidget {
         _MetaChip(label: _DetailContent._formatEnumLabel(payment.method)),
         const SizedBox(height: 8),
         Text(
-          'Se este pagamento foi lancado errado, remova e registre novamente com o valor correto.',
+          'Se este pagamento foi lançado errado, remova e registre novamente com o valor correto.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: const Color(0xFF65727B),
           ),

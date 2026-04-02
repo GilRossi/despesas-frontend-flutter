@@ -28,16 +28,22 @@ void main() {
     expect(viewModel.errorMessage, 'Falha simulada');
   });
 
-  test('load exposes a generic message when reports fail unexpectedly', () async {
-    final viewModel = ReportsViewModel(
-      reportsRepository: FakeReportsRepository(error: Exception('boom')),
-    );
+  test(
+    'load exposes a generic message when reports fail unexpectedly',
+    () async {
+      final viewModel = ReportsViewModel(
+        reportsRepository: FakeReportsRepository(error: Exception('boom')),
+      );
 
-    await viewModel.load(showLoading: false);
+      await viewModel.load(showLoading: false);
 
-    expect(viewModel.errorMessage, 'Nao foi possivel carregar os relatorios.');
-    expect(viewModel.isLoading, isFalse);
-  });
+      expect(
+        viewModel.errorMessage,
+        'Não foi possível carregar os relatórios.',
+      );
+      expect(viewModel.isLoading, isFalse);
+    },
+  );
 
   test('navigation helpers reload the report for the expected month', () async {
     final repository = FakeReportsRepository(snapshot: fakeReportsSnapshot());

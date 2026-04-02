@@ -36,8 +36,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Compra Cobasi'), findsOneWidget);
-    expect(find.text('Dados da ingestao'), findsOneWidget);
-    expect(find.text('Itens extraidos'), findsOneWidget);
+    expect(find.text('Dados da importação'), findsOneWidget);
+    expect(find.text('Itens extraídos'), findsOneWidget);
   });
 
   testWidgets('approves review and returns reload result to parent', (
@@ -86,7 +86,7 @@ void main() {
     final result = await resultFuture;
     expect(repository.approveCalls, 1);
     expect(result?.shouldReload, isTrue);
-    expect(result?.message, 'Pendencia aprovada com sucesso.');
+    expect(result?.message, 'Revisão aprovada com sucesso.');
   });
 
   testWidgets('rejects review and returns reload result to parent', (
@@ -135,7 +135,7 @@ void main() {
     final result = await resultFuture;
     expect(repository.rejectCalls, 1);
     expect(result?.shouldReload, isTrue);
-    expect(result?.message, 'Pendencia rejeitada com sucesso.');
+    expect(result?.message, 'Revisão rejeitada com sucesso.');
   });
 
   testWidgets('shows action error feedback when approve fails', (tester) async {
@@ -208,7 +208,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Itens extraidos'));
+    await tester.ensureVisible(find.text('Itens extraídos'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

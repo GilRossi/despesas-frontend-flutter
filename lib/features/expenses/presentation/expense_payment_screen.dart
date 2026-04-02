@@ -87,50 +87,71 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
         subtitle: 'Quitar uma despesa existente com rapidez',
         leading: const RouteBackButton(fallbackRoute: '/expenses'),
         body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final successState = _successState;
-          if (successState != null) {
-            return _ExpensePaymentSuccessView(
-              successState: successState,
-              onOpenExpenses: _openExpenses,
-              onOpenDashboard: _openDashboard,
-            );
-          }
+          listenable: _viewModel,
+          builder: (context, _) {
+            final successState = _successState;
+            if (successState != null) {
+              return _ExpensePaymentSuccessView(
+                successState: successState,
+                onOpenExpenses: _openExpenses,
+                onOpenDashboard: _openDashboard,
+              );
+            }
 
-          if (_viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (_viewModel.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (_viewModel.isNotFound) {
-            return _PaymentStateCard(
-              title: 'Despesa nao encontrada',
-              message:
-                  'Nao foi possivel abrir este pagamento porque a despesa nao existe ou nao pertence ao household atual.',
-              primaryActionLabel: 'Ver despesas',
-              onPrimaryAction: _openExpenses,
-              secondaryActionLabel: 'Voltar ao dashboard',
-              onSecondaryAction: _openDashboard,
-            );
-          }
+            if (_viewModel.isNotFound) {
+              return _PaymentStateCard(
+                title: 'Despesa não encontrada',
+                message:
+                    'Não foi possível abrir este pagamento porque a despesa não existe ou não pertence ao espaço atual.',
+                primaryActionLabel: 'Ver despesas',
+                onPrimaryAction: _openExpenses,
+                secondaryActionLabel: 'Voltar ao dashboard',
+                onSecondaryAction: _openDashboard,
+              );
+            }
 
-          if (_viewModel.hasError) {
-            return _PaymentStateCard(
-              title: 'Nao foi possivel abrir o fluxo de pagamento.',
-              message: _viewModel.errorMessage!,
-              primaryActionLabel: 'Tentar novamente',
-              onPrimaryAction: _reload,
-              secondaryActionLabel: 'Voltar ao dashboard',
-              onSecondaryAction: _openDashboard,
-            );
-          }
+            if (_viewModel.hasError) {
+              return _PaymentStateCard(
+                title: 'Não foi possível abrir o fluxo de pagamento.',
+                message: _viewModel.errorMessage!,
+                primaryActionLabel: 'Tentar novamente',
+                onPrimaryAction: _reload,
+                secondaryActionLabel: 'Voltar ao dashboard',
+                onSecondaryAction: _openDashboard,
+              );
+            }
 
-          final expense = _viewModel.expense;
-          if (expense == null) {
-            return const SizedBox.shrink();
-          }
+            final expense = _viewModel.expense;
+            if (expense == null) {
+              return const SizedBox.shrink();
+            }
 
-          if (expense.remainingAmount <= 0) {
+            if (expense.remainingAmount <= 0) {
+              return ResponsiveScrollBody(
+                maxWidth: 720,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ExpensePaymentSummaryCard(expense: expense),
+                    const SizedBox(height: 16),
+                    _PaymentStateCard(
+                      title: 'Despesa já quitada',
+                      message:
+                          'Não existe saldo pendente para registrar. Se precisar, acompanhe o histórico em Despesas.',
+                      primaryActionLabel: 'Ver despesas',
+                      onPrimaryAction: _openExpenses,
+                      secondaryActionLabel: 'Voltar ao dashboard',
+                      onSecondaryAction: _openDashboard,
+                    ),
+                  ],
+                ),
+              );
+            }
+
             return ResponsiveScrollBody(
               maxWidth: 720,
               child: Column(
@@ -138,38 +159,17 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
                 children: [
                   _ExpensePaymentSummaryCard(expense: expense),
                   const SizedBox(height: 16),
-                  _PaymentStateCard(
-                    title: 'Despesa ja quitada',
-                    message:
-                        'Nao existe saldo pendente para registrar. Se precisar, acompanhe o historico na gestao de despesas.',
-                    primaryActionLabel: 'Ver despesas',
-                    onPrimaryAction: _openExpenses,
-                    secondaryActionLabel: 'Voltar ao dashboard',
-                    onSecondaryAction: _openDashboard,
+                  ExpensePaymentFormCard(
+                    expense: expense,
+                    isSubmitting: _viewModel.isSubmittingPayment,
+                    errorMessage: _viewModel.paymentErrorMessage,
+                    onSubmit: _handleSubmit,
+                    title: 'Confirmar pagamento',
                   ),
                 ],
               ),
             );
-          }
-
-          return ResponsiveScrollBody(
-            maxWidth: 720,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _ExpensePaymentSummaryCard(expense: expense),
-                const SizedBox(height: 16),
-                ExpensePaymentFormCard(
-                  expense: expense,
-                  isSubmitting: _viewModel.isSubmittingPayment,
-                  errorMessage: _viewModel.paymentErrorMessage,
-                  onSubmit: _handleSubmit,
-                  title: 'Confirmar pagamento',
-                ),
-              ],
-            ),
-          );
-        },
+          },
         ),
       ),
     );
@@ -211,7 +211,7 @@ class _ExpensePaymentSummaryCard extends StatelessWidget {
                   label: 'Status',
                   value: formatExpenseEnumLabel(expense.status),
                 ),
-                _SummaryChip(label: 'Metodo sugerido', value: 'Pix'),
+                _SummaryChip(label: 'Método sugerido', value: 'Pix'),
               ],
             ),
           ],
