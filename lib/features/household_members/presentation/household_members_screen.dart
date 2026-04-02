@@ -70,7 +70,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Membro criado. O novo login ja pode usar a tela oficial.',
+          'Membro criado. O novo login já pode usar a tela oficial.',
         ),
       ),
     );
@@ -86,7 +86,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
         return Scaffold(
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/expenses'),
-            title: const Text('Membros do household'),
+            title: const Text('Membros do espaço'),
             actions: buildAuthenticatedTopBarActions(
               context: context,
               sessionController: widget.sessionController,
@@ -109,12 +109,12 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Fluxo minimo multiusuario',
+                            'Fluxo mínimo multiusuário',
                             style: theme.textTheme.titleLarge,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'O owner pode adicionar um novo login ao household atual. O membro criado entra pela mesma tela de login do produto.',
+                            'O responsável pode adicionar um novo login ao espaço atual. A nova pessoa entra pela mesma tela de login do produto.',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: const Color(0xFF65727B),
                             ),
@@ -169,7 +169,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                               validator: (value) {
                                 final trimmed = value?.trim() ?? '';
                                 if (trimmed.isEmpty || !trimmed.contains('@')) {
-                                  return 'Informe um email valido.';
+                                  return 'Informe um e-mail válido.';
                                 }
                                 return null;
                               },
@@ -240,8 +240,8 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                       title: _viewModel.isForbidden
                           ? 'Acesso restrito ao owner'
                           : _viewModel.isUnauthorized
-                          ? 'Sessao expirada'
-                          : 'Nao foi possivel carregar os membros.',
+                          ? 'Sessão expirada'
+                          : 'Não foi possível carregar os membros.',
                       message: _viewModel.loadErrorMessage!,
                       actionLabel: 'Tentar novamente',
                       onAction: _viewModel.load,
@@ -250,7 +250,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                     const _StateCard(
                       title: 'Nenhum membro encontrado',
                       message:
-                          'O household atual ainda nao possui membros listados.',
+                          'O espaço atual ainda não possui membros listados.',
                     ),
                   ] else ...[
                     Text('Membros atuais', style: theme.textTheme.titleMedium),

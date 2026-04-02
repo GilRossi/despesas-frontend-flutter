@@ -83,71 +83,74 @@ void main() {
     expect(find.text('R\$ 129,90'), findsOneWidget);
     expect(
       find.text(
-        'Cada card destaca status, vencimento e saldo restante para reduzir leitura desnecessaria.',
+        'Cada card destaca status, vencimento e saldo restante para facilitar a leitura.',
       ),
       findsOneWidget,
     );
   });
 
-  testWidgets('highlights the recently created expense at the top of the list', (
-    tester,
-  ) async {
-    final controller = SessionController(
-      authRepository: FakeAuthRepository(loginResult: fakeSession()),
-      sessionStore: MemorySessionStore(),
-    );
-    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+  testWidgets(
+    'highlights the recently created expense at the top of the list',
+    (tester) async {
+      final controller = SessionController(
+        authRepository: FakeAuthRepository(loginResult: fakeSession()),
+        sessionStore: MemorySessionStore(),
+      );
+      await controller.login(email: 'gil@example.com', password: 'Senha123!');
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExpensesListScreen(
-          initialHighlightedExpenseId: 77,
-          sessionController: controller,
-          expensesRepository: FakeExpensesRepository(
-            result: PagedResult(
-              items: [
-                fakeExpense(
-                  id: 77,
-                  description: 'Recem criada',
-                  createdAt: DateTime.utc(2026, 3, 30, 15, 20),
-                ),
-                fakeExpense(
-                  id: 10,
-                  description: 'Mais antiga',
-                  createdAt: DateTime.utc(2026, 3, 28, 10, 0),
-                ),
-              ],
-              page: 0,
-              size: 20,
-              totalElements: 2,
-              totalPages: 1,
-              hasNext: false,
-              hasPrevious: false,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ExpensesListScreen(
+            initialHighlightedExpenseId: 77,
+            sessionController: controller,
+            expensesRepository: FakeExpensesRepository(
+              result: PagedResult(
+                items: [
+                  fakeExpense(
+                    id: 77,
+                    description: 'Recém criada',
+                    createdAt: DateTime.utc(2026, 3, 30, 15, 20),
+                  ),
+                  fakeExpense(
+                    id: 10,
+                    description: 'Mais antiga',
+                    createdAt: DateTime.utc(2026, 3, 28, 10, 0),
+                  ),
+                ],
+                page: 0,
+                size: 20,
+                totalElements: 2,
+                totalPages: 1,
+                hasNext: false,
+                hasPrevious: false,
+              ),
             ),
+            financialAssistantRepository: FakeFinancialAssistantRepository(),
+            householdMembersRepository: FakeHouseholdMembersRepository(),
+            reportsRepository: FakeReportsRepository(),
+            reviewOperationsRepository: FakeReviewOperationsRepository(),
           ),
-          financialAssistantRepository: FakeFinancialAssistantRepository(),
-          householdMembersRepository: FakeHouseholdMembersRepository(),
-          reportsRepository: FakeReportsRepository(),
-          reviewOperationsRepository: FakeReviewOperationsRepository(),
         ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
+      );
+      await tester.pump();
+      await tester.pump();
 
-    expect(find.text('Recem criada'), findsNWidgets(2));
+      expect(find.text('Recém criada'), findsNWidgets(2));
 
-    await tester.scrollUntilVisible(
-      find.text('Mais antiga'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Mais antiga'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
-    final recemCriadaTop = tester.getTopLeft(find.text('Recem criada').first).dy;
-    final maisAntigaTop = tester.getTopLeft(find.text('Mais antiga')).dy;
-    expect(recemCriadaTop, lessThan(maisAntigaTop));
-  });
+      final recemCriadaTop = tester
+          .getTopLeft(find.text('Recém criada').first)
+          .dy;
+      final maisAntigaTop = tester.getTopLeft(find.text('Mais antiga')).dy;
+      expect(recemCriadaTop, lessThan(maisAntigaTop));
+    },
+  );
 
   testWidgets(
     'shows the newly created expense immediately even before the refreshed list finishes',
@@ -191,7 +194,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Despesa imediata'), findsOneWidget);
-      expect(find.text('Recem criada'), findsOneWidget);
+      expect(find.text('Recém criada'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
       await tester.pumpAndSettle();
@@ -402,7 +405,7 @@ void main() {
         '49,90',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Observacoes do pagamento'),
+        find.widgetWithText(TextFormField, 'Observações do pagamento'),
         'Pagamento parcial',
       );
       await tester.ensureVisible(
@@ -517,7 +520,7 @@ void main() {
 
       await tester.enterText(
         find.byKey(const ValueKey('expense-form-description-field')),
-        'Farmacia',
+        'Farmácia',
       );
       await tester.enterText(
         find.byKey(const ValueKey('expense-form-amount-field')),
@@ -539,8 +542,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Despesa criada com sucesso.'), findsOneWidget);
-      expect(find.text('Farmacia'), findsOneWidget);
-      expect(find.text('Recem criada'), findsOneWidget);
+      expect(find.text('Farmácia'), findsOneWidget);
+      expect(find.text('Recém criada'), findsOneWidget);
       expect(repository.createCalls, 1);
       expect(repository.listCalls, greaterThanOrEqualTo(2));
     },
@@ -570,13 +573,16 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Lista principal do household'), findsOneWidget);
-    expect(find.byKey(const ValueKey('expenses-new-expense-button')), findsOneWidget);
+    expect(find.text('Lista principal do espaço'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('expenses-new-expense-button')),
+      findsOneWidget,
+    );
     expect(find.text('Assistente financeiro'), findsNothing);
-    expect(find.text('Relatorios'), findsNothing);
+    expect(find.text('Relatórios'), findsNothing);
     expect(find.text('Minha senha'), findsNothing);
-    expect(find.text('Membros do household'), findsNothing);
-    expect(find.text('Review operations'), findsNothing);
+    expect(find.text('Membros do espaço'), findsNothing);
+    expect(find.text('Revisões pendentes'), findsNothing);
   });
 
   testWidgets('hides household members flow for non-owner', (tester) async {
@@ -603,10 +609,12 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Membros do household'), findsNothing);
+    expect(find.text('Membros do espaço'), findsNothing);
   });
 
-  testWidgets('shows clearer payment progress and status labels', (tester) async {
+  testWidgets('shows clearer payment progress and status labels', (
+    tester,
+  ) async {
     final controller = SessionController(
       authRepository: FakeAuthRepository(loginResult: fakeSession()),
       sessionStore: MemorySessionStore(),
@@ -666,7 +674,9 @@ void main() {
     expect(find.text('Pago R\$ 20,00 · Restam R\$ 39,90'), findsOneWidget);
   });
 
-  testWidgets('remains stable with increased text scale in header', (tester) async {
+  testWidgets('remains stable with increased text scale in header', (
+    tester,
+  ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(360, 740);
     addTearDown(tester.view.reset);

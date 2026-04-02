@@ -43,7 +43,7 @@ class IncomeFormViewModel extends ChangeNotifier {
       _loadReferencesErrorMessage = error.message;
     } catch (_) {
       _loadReferencesErrorMessage =
-          'Nao foi possivel carregar as referencias do seu Espaco agora.';
+          'Não foi possível carregar as referências do seu espaço agora.';
     } finally {
       _isLoadingReferences = false;
       notifyListeners();
@@ -63,7 +63,7 @@ class IncomeFormViewModel extends ChangeNotifier {
       _fieldErrors = error.fieldErrors;
       return null;
     } catch (_) {
-      _submitErrorMessage = 'Nao foi possivel registrar o ganho agora.';
+      _submitErrorMessage = 'Não foi possível registrar o ganho agora.';
       return null;
     } finally {
       _isSubmitting = false;

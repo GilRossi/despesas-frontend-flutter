@@ -152,7 +152,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.text('Trazer meu historico'));
+      await tester.tap(find.text('Trazer meu histórico'));
       await tester.pumpAndSettle();
 
       expect(find.byType(HistoryImportFormScreen), findsOneWidget);
@@ -203,7 +203,7 @@ void main() {
       router.go('/space/references');
       await tester.pumpAndSettle();
 
-      expect(find.text('Referencias do seu Espaco'), findsOneWidget);
+      expect(find.text('Referências do seu espaço'), findsOneWidget);
     });
 
     testWidgets('authenticated users can open /fixed-bills/new', (
@@ -246,9 +246,7 @@ void main() {
         tester,
         login: const Text('login'),
         fixedBillsRepository: FakeFixedBillsRepository(
-          listResult: [
-            fakeFixedBillRecord(description: 'Internet fibra'),
-          ],
+          listResult: [fakeFixedBillRecord(description: 'Internet fibra')],
         ),
       );
       router.go('/fixed-bills');
@@ -306,7 +304,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(HistoryImportFormScreen), findsOneWidget);
-      expect(find.text('Trazer meu historico'), findsWidgets);
+      expect(find.text('Trazer meu histórico'), findsWidgets);
     });
 
     testWidgets('menu principal omite a tela atual no historico', (
@@ -388,7 +386,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ReportsScreen), findsOneWidget);
-      expect(find.text('Leitura clara do mes financeiro'), findsOneWidget);
+      expect(find.text('Leitura clara do mês financeiro'), findsOneWidget);
     });
 
     testWidgets('reports mantem menu autenticado e logout acessivel', (
@@ -563,7 +561,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ExpenseFormScreen), findsOneWidget);
-      expect(find.text('Lancar despesa'), findsOneWidget);
+      expect(find.text('Lançar despesa'), findsOneWidget);
       expect(find.text('Ver despesas'), findsOneWidget);
     });
 
@@ -770,7 +768,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ExpenseFormScreen), findsOneWidget);
-      expect(find.text('Lancar despesa'), findsOneWidget);
+      expect(find.text('Lançar despesa'), findsOneWidget);
     });
 
     testWidgets(
@@ -848,7 +846,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(expensesRepository.createCalls, 1);
-        expect(find.text('Despesa lancada com sucesso'), findsOneWidget);
+        expect(find.text('Despesa lançada com sucesso'), findsOneWidget);
 
         await tester.tap(
           find.byKey(
@@ -861,7 +859,7 @@ void main() {
           find.byKey(const ValueKey('expense-form-description-field')),
         );
         expect(descriptionField.controller?.text, isEmpty);
-        expect(find.text('Despesa lancada com sucesso'), findsNothing);
+        expect(find.text('Despesa lançada com sucesso'), findsNothing);
       },
     );
 
@@ -946,7 +944,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Lista principal do household'), findsOneWidget);
+        expect(find.text('Lista principal do espaço'), findsOneWidget);
         expect(find.text('Mercado'), findsOneWidget);
       },
     );
@@ -1005,7 +1003,7 @@ void main() {
           financialAssistantRepository: FakeFinancialAssistantRepository(
             starterReply: fakeStarterReply(
               intent: FinancialAssistantStarterIntent.importHistory,
-              title: 'Vamos trazer seu historico',
+              title: 'Vamos trazer seu histórico',
               message: 'Primeiro monte o lote e revise antes de confirmar.',
               primaryActionKey: 'OPEN_IMPORT_HISTORY',
             ),
@@ -1098,7 +1096,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Referencias do seu Espaco'), findsOneWidget);
+        expect(find.text('Referências do seu espaço'), findsOneWidget);
         expect(find.text('Projeto Acme'), findsOneWidget);
       },
     );

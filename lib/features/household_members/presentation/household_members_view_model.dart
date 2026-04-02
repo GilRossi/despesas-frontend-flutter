@@ -43,7 +43,7 @@ class HouseholdMembersViewModel extends ChangeNotifier {
       _loadErrorMessage = error.message;
       _loadErrorStatusCode = error.statusCode;
     } catch (_) {
-      _loadErrorMessage = 'Nao foi possivel carregar os membros do household.';
+      _loadErrorMessage = 'Não foi possível carregar os membros do espaço.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -65,7 +65,7 @@ class HouseholdMembersViewModel extends ChangeNotifier {
       _fieldErrors = error.fieldErrors;
       return false;
     } catch (_) {
-      _submitErrorMessage = 'Nao foi possivel adicionar o novo membro.';
+      _submitErrorMessage = 'Não foi possível adicionar o novo membro.';
       return false;
     } finally {
       _isSubmitting = false;

@@ -50,7 +50,7 @@ class ExpenseDetailViewModel extends ChangeNotifier {
         _errorMessage = error.message;
       }
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar o detalhe da despesa.';
+      _errorMessage = 'Não foi possível carregar o detalhe da despesa.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -72,7 +72,7 @@ class ExpenseDetailViewModel extends ChangeNotifier {
       _paymentErrorMessage = error.message;
       return false;
     } catch (_) {
-      _paymentErrorMessage = 'Nao foi possivel registrar o pagamento.';
+      _paymentErrorMessage = 'Não foi possível registrar o pagamento.';
       return false;
     } finally {
       _isSubmittingPayment = false;
@@ -95,7 +95,7 @@ class ExpenseDetailViewModel extends ChangeNotifier {
       _paymentErrorMessage = error.message;
       return false;
     } catch (_) {
-      _paymentErrorMessage = 'Nao foi possivel remover o pagamento.';
+      _paymentErrorMessage = 'Não foi possível remover o pagamento.';
       return false;
     } finally {
       _removingPaymentId = null;

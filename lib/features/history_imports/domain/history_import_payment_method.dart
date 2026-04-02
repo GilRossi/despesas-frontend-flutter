@@ -20,7 +20,7 @@ enum HistoryImportPaymentMethod {
       orElse: () => throw ArgumentError.value(
         value,
         'value',
-        'Metodo de pagamento desconhecido.',
+        'Método de pagamento desconhecido.',
       ),
     );
   }

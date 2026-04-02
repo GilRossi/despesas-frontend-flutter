@@ -84,8 +84,8 @@ class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
               const SizedBox(height: 8),
               Text(
                 _isPaidOff
-                    ? 'Esta despesa ja foi quitada. O historico permanece disponivel para consulta.'
-                    : 'Saldo restante: ${formatCurrency(widget.expense.remainingAmount)}. O valor ja vem preenchido e pode ser ajustado ate o saldo.',
+                    ? 'Esta despesa já foi quitada. O histórico permanece disponível para consulta.'
+                    : 'Saldo restante: ${formatCurrency(widget.expense.remainingAmount)}. O valor já vem preenchido e pode ser ajustado até o saldo.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
@@ -130,7 +130,7 @@ class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
                   key: const ValueKey('expense-payment-method-field'),
                   initialValue: _method,
                   decoration: const InputDecoration(
-                    labelText: 'Metodo de pagamento',
+                    labelText: 'Método de pagamento',
                   ),
                   items: expensePaymentMethods
                       .map(
@@ -158,11 +158,11 @@ class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
                   maxLength: 255,
                   textInputAction: TextInputAction.done,
                   decoration: const InputDecoration(
-                    labelText: 'Observacoes do pagamento',
+                    labelText: 'Observações do pagamento',
                   ),
                   validator: (value) {
                     if (value != null && value.trim().length > 255) {
-                      return 'As observacoes devem ter no maximo 255 caracteres.';
+                      return 'As observações devem ter no máximo 255 caracteres.';
                     }
                     return null;
                   },
@@ -206,13 +206,13 @@ class _ExpensePaymentFormCardState extends State<ExpensePaymentFormCard> {
 
     final amount = _parseAmount(value);
     if (amount == null) {
-      return 'Informe um valor valido.';
+      return 'Informe um valor válido.';
     }
     if (amount <= 0) {
       return 'O valor deve ser maior que zero.';
     }
     if (amount > widget.expense.remainingAmount) {
-      return 'O valor nao pode ser maior que o saldo restante.';
+      return 'O valor não pode ser maior que o saldo restante.';
     }
     return null;
   }

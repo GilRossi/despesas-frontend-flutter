@@ -67,7 +67,7 @@ class HttpAuthRepository implements AuthRepository {
 
     final data = _parseDataMap(
       response,
-      fallbackMessage: 'Resposta invalida da sessao atual.',
+      fallbackMessage: 'Resposta inválida da sessão atual.',
     );
     return AuthUser.fromJson(data);
   }
@@ -81,7 +81,7 @@ class HttpAuthRepository implements AuthRepository {
 
     final data = _parseDataMap(
       response,
-      fallbackMessage: 'Resposta invalida da conclusao do onboarding.',
+      fallbackMessage: 'Resposta inválida da conclusão do onboarding.',
     );
     return AuthOnboarding.fromJson(data);
   }
@@ -97,7 +97,7 @@ class HttpAuthRepository implements AuthRepository {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_UNAVAILABLE',
-        message: 'A sessao nao esta disponivel.',
+        message: 'A sessão não está disponível.',
       );
     }
 
@@ -113,7 +113,7 @@ class HttpAuthRepository implements AuthRepository {
 
     final data = _parseDataMap(
       response,
-      fallbackMessage: 'Resposta invalida da troca de senha.',
+      fallbackMessage: 'Resposta inválida da troca de senha.',
     );
     return ChangePasswordResult.fromJson(data);
   }
@@ -135,7 +135,7 @@ class HttpAuthRepository implements AuthRepository {
       throw const ApiException(
         statusCode: 500,
         code: 'INVALID_RESPONSE',
-        message: 'Resposta invalida do pedido de recuperacao de senha.',
+        message: 'Resposta inválida do pedido de recuperação de senha.',
       );
     }
     final resetToken = decoded['resetToken'] as String?;
@@ -162,7 +162,7 @@ class HttpAuthRepository implements AuthRepository {
 
     final data = _parseDataMap(
       response,
-      fallbackMessage: 'Resposta invalida da redefinicao de senha.',
+      fallbackMessage: 'Resposta inválida da redefinição de senha.',
     );
 
     final revokedTokens = data['revokedRefreshTokens'];
@@ -171,7 +171,7 @@ class HttpAuthRepository implements AuthRepository {
       throw const ApiException(
         statusCode: 500,
         code: 'INVALID_RESPONSE',
-        message: 'Resposta invalida da redefinicao de senha.',
+        message: 'Resposta inválida da redefinição de senha.',
       );
     }
 
@@ -184,7 +184,7 @@ class HttpAuthRepository implements AuthRepository {
   MobileSession _parseSessionResponse(http.Response response) {
     final data = _parseDataMap(
       response,
-      fallbackMessage: 'Resposta de autenticacao invalida.',
+      fallbackMessage: 'Resposta de autenticação inválida.',
     );
     return MobileSession.fromJson(data);
   }
@@ -195,7 +195,7 @@ class HttpAuthRepository implements AuthRepository {
       throw const ApiException(
         statusCode: 401,
         code: 'SESSION_UNAVAILABLE',
-        message: 'A sessao nao esta disponivel.',
+        message: 'A sessão não está disponível.',
       );
     }
 

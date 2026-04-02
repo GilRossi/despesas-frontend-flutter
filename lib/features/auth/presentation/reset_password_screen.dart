@@ -68,7 +68,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           title: const Text('Senha atualizada'),
           content: Text(
             result.revokedRefreshTokens > 0
-                ? 'Senha redefinida com sucesso. Sessao anterior foi encerrada.'
+                ? 'Senha redefinida com sucesso. A sessão anterior foi encerrada.'
                 : 'Senha redefinida com sucesso.',
           ),
           actions: [
@@ -92,7 +92,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Nao foi possivel redefinir agora. Tente novamente.';
+        _errorMessage = 'Não foi possível redefinir agora. Tente novamente.';
       });
     } finally {
       if (mounted) {
@@ -124,7 +124,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               Text(
                 hasToken
                     ? 'Defina a nova senha. O token expira em poucos minutos.'
-                    : 'O token nao foi encontrado. Solicite um novo link.',
+                    : 'O token não foi encontrado. Solicite um novo link.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF58616A),
                 ),
@@ -175,10 +175,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         textInputAction: TextInputAction.done,
                         autofillHints: const [AutofillHints.newPassword],
                         decoration: InputDecoration(
-                          labelText: 'Confirmacao da nova senha',
+                          labelText: 'Confirmação da nova senha',
                           suffixIcon: IconButton(
-                            key:
-                                const ValueKey('reset-password-confirm-toggle'),
+                            key: const ValueKey(
+                              'reset-password-confirm-toggle',
+                            ),
                             icon: Icon(
                               _obscureConfirm
                                   ? Icons.visibility_outlined
@@ -196,7 +197,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             return 'Confirme a nova senha.';
                           }
                           if (value != _newPasswordController.text) {
-                            return 'A confirmacao deve ser igual a nova senha.';
+                            return 'A confirmação deve ser igual à nova senha.';
                           }
                           return null;
                         },

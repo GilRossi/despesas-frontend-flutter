@@ -183,7 +183,7 @@ GoRouter createAppRouter({
               if (fixedBillId == null) {
                 return const Scaffold(
                   body: Center(
-                    child: Text('Nao foi possivel abrir esta conta fixa.'),
+                    child: Text('Não foi possível abrir esta conta fixa.'),
                   ),
                 );
               }
@@ -239,7 +239,7 @@ GoRouter createAppRouter({
               if (expenseId == null) {
                 return const Scaffold(
                   body: Center(
-                    child: Text('Nao foi possivel abrir este pagamento.'),
+                    child: Text('Não foi possível abrir este pagamento.'),
                   ),
                 );
               }
@@ -258,7 +258,7 @@ GoRouter createAppRouter({
               if (expenseId == null) {
                 return const Scaffold(
                   body: Center(
-                    child: Text('Nao foi possivel abrir esta despesa.'),
+                    child: Text('Não foi possível abrir esta despesa.'),
                   ),
                 );
               }
@@ -286,7 +286,7 @@ GoRouter createAppRouter({
               if (ingestionId == null) {
                 return const Scaffold(
                   body: Center(
-                    child: Text('Nao foi possivel abrir esta review.'),
+                    child: Text('Não foi possível abrir esta revisão.'),
                   ),
                 );
               }

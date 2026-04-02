@@ -55,7 +55,7 @@ class FixedBillFormViewModel extends ChangeNotifier {
       _loadCatalogErrorMessage = error.message;
     } catch (_) {
       _loadCatalogErrorMessage =
-          'Nao foi possivel carregar o catalogo para contas fixas agora.';
+          'Não foi possível carregar o catálogo para contas fixas agora.';
     } finally {
       _isLoadingCatalog = false;
       notifyListeners();
@@ -73,7 +73,7 @@ class FixedBillFormViewModel extends ChangeNotifier {
       _loadReferencesErrorMessage = error.message;
     } catch (_) {
       _loadReferencesErrorMessage =
-          'Nao foi possivel carregar as referencias do seu Espaco agora.';
+          'Não foi possível carregar as referências do seu espaço agora.';
     } finally {
       _isLoadingReferences = false;
       notifyListeners();
@@ -103,8 +103,8 @@ class FixedBillFormViewModel extends ChangeNotifier {
       return null;
     } catch (_) {
       _submitErrorMessage = fixedBillId == null
-          ? 'Nao foi possivel cadastrar a conta fixa agora.'
-          : 'Nao foi possivel atualizar a conta fixa agora.';
+          ? 'Não foi possível cadastrar a conta fixa agora.'
+          : 'Não foi possível atualizar a conta fixa agora.';
       return null;
     } finally {
       _isSubmitting = false;

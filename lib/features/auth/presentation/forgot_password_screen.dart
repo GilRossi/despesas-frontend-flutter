@@ -53,7 +53,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Nao foi possivel solicitar agora. Tente de novo em instantes.';
+        _errorMessage =
+            'Não foi possível solicitar agora. Tente de novo em instantes.';
       });
     } finally {
       if (mounted) {
@@ -80,10 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Recuperar acesso',
-                  style: theme.textTheme.headlineSmall,
-                ),
+                Text('Recuperar acesso', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: 8),
                 Text(
                   'Informe seu e-mail. Se encontrarmos uma conta, enviaremos um link de redefinicao.',
@@ -104,7 +102,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       return 'Informe seu e-mail.';
                     }
                     if (!value.contains('@')) {
-                      return 'Informe um e-mail valido.';
+                      return 'Informe um e-mail válido.';
                     }
                     return null;
                   },

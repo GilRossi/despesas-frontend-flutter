@@ -164,7 +164,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
       _step = _HistoryImportFlowStep.success;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Historico importado com sucesso.')),
+      const SnackBar(content: Text('Histórico importado com sucesso.')),
     );
   }
 
@@ -269,7 +269,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const RouteBackButton(fallbackRoute: '/expenses/new'),
-        title: const Text('Trazer meu historico'),
+        title: const Text('Trazer meu histórico'),
         actions: buildAuthenticatedTopBarActions(
           context: context,
           sessionController: widget.sessionController,
@@ -318,9 +318,9 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
     if (_viewModel.isLoadingCatalog && !_viewModel.hasCatalogOptions) {
       return const _StateCard(
         key: ValueKey('history-import-loading-catalog-card'),
-        title: 'Preparando a importacao do seu historico',
+        title: 'Preparando a importação do seu histórico',
         message:
-            'Carregando o catalogo que o backend usa como fonte de verdade.',
+            'Carregando as categorias necessárias para importar seu histórico.',
         showProgress: true,
       );
     }
@@ -329,7 +329,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
         !_viewModel.hasCatalogOptions) {
       return _StateCard(
         key: const ValueKey('history-import-catalog-error-card'),
-        title: 'Nao foi possivel carregar o catalogo',
+        title: 'Não foi possível carregar o catálogo',
         message: _viewModel.loadCatalogErrorMessage!,
         actionLabel: 'Tentar novamente',
         onAction: _viewModel.loadCatalogOptions,
@@ -339,9 +339,9 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
     if (!_viewModel.hasCatalogOptions) {
       return const _StateCard(
         key: ValueKey('history-import-empty-catalog-card'),
-        title: 'Catalogo indisponivel',
+        title: 'Catálogo indisponível',
         message:
-            'Cadastre ao menos uma categoria e subcategoria ativas antes de trazer seu historico.',
+            'Cadastre ao menos uma categoria e uma subcategoria ativas antes de trazer seu histórico.',
       );
     }
 
@@ -357,7 +357,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
                 const SummaryHeader(
                   title: 'Conte o essencial do lote',
                   subtitle:
-                      'Neste fluxo base voce organiza despesas passadas ja pagas. Primeiro escolha como esse lote foi pago; depois detalhe os itens com calma.',
+                      'Neste fluxo você organiza despesas passadas já pagas. Primeiro escolha como esse lote foi pago; depois detalhe os itens com calma.',
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<HistoryImportPaymentMethod?>(
@@ -369,13 +369,13 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
                   decoration: InputDecoration(
                     labelText: 'Como esse lote foi pago?',
                     helperText:
-                        'Neste release base o metodo vale para todos os itens do lote.',
+                        'Neste fluxo, a forma de pagamento vale para todos os itens do lote.',
                     errorText: _viewModel.fieldError('paymentMethod'),
                   ),
                   items: [
                     const DropdownMenuItem<HistoryImportPaymentMethod?>(
                       value: null,
-                      child: Text('Escolha o metodo de pagamento'),
+                      child: Text('Escolha a forma de pagamento'),
                     ),
                     for (final method in HistoryImportPaymentMethod.values)
                       DropdownMenuItem<HistoryImportPaymentMethod?>(
@@ -389,7 +389,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
                   },
                   validator: (value) {
                     if (value == null) {
-                      return 'Selecione o metodo de pagamento do lote.';
+                      return 'Selecione a forma de pagamento do lote.';
                     }
                     return null;
                   },
@@ -440,13 +440,13 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
               onPressed: _viewModel.isSubmitting
                   ? null
                   : () => context.go('/expenses/new'),
-              child: const Text('Voltar ao lancamento manual'),
+              child: const Text('Voltar ao lançamento manual'),
             ),
             primary: FilledButton.icon(
               key: const ValueKey('history-import-form-continue-button'),
               onPressed: _viewModel.isSubmitting ? null : _continueToReview,
               icon: const Icon(Icons.arrow_forward),
-              label: const Text('Continuar para revisao'),
+              label: const Text('Continuar para revisão'),
             ),
           ),
         ],
@@ -473,8 +473,8 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
                       ? 'Primeiro item do lote'
                       : 'Item ${index + 1}',
                   subtitle: index == 0
-                      ? 'Comece por uma despesa passada que ja foi totalmente paga.'
-                      : 'Adicione outro item do historico com os mesmos cuidados.',
+                      ? 'Comece por uma despesa passada que já foi totalmente paga.'
+                      : 'Adicione outro item do histórico com os mesmos cuidados.',
                 ),
               ),
               if (_entries.length > 1) ...[
@@ -497,17 +497,17 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             textInputAction: TextInputAction.next,
             maxLength: 140,
             decoration: InputDecoration(
-              labelText: 'Como voce quer identificar esse item?',
-              hintText: 'Ex.: Mercado de fevereiro, Aluguel de janeiro',
+              labelText: 'Como você quer identificar esse item?',
+              hintText: 'Ex.: Mercado de fevereiro, aluguel de janeiro',
               errorText: _entryFieldError(index, 'description'),
             ),
             validator: (value) {
               final trimmed = value?.trim() ?? '';
               if (trimmed.isEmpty) {
-                return 'Informe uma descricao para este item.';
+                return 'Informe uma descrição para este item.';
               }
               if (trimmed.length > 140) {
-                return 'Use no maximo 140 caracteres.';
+                return 'Use no máximo 140 caracteres.';
               }
               return null;
             },
@@ -606,7 +606,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             decoration: InputDecoration(
               labelText: 'Subcategoria',
               helperText: selectedCategory != null && subcategoryOptions.isEmpty
-                  ? 'A categoria selecionada nao possui subcategorias ativas.'
+                  ? 'A categoria selecionada não possui subcategorias ativas.'
                   : null,
               errorText: _entryFieldError(index, 'subcategoryId'),
             ),
@@ -641,7 +641,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             minLines: 2,
             maxLines: 4,
             decoration: InputDecoration(
-              labelText: 'Observacao opcional',
+              labelText: 'Observação opcional',
               hintText: 'Ex.: pago no fechamento da semana, ajuste de casa',
               errorText: _entryFieldError(index, 'notes'),
             ),
@@ -656,7 +656,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Esse item sera gravado como despesa ja paga depois da sua confirmacao final.',
+            'Esse item será gravado como despesa já paga depois da sua confirmação final.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -683,14 +683,14 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'O backend continua como fonte de verdade. Aqui voce so revisa o lote antes do POST real que cria despesa e pagamento integral para cada item.',
+                'Confira o lote antes de confirmar. Depois disso, cada item será salvo como despesa já paga.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
               ),
               const SizedBox(height: 16),
               _ReviewRow(
-                label: 'Metodo de pagamento do lote',
+                label: 'Método de pagamento do lote',
                 value: input.paymentMethod.label,
               ),
               _ReviewRow(
@@ -736,7 +736,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             label: Text(
               _viewModel.isSubmitting
                   ? 'Confirmando...'
-                  : 'Confirmar importacao',
+                  : 'Confirmar importação',
             ),
           ),
         ),
@@ -761,7 +761,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            _ReviewRow(label: 'Descricao', value: entry.description),
+            _ReviewRow(label: 'Descrição', value: entry.description),
             _ReviewRow(label: 'Valor', value: formatCurrency(entry.amount)),
             _ReviewRow(label: 'Data', value: _formatDate(entry.date)),
             _ReviewRow(
@@ -773,7 +773,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
               value: _selectedSubcategoryNameFor(draft) ?? '-',
             ),
             if ((entry.notes ?? '').trim().isNotEmpty)
-              _ReviewRow(label: 'Observacao', value: entry.notes!.trim()),
+              _ReviewRow(label: 'Observação', value: entry.notes!.trim()),
           ],
         ),
       ),
@@ -803,9 +803,9 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
               const SizedBox(width: 12),
               const Expanded(
                 child: SummaryHeader(
-                  title: 'Historico importado',
+                  title: 'Histórico importado',
                   subtitle:
-                      'O lote foi salvo no household atual e cada item entrou como despesa ja paga.',
+                      'O lote foi salvo no espaço atual e cada item entrou como despesa já paga.',
                 ),
               ),
             ],
@@ -816,7 +816,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
             value: '${createdImport.importedCount}',
           ),
           _ReviewRow(
-            label: 'Metodo do lote',
+            label: 'Método do lote',
             value: _selectedPaymentMethod?.label ?? '-',
           ),
           const SizedBox(height: 8),
@@ -864,7 +864,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            _ReviewRow(label: 'Descricao', value: entry.description),
+            _ReviewRow(label: 'Descrição', value: entry.description),
             _ReviewRow(label: 'Valor', value: formatCurrency(entry.amount)),
             _ReviewRow(label: 'Data', value: _formatDate(entry.date)),
             _ReviewRow(
@@ -963,9 +963,9 @@ class _HeroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SummaryHeader(
-            title: 'Trazer meu historico',
+            title: 'Trazer meu histórico',
             subtitle:
-                'Um fluxo guiado para registrar, em lote, despesas passadas que ja foram pagas sem cair num formulario frio.',
+                'Um fluxo guiado para registrar, em lote, despesas passadas que já foram pagas sem complicação.',
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -977,11 +977,11 @@ class _HeroCard extends StatelessWidget {
                 isActive: step == _HistoryImportFlowStep.collect,
               ),
               _StepChip(
-                label: '2. Revisao',
+                label: '2. Revisão',
                 isActive: step == _HistoryImportFlowStep.review,
               ),
               _StepChip(
-                label: '3. Confirmacao',
+                label: '3. Confirmação',
                 isActive: step == _HistoryImportFlowStep.success,
               ),
             ],
@@ -989,10 +989,10 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             step == _HistoryImportFlowStep.collect
-                ? 'Voce monta um lote manual com metodo de pagamento unico e itens claros, todos ligados ao catalogo real do backend. Para series simples, duplique o ultimo item e ajuste o que mudou no mes.'
+                ? 'Você monta um lote manual com uma única forma de pagamento e itens claros. Para séries simples, duplique o último item e ajuste o que mudou no mês.'
                 : step == _HistoryImportFlowStep.review
-                ? 'Agora confira o lote inteiro com calma. A gravacao real so acontece depois da sua confirmacao.'
-                : 'Tudo certo. O backend confirmou a importacao historica em lote.',
+                ? 'Agora confira o lote inteiro com calma. O salvamento só acontece depois da sua confirmação.'
+                : 'Tudo certo. A importação histórica em lote foi concluída.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),

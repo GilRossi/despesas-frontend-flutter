@@ -51,7 +51,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         return Scaffold(
           appBar: AppBar(
             leading: const RouteBackButton(fallbackRoute: '/'),
-            title: const Text('Relatorios'),
+            title: const Text('Relatórios'),
             actions: buildAuthenticatedTopBarActions(
               context: context,
               sessionController: widget.sessionController,
@@ -71,8 +71,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 if (_viewModel.errorMessage != null && !_viewModel.hasData) {
                   return _StateCard(
                     title: _viewModel.isUnauthorized
-                        ? 'Sessao expirada'
-                        : 'Nao foi possivel carregar os relatorios.',
+                        ? 'Sessão expirada'
+                        : 'Não foi possível carregar os relatórios.',
                     message: _viewModel.errorMessage!,
                     actionLabel: 'Tentar novamente',
                     onAction: _viewModel.load,
@@ -109,9 +109,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       if (!snapshot.summary.hasData) ...[
                         const SizedBox(height: 16),
                         const _InlineMessageCard(
-                          title: 'Periodo sem dados',
+                          title: 'Período sem dados',
                           message:
-                              'Nao ha despesas registradas no mes selecionado. Ajuste o periodo para liberar a leitura completa.',
+                              'Não há despesas registradas no mês selecionado. Ajuste o período para liberar a leitura completa.',
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -197,12 +197,12 @@ class _ReportsHeroCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Leitura clara do mes financeiro',
+                    'Leitura clara do mês financeiro',
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Resumo do household atual com comparacao mensal, breakdown por categoria e prioridades do periodo.',
+                    'Resumo do espaço atual com comparação mensal, distribuição por categoria e prioridades do período.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF65727B),
                     ),
@@ -217,7 +217,7 @@ class _ReportsHeroCard extends StatelessWidget {
               children: [
                 OutlinedButton(
                   onPressed: isLoading ? null : onPreviousMonth,
-                  child: const Text('Mes anterior'),
+                  child: const Text('Mês anterior'),
                 ),
                 FilledButton.tonal(
                   onPressed: null,
@@ -225,10 +225,10 @@ class _ReportsHeroCard extends StatelessWidget {
                 ),
                 OutlinedButton(
                   onPressed: isLoading ? null : onNextMonth,
-                  child: const Text('Proximo mes'),
+                  child: const Text('Próximo mês'),
                 ),
                 FilterChip(
-                  label: const Text('Comparar com mes anterior'),
+                  label: const Text('Comparar com mês anterior'),
                   selected: comparePrevious,
                   onSelected: isLoading ? null : onCompareChanged,
                 ),
@@ -264,7 +264,7 @@ class _KpiGrid extends StatelessWidget {
           children: [
             _KpiCard(
               width: minWidth,
-              label: 'Total do periodo',
+              label: 'Total do período',
               value: formatCurrency(snapshot.summary.totalAmount),
               meta: _periodLabel(snapshot.summary.from, snapshot.summary.to),
             ),
@@ -273,7 +273,7 @@ class _KpiGrid extends StatelessWidget {
               label: 'Pago',
               value: formatCurrency(snapshot.summary.paidAmount),
               meta:
-                  '${snapshot.summary.totalExpenses} lancamento(s) no periodo',
+                  '${snapshot.summary.totalExpenses} lançamento(s) no período',
             ),
             _KpiCard(
               width: minWidth,
@@ -291,12 +291,12 @@ class _KpiGrid extends StatelessWidget {
             ),
             _KpiCard(
               width: minWidth,
-              label: 'Variacao mensal',
+              label: 'Variação mensal',
               value: comparison == null
                   ? '—'
                   : '${comparison.deltaPercentage.toStringAsFixed(2)}%',
               meta: comparison == null
-                  ? 'Comparacao desativada'
+                  ? 'Comparação desativada'
                   : 'Delta de ${formatCurrency(comparison.deltaAmount)}',
             ),
           ],
@@ -336,15 +336,15 @@ class _SecondaryReportsColumn extends StatelessWidget {
       children: [
         _ListSectionCard<ReportTopExpense>(
           title: 'Maiores despesas',
-          subtitle: 'Lancamentos mais relevantes do periodo.',
+          subtitle: 'Lançamentos mais relevantes do período.',
           items: snapshot.summary.topExpenses,
-          emptyMessage: 'Sem despesas relevantes no periodo.',
+          emptyMessage: 'Sem despesas relevantes no período.',
           itemBuilder: (expense) => _TopExpenseTile(expense: expense),
         ),
         const SizedBox(height: 16),
         _ListSectionCard<ReportRecurringExpense>(
-          title: 'Recorrencias detectadas',
-          subtitle: 'Padroes recorrentes encontrados no household.',
+          title: 'Recorrências detectadas',
+          subtitle: 'Padrões recorrentes encontrados no espaço.',
           items: snapshot.insights.recurringExpenses,
           emptyMessage: 'Nenhum padrao recorrente forte encontrado.',
           itemBuilder: (recurring) =>
@@ -354,18 +354,18 @@ class _SecondaryReportsColumn extends StatelessWidget {
           const SizedBox(height: 16),
           _ListSectionCard<ReportIncreaseAlert>(
             title: 'Aumentos relevantes',
-            subtitle: 'Categorias com salto frente ao mes anterior.',
+            subtitle: 'Categorias com salto em relação ao mês anterior.',
             items: snapshot.insights.increaseAlerts,
-            emptyMessage: 'Nenhum aumento relevante no periodo.',
+            emptyMessage: 'Nenhum aumento relevante no período.',
             itemBuilder: (alert) => _IncreaseAlertTile(alert: alert),
           ),
         ],
         const SizedBox(height: 16),
         _ListSectionCard<ReportRecommendation>(
-          title: 'Recomendacoes',
-          subtitle: 'Sugestoes deterministicas geradas pelo backend.',
+          title: 'Recomendações',
+          subtitle: 'Sugestões automáticas geradas pelo sistema.',
           items: snapshot.recommendations,
-          emptyMessage: 'Nenhuma recomendacao disponivel para o periodo.',
+          emptyMessage: 'Nenhuma recomendação disponível para o período.',
           itemBuilder: (recommendation) =>
               _RecommendationTile(recommendation: recommendation),
         ),
@@ -402,15 +402,15 @@ class _ComparisonCard extends StatelessWidget {
           children: [
             Text(
               comparison == null
-                  ? 'Distribuicao do periodo'
+                  ? 'Distribuição do período'
                   : 'Comparativo mensal',
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
               comparison == null
-                  ? 'Como o mes atual esta dividido entre pago e pendente.'
-                  : 'Visao direta do mes atual contra o anterior.',
+                  ? 'Como o mês atual está dividido entre pago e pendente.'
+                  : 'Visão direta do mês atual contra o anterior.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF65727B),
               ),
@@ -478,10 +478,13 @@ class _CategoryBreakdownCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Breakdown por categoria', style: theme.textTheme.titleLarge),
+            Text(
+              'Distribuição por categoria',
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
-              'Ranking do periodo com peso relativo e leitura rapida da categoria dominante.',
+              'Ranking do período com peso relativo e leitura rápida da categoria dominante.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF65727B),
               ),
@@ -489,7 +492,7 @@ class _CategoryBreakdownCard extends StatelessWidget {
             const SizedBox(height: 20),
             if (categories.isEmpty)
               Text(
-                'Nenhuma categoria apareceu no periodo selecionado.',
+                'Nenhuma categoria apareceu no período selecionado.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
@@ -618,7 +621,7 @@ class _RecurringExpenseTile extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${recurring.occurrences} ocorrencia(s) • ${recurring.categoryName}',
+          '${recurring.occurrences} ocorrência(s) • ${recurring.categoryName}',
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: const Color(0xFF65727B)),
@@ -786,7 +789,7 @@ class _CategoryBreakdownRow extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          '${category.sharePercentage.toStringAsFixed(2)}% do mes • ${category.expensesCount} despesa(s)',
+          '${category.sharePercentage.toStringAsFixed(2)}% do mês • ${category.expensesCount} despesa(s)',
           style: theme.textTheme.bodySmall?.copyWith(
             color: const Color(0xFF65727B),
           ),

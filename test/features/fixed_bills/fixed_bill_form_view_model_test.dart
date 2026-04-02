@@ -51,53 +51,50 @@ void main() {
 
       expect(
         viewModel.loadCatalogErrorMessage,
-        'Nao foi possivel carregar o catalogo para contas fixas agora.',
+        'Não foi possível carregar o catálogo para contas fixas agora.',
       );
       expect(
         viewModel.loadReferencesErrorMessage,
-        'Nao foi possivel carregar as referencias do seu Espaco agora.',
+        'Não foi possível carregar as referências do seu espaço agora.',
       );
     },
   );
 
-  test(
-    'submitFixedBill creates the record and clears feedback',
-    () async {
-      final repository = FakeFixedBillsRepository();
-      final viewModel = FixedBillFormViewModel(
-        fixedBillsRepository: repository,
-        expensesRepository: FakeExpensesRepository(),
-        spaceReferencesRepository: FakeSpaceReferencesRepository(),
-      );
-      final input = CreateFixedBillInput(
-        description: 'Internet fibra',
-        amount: 129.9,
-        firstDueDate: DateTime(2026, 3, 10),
-        frequency: FixedBillFrequency.monthly,
-        categoryId: 1,
-        subcategoryId: 2,
-        spaceReferenceId: 7,
-      );
+  test('submitFixedBill creates the record and clears feedback', () async {
+    final repository = FakeFixedBillsRepository();
+    final viewModel = FixedBillFormViewModel(
+      fixedBillsRepository: repository,
+      expensesRepository: FakeExpensesRepository(),
+      spaceReferencesRepository: FakeSpaceReferencesRepository(),
+    );
+    final input = CreateFixedBillInput(
+      description: 'Internet fibra',
+      amount: 129.9,
+      firstDueDate: DateTime(2026, 3, 10),
+      frequency: FixedBillFrequency.monthly,
+      categoryId: 1,
+      subcategoryId: 2,
+      spaceReferenceId: 7,
+    );
 
-      final result = await viewModel.submitFixedBill(input: input);
-      viewModel.clearFieldError('description');
-      viewModel.clearSubmissionFeedback();
+    final result = await viewModel.submitFixedBill(input: input);
+    viewModel.clearFieldError('description');
+    viewModel.clearSubmissionFeedback();
 
-      expect(repository.createCalls, 1);
-      expect(result?.description, 'Internet fibra');
-      expect(viewModel.submitErrorMessage, isNull);
-      expect(viewModel.hasFieldErrors, isFalse);
-      expect(input.toJson(), {
-        'description': 'Internet fibra',
-        'amount': 129.9,
-        'firstDueDate': '2026-03-10',
-        'frequency': 'MONTHLY',
-        'categoryId': 1,
-        'subcategoryId': 2,
-        'spaceReferenceId': 7,
-      });
-    },
-  );
+    expect(repository.createCalls, 1);
+    expect(result?.description, 'Internet fibra');
+    expect(viewModel.submitErrorMessage, isNull);
+    expect(viewModel.hasFieldErrors, isFalse);
+    expect(input.toJson(), {
+      'description': 'Internet fibra',
+      'amount': 129.9,
+      'firstDueDate': '2026-03-10',
+      'frequency': 'MONTHLY',
+      'categoryId': 1,
+      'subcategoryId': 2,
+      'spaceReferenceId': 7,
+    });
+  });
 
   test('submitFixedBill exposes API messages and field errors', () async {
     final viewModel = FixedBillFormViewModel(

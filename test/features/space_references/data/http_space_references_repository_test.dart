@@ -92,7 +92,7 @@ void main() {
                 'name': 'Projeto Acme',
               },
               'message':
-                  'Encontrei uma referencia parecida no seu Espaco. Quer usar essa para evitar duplicidade?',
+                  'Encontrei uma referência parecida no seu espaço. Quer usar esta para evitar duplicidade?',
             },
           }),
           200,

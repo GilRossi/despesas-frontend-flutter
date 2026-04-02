@@ -13,10 +13,8 @@ class HttpDashboardRepository implements DashboardRepository {
   @override
   Future<DashboardSummary> fetchDashboard() async {
     final response = await _executor.run(
-      (headers) => _executor.apiClient.get(
-        '/api/v1/dashboard',
-        headers: headers,
-      ),
+      (headers) =>
+          _executor.apiClient.get('/api/v1/dashboard', headers: headers),
     );
     if (response.statusCode >= 400) {
       throw ApiException.fromResponse(response);
@@ -27,7 +25,7 @@ class HttpDashboardRepository implements DashboardRepository {
       throw const ApiException(
         statusCode: 500,
         code: 'INVALID_RESPONSE',
-        message: 'Resposta invalida do dashboard.',
+        message: 'Resposta inválida do dashboard.',
       );
     }
     return DashboardSummary.fromJson(data);

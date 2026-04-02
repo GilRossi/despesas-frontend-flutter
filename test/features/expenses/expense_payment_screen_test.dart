@@ -167,7 +167,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('O valor nao pode ser maior que o saldo restante.'),
+      find.text('O valor não pode ser maior que o saldo restante.'),
       findsOneWidget,
     );
     expect(repository.registerPaymentCalls, 0);
@@ -255,17 +255,17 @@ void main() {
     final repository = FakeExpensesRepository(
       detailError: fakeApiException(
         statusCode: 404,
-        message: 'Despesa nao encontrada',
+        message: 'Despesa não encontrada',
       ),
     );
 
     await pumpPaymentFlow(tester, repository: repository);
 
-    expect(find.text('Despesa nao encontrada'), findsOneWidget);
+    expect(find.text('Despesa não encontrada'), findsOneWidget);
     expect(find.text('Ver despesas'), findsOneWidget);
     expect(find.text('Voltar ao dashboard'), findsOneWidget);
     expect(
-      find.textContaining('Nao foi possivel abrir este pagamento'),
+      find.textContaining('Não foi possível abrir este pagamento'),
       findsOneWidget,
     );
   });
@@ -274,7 +274,7 @@ void main() {
     final repository = FakeExpensesRepository(
       detailError: fakeApiException(
         statusCode: 404,
-        message: 'Despesa nao encontrada',
+        message: 'Despesa não encontrada',
       ),
     );
 
@@ -297,7 +297,7 @@ void main() {
 
     await pumpPaymentFlow(tester, repository: repository);
 
-    expect(find.text('Despesa ja quitada'), findsOneWidget);
+    expect(find.text('Despesa já quitada'), findsOneWidget);
     expect(find.text('Ver despesas'), findsOneWidget);
     expect(find.text('Voltar ao dashboard'), findsOneWidget);
   });
@@ -329,7 +329,7 @@ void main() {
     await pumpPaymentFlow(tester, repository: repository);
 
     expect(
-      find.text('Nao foi possivel abrir o fluxo de pagamento.'),
+      find.text('Não foi possível abrir o fluxo de pagamento.'),
       findsOneWidget,
     );
     expect(find.text('Falha simulada'), findsOneWidget);
@@ -358,7 +358,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Nao foi possivel registrar o pagamento.'),
+      find.text('Não foi possível registrar o pagamento.'),
       findsOneWidget,
     );
     expect(find.text('Despesa quitada com sucesso'), findsNothing);

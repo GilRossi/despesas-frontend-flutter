@@ -144,7 +144,9 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     });
 
     try {
-      final record = await widget.fixedBillsRepository.getFixedBill(fixedBillId);
+      final record = await widget.fixedBillsRepository.getFixedBill(
+        fixedBillId,
+      );
       if (!mounted) {
         return;
       }
@@ -167,7 +169,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       }
       setState(() {
         _loadInitialRecordMessage =
-            'Nao foi possivel carregar esta conta fixa agora.';
+            'Não foi possível carregar esta conta fixa agora.';
         _isLoadingInitialRecord = false;
       });
     }
@@ -175,7 +177,9 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
 
   void _applyInitialRecord(FixedBillRecord record) {
     _descriptionController.text = record.description;
-    _amountController.text = record.amount.toStringAsFixed(2).replaceAll('.', ',');
+    _amountController.text = record.amount
+        .toStringAsFixed(2)
+        .replaceAll('.', ',');
     _firstDueDate = _normalizeDate(record.firstDueDate);
     _firstDueDateController.text = _formatDate(_firstDueDate);
     _selectedCategoryId = record.category.id;
@@ -228,7 +232,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
         content: Text(
           _isEditMode
               ? 'Conta fixa atualizada com sucesso.'
-              : 'Conta fixa registrada com sucesso.',
+              : 'Conta fixa cadastrada com sucesso.',
         ),
       ),
     );
@@ -283,9 +287,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const RouteBackButton(fallbackRoute: '/fixed-bills'),
-        title: Text(
-          _isEditMode ? 'Editar conta fixa' : 'Cadastrar conta fixa',
-        ),
+        title: Text(_isEditMode ? 'Editar conta fixa' : 'Cadastrar conta fixa'),
       ),
       body: SafeArea(
         top: false,
@@ -311,23 +313,25 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                       key: ValueKey('fixed-bill-loading-draft-card'),
                       title: 'Carregando esta conta fixa',
                       message:
-                          'Buscando a regra atual para voce editar sem perder o contexto operacional.',
+                          'Buscando a regra atual para você editar sem perder o contexto.',
                       showProgress: true,
                     ),
                   if (!_isLoadingInitialRecord &&
                       _loadInitialRecordMessage != null)
                     _StateCard(
                       key: const ValueKey('fixed-bill-load-draft-error-card'),
-                      title: 'Nao foi possivel abrir esta conta fixa',
+                      title: 'Não foi possível abrir esta conta fixa',
                       message: _loadInitialRecordMessage!,
                       actionLabel: 'Tentar novamente',
                       onAction: _loadInitialRecord,
                     ),
                   if (!_isLoadingInitialRecord &&
                       _loadInitialRecordMessage == null) ...[
-                  if (_step == _FixedBillFlowStep.collect) _buildCollectStep(),
-                  if (_step == _FixedBillFlowStep.review) _buildReviewStep(),
-                  if (_step == _FixedBillFlowStep.success) _buildSuccessStep(),
+                    if (_step == _FixedBillFlowStep.collect)
+                      _buildCollectStep(),
+                    if (_step == _FixedBillFlowStep.review) _buildReviewStep(),
+                    if (_step == _FixedBillFlowStep.success)
+                      _buildSuccessStep(),
                   ],
                 ],
               ),
@@ -346,7 +350,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
         key: ValueKey('fixed-bill-loading-catalog-card'),
         title: 'Preparando o fluxo de conta fixa',
         message:
-            'Carregando o catalogo que o backend usa como fonte de verdade.',
+            'Carregando as categorias usadas para organizar suas contas fixas.',
         showProgress: true,
       );
     }
@@ -355,7 +359,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
         !_viewModel.hasCatalogOptions) {
       return _StateCard(
         key: const ValueKey('fixed-bill-catalog-error-card'),
-        title: 'Nao foi possivel carregar o catalogo',
+        title: 'Não foi possível carregar o catálogo',
         message: _viewModel.loadCatalogErrorMessage!,
         actionLabel: 'Tentar novamente',
         onAction: _viewModel.loadCatalogOptions,
@@ -365,7 +369,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     if (!_viewModel.hasCatalogOptions) {
       return const _StateCard(
         key: ValueKey('fixed-bill-empty-catalog-card'),
-        title: 'Catalogo indisponivel',
+        title: 'Catálogo indisponível',
         message:
             'Cadastre ao menos uma categoria e subcategoria ativas antes de registrar uma conta fixa.',
       );
@@ -378,10 +382,10 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SummaryHeader(
-                  title: 'Conte o essencial da conta fixa',
-                  subtitle:
-                      'Defina ou ajuste a regra recorrente. Essa tela cuida da regra; o lancamento real do dia a dia continua acontecendo em Minhas contas fixas, no botao Lancar despesa.',
-                ),
+              title: 'Conte o essencial da conta fixa',
+              subtitle:
+                  'Defina ou ajuste a regra recorrente. Esta tela cuida da regra; o lançamento do dia a dia continua em Minhas contas fixas, no botão Lançar despesa.',
+            ),
             const SizedBox(height: 20),
             TextFormField(
               key: const ValueKey('fixed-bill-form-description-field'),
@@ -389,14 +393,14 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
               textInputAction: TextInputAction.next,
               maxLength: 140,
               decoration: InputDecoration(
-                labelText: 'Como voce quer identificar essa conta fixa?',
+                labelText: 'Como você quer identificar essa conta fixa?',
                 hintText: 'Ex.: Internet fibra, Aluguel, Plano de saude',
                 errorText: _viewModel.fieldError('description'),
               ),
               validator: (value) {
                 final trimmed = value?.trim() ?? '';
                 if (trimmed.isEmpty) {
-                  return 'Informe uma descricao para a conta fixa.';
+                  return 'Informe uma descrição para a conta fixa.';
                 }
                 if (trimmed.length > 140) {
                   return 'Use no maximo 140 caracteres.';
@@ -546,7 +550,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 labelText: 'Subcategoria',
                 helperText:
                     _selectedCategoryId != null && _subcategoryOptions.isEmpty
-                    ? 'A categoria selecionada nao possui subcategorias ativas.'
+                    ? 'A categoria selecionada não possui subcategorias ativas.'
                     : null,
                 errorText: _viewModel.fieldError('subcategoryId'),
               ),
@@ -607,7 +611,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 key: const ValueKey('fixed-bill-form-continue-button'),
                 onPressed: _viewModel.isSubmitting ? null : _continueToReview,
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text('Continuar para revisao'),
+                label: const Text('Continuar para revisão'),
               ),
             ),
           ],
@@ -630,14 +634,14 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'O backend continua como fonte de verdade. Aqui voce so revisa o cadastro base antes do POST real.',
+                'Confira os dados antes de salvar a regra recorrente.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF65727B),
                 ),
               ),
               const SizedBox(height: 16),
               _ReviewRow(
-                label: 'Descricao',
+                label: 'Descrição',
                 value: _descriptionController.text.trim(),
               ),
               _ReviewRow(
@@ -650,10 +654,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 label: 'Primeiro vencimento',
                 value: _formatDate(_firstDueDate),
               ),
-              _ReviewRow(
-                label: 'Recorrencia',
-                value: _selectedFrequency.label,
-              ),
+              _ReviewRow(label: 'Recorrência', value: _selectedFrequency.label),
               _ReviewRow(
                 label: 'Categoria',
                 value: _selectedCategory?.name ?? '-',
@@ -663,9 +664,9 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 value: _selectedSubcategoryName ?? '-',
               ),
               _ReviewRow(
-                label: 'Referencia do Espaco',
+                label: 'Referência do espaço',
                 value:
-                    _selectedReference?.name ?? 'Sem referencia por enquanto',
+                    _selectedReference?.name ?? 'Sem referência por enquanto',
               ),
             ],
           ),
@@ -751,14 +752,14 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                       ? 'Conta fixa atualizada'
                       : 'Conta fixa registrada',
                   subtitle: _isEditMode
-                      ? 'As proximas despesas lancadas a partir desta regra vao usar os dados novos. As despesas ja geradas continuam preservadas em Despesas.'
-                      : 'A regra recorrente foi salva. Quando chegar o vencimento, abra Minhas contas fixas e use Lancar despesa para criar a despesa real em Despesas.',
+                      ? 'As próximas despesas lançadas a partir desta regra vão usar os dados novos. As despesas já geradas continuam preservadas em Despesas.'
+                      : 'A regra recorrente foi salva. Quando chegar o vencimento, abra Minhas contas fixas e use Lançar despesa para criar a despesa real em Despesas.',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          _ReviewRow(label: 'Descricao', value: createdFixedBill.description),
+          _ReviewRow(label: 'Descrição', value: createdFixedBill.description),
           _ReviewRow(
             label: createdFixedBill.frequency == FixedBillFrequency.weekly
                 ? 'Valor semanal'
@@ -770,7 +771,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             value: _formatDate(createdFixedBill.firstDueDate),
           ),
           _ReviewRow(
-            label: 'Recorrencia',
+            label: 'Recorrência',
             value: createdFixedBill.frequency.label,
           ),
           _ReviewRow(label: 'Categoria', value: createdFixedBill.category.name),
@@ -779,10 +780,10 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             value: createdFixedBill.subcategory.name,
           ),
           _ReviewRow(
-            label: 'Referencia do Espaco',
+            label: 'Referência do espaço',
             value:
                 createdFixedBill.spaceReference?.name ??
-                'Sem referencia vinculada',
+                'Sem referência vinculada',
           ),
           _ReviewRow(
             label: 'Registrado em',
@@ -857,7 +858,7 @@ class _HeroCard extends StatelessWidget {
           const SummaryHeader(
             title: 'Ciclo da conta fixa',
             subtitle:
-                'Conta fixa e a regra recorrente. A despesa real entra em Despesas quando voce usa Lancar despesa em Minhas contas fixas.',
+                'Conta fixa é a sua regra recorrente. A despesa real entra em Despesas quando você usa Lançar despesa em Minhas contas fixas.',
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -869,11 +870,11 @@ class _HeroCard extends StatelessWidget {
                 isActive: step == _FixedBillFlowStep.collect,
               ),
               _StepChip(
-                label: '2. Revisao',
+                label: '2. Revisão',
                 isActive: step == _FixedBillFlowStep.review,
               ),
               _StepChip(
-                label: '3. Confirmacao',
+                label: '3. Confirmação',
                 isActive: step == _FixedBillFlowStep.success,
               ),
             ],
@@ -882,13 +883,13 @@ class _HeroCard extends StatelessWidget {
           Text(
             step == _FixedBillFlowStep.collect
                 ? isEditMode
-                    ? 'Aqui voce ajusta a regra recorrente. O que mudar passa a valer para os proximos lancamentos, sem reescrever despesas ja geradas.'
-                    : 'Aqui voce registra a regra recorrente: descricao, valor, primeiro vencimento, periodicidade semanal ou mensal, catalogo e referencia opcional.'
+                      ? 'Aqui você ajusta a regra recorrente. O que mudar passa a valer para os próximos lançamentos, sem reescrever despesas já geradas.'
+                      : 'Aqui você registra a regra recorrente: descrição, valor, primeiro vencimento, periodicidade semanal ou mensal, categorias e referência opcional.'
                 : step == _FixedBillFlowStep.review
-                ? 'Agora confira com calma. A gravacao real so acontece depois da sua confirmacao.'
+                ? 'Agora confira com calma. O salvamento só acontece depois da sua confirmação.'
                 : isEditMode
                 ? 'Tudo certo. A regra recorrente foi atualizada.'
-                : 'Tudo certo. A regra recorrente foi criada e ja pode lancar despesas reais depois.',
+                : 'Tudo certo. A regra recorrente foi criada e já pode lançar despesas reais depois.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -925,10 +926,10 @@ class _ReferenceFieldSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Referencia opcional', style: theme.textTheme.titleMedium),
+        Text('Referência opcional', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         Text(
-          'Se essa conta fixa estiver ligada a cliente, projeto ou outra referencia do seu Espaco, voce pode conectar agora. Se nao fizer sentido, siga sem isso.',
+          'Se essa conta fixa estiver ligada a cliente, projeto ou outra referência do seu espaço, você pode conectar agora. Se não fizer sentido, siga sem isso.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: const Color(0xFF65727B),
           ),
@@ -938,7 +939,7 @@ class _ReferenceFieldSection extends StatelessWidget {
           const LinearProgressIndicator(),
           const SizedBox(height: 8),
           Text(
-            'Carregando referencias do seu Espaco...',
+            'Carregando referências do seu espaço...',
             style: theme.textTheme.bodySmall?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -957,7 +958,7 @@ class _ReferenceFieldSection extends StatelessWidget {
           ),
         ] else if (references.isEmpty) ...[
           Text(
-            'Ainda nao ha referencias cadastradas no seu Espaco. Voce pode seguir sem vincular nenhuma agora.',
+            'Ainda não há referências cadastradas no seu espaço. Você pode seguir sem vincular nenhuma agora.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),
@@ -970,13 +971,13 @@ class _ReferenceFieldSection extends StatelessWidget {
             initialValue: selectedReferenceId,
             isExpanded: true,
             decoration: InputDecoration(
-              labelText: 'Referencia do Espaco',
+              labelText: 'Referência do espaço',
               errorText: fieldError,
             ),
             items: [
               const DropdownMenuItem<int?>(
                 value: null,
-                child: Text('Sem referencia por enquanto'),
+                child: Text('Sem referência por enquanto'),
               ),
               for (final reference in references)
                 DropdownMenuItem<int?>(

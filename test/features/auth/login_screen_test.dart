@@ -39,7 +39,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
     await tester.pump();
 
-    expect(find.text('Informe um e-mail valido.'), findsOneWidget);
+    expect(find.text('Informe um e-mail válido.'), findsOneWidget);
     expect(
       find.text('A senha deve ter pelo menos 6 caracteres.'),
       findsOneWidget,

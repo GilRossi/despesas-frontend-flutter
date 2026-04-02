@@ -53,7 +53,7 @@ class ReviewOperationDetailViewModel extends ChangeNotifier {
         _errorStatusCode = error.statusCode;
       }
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar o detalhe da revisao.';
+      _errorMessage = 'Não foi possível carregar o detalhe da revisão.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -85,7 +85,7 @@ class ReviewOperationDetailViewModel extends ChangeNotifier {
       _actionErrorMessage = error.message;
       return null;
     } catch (_) {
-      _actionErrorMessage = 'Nao foi possivel concluir a revisao.';
+      _actionErrorMessage = 'Não foi possível concluir a revisão.';
       return null;
     } finally {
       _isSubmitting = false;

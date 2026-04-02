@@ -115,6 +115,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       ).push<T>(MaterialPageRoute(builder: (_) => fallbackBuilder()));
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -153,12 +154,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Lista principal do household',
+                              'Lista principal do espaço',
                               style: theme.textTheme.titleLarge,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Aqui o foco e localizar, abrir e acompanhar despesas. A navegacao global continua no menu superior.',
+                              'Aqui o foco é localizar, abrir e acompanhar despesas. A navegação global continua no menu superior.',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -182,7 +183,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                 ] else if (_viewModel.errorMessage != null) ...[
                   SectionCard(
                     child: EmptyState(
-                      title: 'Nao foi possivel carregar as despesas.',
+                      title: 'Não foi possível carregar as despesas.',
                       message: _viewModel.errorMessage!,
                       actionLabel: 'Tentar novamente',
                       onAction: _viewModel.load,
@@ -193,7 +194,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                     child: EmptyState(
                       title: 'Nenhuma despesa encontrada',
                       message:
-                          'Crie a primeira despesa do household para iniciar a gestao pelo Flutter Web.',
+                          'Crie a primeira despesa do seu espaço para começar a acompanhar seus lançamentos.',
                     ),
                   ),
                 ] else ...[
@@ -209,12 +210,12 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Despesas do household atual',
+                              'Despesas do espaço atual',
                               style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Cada card destaca status, vencimento e saldo restante para reduzir leitura desnecessaria.',
+                              'Cada card destaca status, vencimento e saldo restante para facilitar a leitura.',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: const Color(0xFF65727B),
                               ),
@@ -302,7 +303,7 @@ class _ExpenseCard extends StatelessWidget {
                         if (expense.reference != null) ...[
                           const SizedBox(height: 6),
                           Text(
-                            'Referencia: ${expense.reference!.name}',
+                            'Referência: ${expense.reference!.name}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: const Color(0xFF65727B),
                             ),
@@ -338,12 +339,12 @@ class _ExpenseCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _MetaChip(
-                    label: dueDate == null ? 'Sem vencimento' : 'Vence em $dueDate',
+                    label: dueDate == null
+                        ? 'Sem vencimento'
+                        : 'Vence em $dueDate',
                   ),
-                  _MetaChip(
-                    label: financialSummary,
-                  ),
-                  if (highlighted) const _MetaChip(label: 'Recem criada'),
+                  _MetaChip(label: financialSummary),
+                  if (highlighted) const _MetaChip(label: 'Recém criada'),
                   if (expense.overdue) const _MetaChip(label: 'Atrasada'),
                 ],
               ),
@@ -412,7 +413,10 @@ class _ExpenseStatusTone {
   final Color textColor;
   final Color borderColor;
 
-  factory _ExpenseStatusTone.fromExpense(ExpenseSummary expense, ThemeData theme) {
+  factory _ExpenseStatusTone.fromExpense(
+    ExpenseSummary expense,
+    ThemeData theme,
+  ) {
     if (expense.overdue) {
       return const _ExpenseStatusTone(
         label: 'Atrasada',

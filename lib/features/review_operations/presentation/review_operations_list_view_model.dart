@@ -49,7 +49,7 @@ class ReviewOperationsListViewModel extends ChangeNotifier {
       _errorMessage = error.message;
       _errorStatusCode = error.statusCode;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar as revisoes operacionais.';
+      _errorMessage = 'Não foi possível carregar as revisões pendentes.';
     } finally {
       _isLoading = false;
       notifyListeners();

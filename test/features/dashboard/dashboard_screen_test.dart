@@ -23,17 +23,17 @@ void main() {
     final repository =
         authRepository ??
         FakeAuthRepository(
-      loginResult: fakeSession(
-        role: role,
-        onboarding: onboarding.completed
-            ? AuthOnboarding(
-                completed: true,
-                completedAt:
-                    onboarding.completedAt ?? DateTime.utc(2026, 3, 28, 12),
-              )
-            : onboarding,
-      ),
-    );
+          loginResult: fakeSession(
+            role: role,
+            onboarding: onboarding.completed
+                ? AuthOnboarding(
+                    completed: true,
+                    completedAt:
+                        onboarding.completedAt ?? DateTime.utc(2026, 3, 28, 12),
+                  )
+                : onboarding,
+          ),
+        );
     final sessionController = SessionController(
       authRepository: repository,
       sessionStore: MemorySessionStore(),
@@ -223,7 +223,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('dashboard-first-use-card')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('dashboard-first-use-card')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('dashboard-first-use-manual-button')),
       findsOneWidget,
@@ -369,7 +372,7 @@ void main() {
     expect(find.text('pay-page-10'), findsOneWidget);
   });
 
-  testWidgets('mostra loading enquanto o dashboard ainda nao chegou', (
+  testWidgets('mostra loading enquanto o dashboard ainda não chegou', (
     tester,
   ) async {
     final completer = Completer<DashboardSummary>();
@@ -403,7 +406,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Nao foi possivel carregar seu dashboard agora.'),
+      find.text('Não foi possível carregar seu painel agora.'),
       findsOneWidget,
     );
     expect(find.text('Tentar novamente'), findsOneWidget);

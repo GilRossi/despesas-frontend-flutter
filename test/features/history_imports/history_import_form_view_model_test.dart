@@ -73,7 +73,7 @@ void main() {
     await viewModel.loadCatalogOptions();
     expect(
       viewModel.loadCatalogErrorMessage,
-      'Nao foi possivel carregar o catalogo para importar seu historico agora.',
+      'Não foi possível carregar o catálogo para importar seu histórico agora.',
     );
 
     final result = await viewModel.importHistory(

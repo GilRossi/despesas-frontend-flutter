@@ -31,7 +31,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Nenhuma pendencia de review'), findsOneWidget);
+    expect(find.text('Nenhuma revisão pendente'), findsOneWidget);
   });
 
   testWidgets('shows error state when review list fails', (tester) async {
@@ -48,7 +48,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Nao foi possivel carregar as revisoes.'), findsOneWidget);
+    expect(find.text('Não foi possível carregar as revisões.'), findsOneWidget);
     expect(find.text('Falha simulada'), findsOneWidget);
   });
 

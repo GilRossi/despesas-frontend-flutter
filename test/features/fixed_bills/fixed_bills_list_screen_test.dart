@@ -87,13 +87,16 @@ void main() {
     await pumpRouter(tester, repository: repository);
 
     expect(repository.listCalls, 1);
-    expect(find.byKey(const ValueKey('fixed-bills-list-item-10')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('fixed-bills-list-item-10')),
+      findsOneWidget,
+    );
     expect(find.text('Internet fibra'), findsOneWidget);
     expect(find.text('R\$ 129,90'), findsOneWidget);
     expect(find.text('Mensal'), findsWidgets);
-    expect(find.text('Referencia Apartamento Centro'), findsOneWidget);
+    expect(find.text('Referência Apartamento Centro'), findsOneWidget);
     expect(find.text('Faxina semanal'), findsOneWidget);
-    expect(find.text('Lancar despesa'), findsNWidgets(2));
+    expect(find.text('Lançar despesa'), findsNWidgets(2));
     expect(find.text('Editar regra'), findsNWidgets(2));
     expect(find.text('Excluir regra'), findsNWidgets(2));
   });
@@ -115,7 +118,7 @@ void main() {
       find.byKey(const ValueKey('fixed-bills-list-create-button')),
       findsOneWidget,
     );
-    expect(find.text('Contas fixas do household atual'), findsOneWidget);
+    expect(find.text('Contas fixas do espaço atual'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
       findsOneWidget,
@@ -183,7 +186,9 @@ void main() {
 
     await pumpRouter(tester, repository: repository);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('fixed-bills-edit-10')));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('fixed-bills-edit-10')),
+    );
     await tester.tap(
       find.byKey(const ValueKey('fixed-bills-edit-10')),
       warnIfMissed: false,
