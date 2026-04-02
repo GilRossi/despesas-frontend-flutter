@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_frequency.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/test_doubles.dart';
 
 void main() {
+  Future<SessionController> buildSessionController() async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
+    return controller;
+  }
+
   Future<void> scrollTo(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(
       finder,
@@ -22,12 +32,14 @@ void main() {
     FakeSpaceReferencesRepository? spaceReferencesRepository,
     int? fixedBillId,
   }) async {
+    final sessionController = await buildSessionController();
     await tester.binding.setSurfaceSize(const Size(1200, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         home: FixedBillFormScreen(
           fixedBillId: fixedBillId,
+          sessionController: sessionController,
           fixedBillsRepository:
               fixedBillsRepository ?? FakeFixedBillsRepository(),
           expensesRepository: expensesRepository ?? FakeExpensesRepository(),
@@ -38,6 +50,21 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('formulario de conta fixa mantem menu e logout acessiveis', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    expect(
+      find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('authenticated-top-bar-logout-button')),
+      findsOneWidget,
+    );
+  });
 
   Future<void> fillRequiredFields(WidgetTester tester) async {
     await tester.enterText(

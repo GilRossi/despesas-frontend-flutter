@@ -34,6 +34,7 @@ void main() {
         GoRoute(
           path: '/fixed-bills/new',
           builder: (context, state) => FixedBillFormScreen(
+            sessionController: controller,
             fixedBillsRepository: repository,
             expensesRepository: FakeExpensesRepository(),
             spaceReferencesRepository: FakeSpaceReferencesRepository(),
@@ -45,6 +46,7 @@ void main() {
             fixedBillId: int.tryParse(
               state.pathParameters['fixedBillId'] ?? '',
             ),
+            sessionController: controller,
             fixedBillsRepository: repository,
             expensesRepository: FakeExpensesRepository(),
             spaceReferencesRepository: FakeSpaceReferencesRepository(),

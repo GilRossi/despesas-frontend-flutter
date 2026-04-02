@@ -169,6 +169,7 @@ GoRouter createAppRouter({
           GoRoute(
             path: '/fixed-bills/new',
             builder: (context, state) => FixedBillFormScreen(
+              sessionController: sessionController,
               fixedBillsRepository: fixedBillsRepository,
               expensesRepository: expensesRepository,
               spaceReferencesRepository: spaceReferencesRepository,
@@ -189,6 +190,7 @@ GoRouter createAppRouter({
               }
               return FixedBillFormScreen(
                 fixedBillId: fixedBillId,
+                sessionController: sessionController,
                 fixedBillsRepository: fixedBillsRepository,
                 expensesRepository: expensesRepository,
                 spaceReferencesRepository: spaceReferencesRepository,

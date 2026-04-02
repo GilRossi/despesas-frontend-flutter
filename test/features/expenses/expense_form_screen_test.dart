@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:despesas_frontend/features/expenses/presentation/expense_flow_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -473,6 +474,11 @@ void main() {
     tester,
   ) async {
     late final GoRouter router;
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(email: 'gil@example.com', password: 'Senha123!');
 
     router = GoRouter(
       initialLocation: '/expenses/new',
@@ -487,6 +493,7 @@ void main() {
         GoRoute(
           path: '/fixed-bills/new',
           builder: (context, state) => FixedBillFormScreen(
+            sessionController: sessionController,
             fixedBillsRepository: FakeFixedBillsRepository(),
             expensesRepository: FakeExpensesRepository(),
             spaceReferencesRepository: FakeSpaceReferencesRepository(),
