@@ -163,7 +163,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
-                                labelText: 'Email',
+                                labelText: 'E-mail',
                                 errorText: _viewModel.fieldError('email'),
                               ),
                               validator: (value) {

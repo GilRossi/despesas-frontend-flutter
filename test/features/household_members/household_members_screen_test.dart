@@ -139,6 +139,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('usa label pt-br consistente para e-mail', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HouseholdMembersScreen(
+          householdMembersRepository: FakeHouseholdMembersRepository(),
+          sessionController: buildSessionController(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextFormField, 'E-mail'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Email'), findsNothing);
+  });
+
   testWidgets('keeps household member cards stable on narrow widths', (
     tester,
   ) async {
