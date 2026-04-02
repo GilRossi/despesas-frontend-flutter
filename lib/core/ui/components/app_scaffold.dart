@@ -31,7 +31,10 @@ class AppScaffold extends StatelessWidget {
           ? AppBar(
               titleSpacing: 0,
               leading: leading,
-              title: SummaryHeader(title: title, subtitle: subtitle),
+              title: SizedBox(
+                width: double.infinity,
+                child: SummaryHeader(title: title, subtitle: subtitle),
+              ),
               actions: actions,
             )
           : AppBar(leading: leading, actions: actions),
