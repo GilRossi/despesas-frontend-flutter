@@ -466,7 +466,7 @@ class _SummaryMainCard extends StatelessWidget {
             runSpacing: 12,
             children: [
               _MetricTile(
-                label: 'Mes de referência',
+                label: 'Mês de referência',
                 value: _formatReferenceMonth(summary.referenceMonth),
                 highlight: false,
               ),
