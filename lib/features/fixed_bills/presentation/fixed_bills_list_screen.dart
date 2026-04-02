@@ -442,7 +442,7 @@ class _FixedBillCard extends StatelessWidget {
     return switch (record.operationalStatus) {
       FixedBillOperationalStatus.overdue => 'Atrasada desde $nextDueDate',
       FixedBillOperationalStatus.dueToday => 'Vence hoje',
-      FixedBillOperationalStatus.upcoming => 'Proximo vencimento $nextDueDate',
+      FixedBillOperationalStatus.upcoming => 'Próximo vencimento $nextDueDate',
     };
   }
 }

@@ -12,7 +12,7 @@ enum SpaceReferenceCreateResultType {
       orElse: () => throw ArgumentError.value(
         value,
         'value',
-        'Resultado de criacao desconhecido.',
+        'Resultado de criação desconhecido.',
       ),
     );
   }
