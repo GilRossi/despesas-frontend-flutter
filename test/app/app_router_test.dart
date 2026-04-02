@@ -944,7 +944,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Lista principal do espaço'), findsOneWidget);
+        expect(find.text('Suas despesas'), findsOneWidget);
         expect(find.text('Mercado'), findsOneWidget);
       },
     );
