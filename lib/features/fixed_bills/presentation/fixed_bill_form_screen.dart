@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
@@ -25,11 +26,13 @@ class FixedBillFormScreen extends StatefulWidget {
     required this.fixedBillsRepository,
     required this.expensesRepository,
     required this.spaceReferencesRepository,
+    this.fixedBillId,
   });
 
   final FixedBillsRepository fixedBillsRepository;
   final ExpensesRepository expensesRepository;
   final SpaceReferencesRepository spaceReferencesRepository;
+  final int? fixedBillId;
 
   @override
   State<FixedBillFormScreen> createState() => _FixedBillFormScreenState();
@@ -50,6 +53,10 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
   int? _selectedSpaceReferenceId;
   FixedBillFrequency _selectedFrequency = FixedBillFrequency.monthly;
   FixedBillRecord? _createdFixedBill;
+  bool _isLoadingInitialRecord = false;
+  String? _loadInitialRecordMessage;
+
+  bool get _isEditMode => widget.fixedBillId != null;
 
   CatalogOption? get _selectedCategory {
     if (_selectedCategoryId == null) {
@@ -94,6 +101,9 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     _firstDueDateController.text = _formatDate(_firstDueDate);
     _viewModel.loadCatalogOptions();
     _viewModel.loadReferences();
+    if (_isEditMode) {
+      _loadInitialRecord();
+    }
   }
 
   @override
@@ -122,6 +132,58 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     });
   }
 
+  Future<void> _loadInitialRecord() async {
+    final fixedBillId = widget.fixedBillId;
+    if (fixedBillId == null) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingInitialRecord = true;
+      _loadInitialRecordMessage = null;
+    });
+
+    try {
+      final record = await widget.fixedBillsRepository.getFixedBill(fixedBillId);
+      if (!mounted) {
+        return;
+      }
+      _applyInitialRecord(record);
+      setState(() {
+        _createdFixedBill = record;
+        _isLoadingInitialRecord = false;
+      });
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadInitialRecordMessage = error.message;
+        _isLoadingInitialRecord = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadInitialRecordMessage =
+            'Nao foi possivel carregar esta conta fixa agora.';
+        _isLoadingInitialRecord = false;
+      });
+    }
+  }
+
+  void _applyInitialRecord(FixedBillRecord record) {
+    _descriptionController.text = record.description;
+    _amountController.text = record.amount.toStringAsFixed(2).replaceAll('.', ',');
+    _firstDueDate = _normalizeDate(record.firstDueDate);
+    _firstDueDateController.text = _formatDate(_firstDueDate);
+    _selectedCategoryId = record.category.id;
+    _selectedSubcategoryId = record.subcategory.id;
+    _selectedSpaceReferenceId = record.spaceReference?.id;
+    _selectedFrequency = record.frequency;
+  }
+
   void _continueToReview() {
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || _buildInput() == null) {
@@ -141,7 +203,10 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     }
 
     FocusScope.of(context).unfocus();
-    final created = await _viewModel.createFixedBill(input);
+    final created = await _viewModel.submitFixedBill(
+      fixedBillId: widget.fixedBillId,
+      input: input,
+    );
 
     if (!mounted) {
       return;
@@ -159,11 +224,23 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       _step = _FixedBillFlowStep.success;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Conta fixa registrada com sucesso.')),
+      SnackBar(
+        content: Text(
+          _isEditMode
+              ? 'Conta fixa atualizada com sucesso.'
+              : 'Conta fixa registrada com sucesso.',
+        ),
+      ),
     );
   }
 
   void _resetDraft() {
+    if (_isEditMode && _createdFixedBill != null) {
+      setState(() {
+        _step = _FixedBillFlowStep.collect;
+      });
+      return;
+    }
     setState(() {
       _descriptionController.clear();
       _amountController.clear();
@@ -206,7 +283,9 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const RouteBackButton(fallbackRoute: '/fixed-bills'),
-        title: const Text('Cadastrar minhas contas fixas'),
+        title: Text(
+          _isEditMode ? 'Editar conta fixa' : 'Cadastrar minhas contas fixas',
+        ),
         actions: [
           TextButton.icon(
             key: const ValueKey('fixed-bill-open-list-button'),
@@ -234,11 +313,31 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _HeroCard(step: _step),
+                  _HeroCard(step: _step, isEditMode: _isEditMode),
                   const SizedBox(height: 16),
+                  if (_isLoadingInitialRecord)
+                    const _StateCard(
+                      key: ValueKey('fixed-bill-loading-draft-card'),
+                      title: 'Carregando esta conta fixa',
+                      message:
+                          'Buscando a regra atual para voce editar sem perder o contexto operacional.',
+                      showProgress: true,
+                    ),
+                  if (!_isLoadingInitialRecord &&
+                      _loadInitialRecordMessage != null)
+                    _StateCard(
+                      key: const ValueKey('fixed-bill-load-draft-error-card'),
+                      title: 'Nao foi possivel abrir esta conta fixa',
+                      message: _loadInitialRecordMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: _loadInitialRecord,
+                    ),
+                  if (!_isLoadingInitialRecord &&
+                      _loadInitialRecordMessage == null) ...[
                   if (_step == _FixedBillFlowStep.collect) _buildCollectStep(),
                   if (_step == _FixedBillFlowStep.review) _buildReviewStep(),
                   if (_step == _FixedBillFlowStep.success) _buildSuccessStep(),
+                  ],
                 ],
               ),
             );
@@ -288,10 +387,10 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SummaryHeader(
-              title: 'Conte o essencial da conta fixa',
-              subtitle:
-                  'Defina o nome, o valor previsto, quando ela comeca a vencer e se essa recorrencia acontece toda semana ou todo mes.',
-            ),
+                  title: 'Conte o essencial da conta fixa',
+                  subtitle:
+                      'Defina ou ajuste a regra recorrente. Essa tela cuida da regra; o lancamento real do dia a dia continua acontecendo em Minhas contas fixas, no botao Lancar despesa.',
+                ),
             const SizedBox(height: 20),
             TextFormField(
               key: const ValueKey('fixed-bill-form-description-field'),
@@ -654,11 +753,14 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: SummaryHeader(
-                  title: 'Conta fixa registrada',
-                  subtitle:
-                      'O cadastro base foi salvo no household atual e ficou pronto para os proximos passos do app consumirem.',
+                  title: _isEditMode
+                      ? 'Conta fixa atualizada'
+                      : 'Conta fixa registrada',
+                  subtitle: _isEditMode
+                      ? 'As proximas despesas lancadas a partir desta regra vao usar os dados novos. As despesas ja geradas continuam preservadas em Despesas.'
+                      : 'A regra recorrente foi salva. Quando chegar o vencimento, abra Minhas contas fixas e use Lancar despesa para criar a despesa real em Despesas.',
                 ),
               ),
             ],
@@ -699,13 +801,19 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             secondary: OutlinedButton(
               key: const ValueKey('fixed-bill-success-open-list-button'),
               onPressed: () => context.go('/fixed-bills'),
-              child: const Text('Ver contas fixas criadas'),
+              child: Text(
+                _isEditMode ? 'Voltar para minhas contas' : 'Ver minhas contas',
+              ),
             ),
             primary: FilledButton.icon(
               key: const ValueKey('fixed-bill-success-create-another-button'),
               onPressed: _resetDraft,
-              icon: const Icon(Icons.add),
-              label: const Text('Cadastrar outra conta fixa'),
+              icon: Icon(_isEditMode ? Icons.edit_outlined : Icons.add),
+              label: Text(
+                _isEditMode
+                    ? 'Continuar editando'
+                    : 'Cadastrar outra conta fixa',
+              ),
             ),
           ),
         ],
@@ -741,9 +849,10 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
 }
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.step});
+  const _HeroCard({required this.step, required this.isEditMode});
 
   final _FixedBillFlowStep step;
+  final bool isEditMode;
 
   @override
   Widget build(BuildContext context) {
@@ -754,9 +863,9 @@ class _HeroCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SummaryHeader(
-            title: 'Cadastrar minhas contas fixas',
+            title: 'Ciclo da conta fixa',
             subtitle:
-                'Um fluxo curto para registrar a base de uma conta recorrente sem te jogar num CRUD frio.',
+                'Conta fixa e a regra recorrente. A despesa real entra em Despesas quando voce usa Lancar despesa em Minhas contas fixas.',
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -780,10 +889,14 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             step == _FixedBillFlowStep.collect
-                ? 'Voce preenche so o essencial: descricao, valor previsto, primeiro vencimento, periodicidade semanal ou mensal, catalogo e uma referencia opcional.'
+                ? isEditMode
+                    ? 'Aqui voce ajusta a regra recorrente. O que mudar passa a valer para os proximos lancamentos, sem reescrever despesas ja geradas.'
+                    : 'Aqui voce registra a regra recorrente: descricao, valor, primeiro vencimento, periodicidade semanal ou mensal, catalogo e referencia opcional.'
                 : step == _FixedBillFlowStep.review
                 ? 'Agora confira com calma. A gravacao real so acontece depois da sua confirmacao.'
-                : 'Tudo certo. O backend confirmou o cadastro da conta fixa.',
+                : isEditMode
+                ? 'Tudo certo. A regra recorrente foi atualizada.'
+                : 'Tudo certo. A regra recorrente foi criada e ja pode lancar despesas reais depois.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),

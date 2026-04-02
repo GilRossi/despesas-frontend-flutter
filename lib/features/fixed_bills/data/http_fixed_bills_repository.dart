@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/network/authorized_request_executor.dart';
+import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/create_fixed_bill_input.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_record.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
@@ -33,6 +34,24 @@ class HttpFixedBillsRepository implements FixedBillsRepository {
   }
 
   @override
+  Future<FixedBillRecord> getFixedBill(int fixedBillId) async {
+    final response = await _requestExecutor.run(
+      (headers) => _requestExecutor.apiClient.get(
+        '/api/v1/fixed-bills/$fixedBillId',
+        headers: headers,
+      ),
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] as Map<String, dynamic>? ?? const {};
+    return FixedBillRecord.fromJson(data);
+  }
+
+  @override
   Future<FixedBillRecord> createFixedBill(CreateFixedBillInput input) async {
     final response = await _requestExecutor.run(
       (headers) => _requestExecutor.apiClient.postJson(
@@ -49,5 +68,59 @@ class HttpFixedBillsRepository implements FixedBillsRepository {
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final data = payload['data'] as Map<String, dynamic>? ?? const {};
     return FixedBillRecord.fromJson(data);
+  }
+
+  @override
+  Future<FixedBillRecord> updateFixedBill({
+    required int fixedBillId,
+    required CreateFixedBillInput input,
+  }) async {
+    final response = await _requestExecutor.run(
+      (headers) => _requestExecutor.apiClient.patchJson(
+        '/api/v1/fixed-bills/$fixedBillId',
+        headers: headers,
+        body: input.toJson(),
+      ),
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] as Map<String, dynamic>? ?? const {};
+    return FixedBillRecord.fromJson(data);
+  }
+
+  @override
+  Future<void> deleteFixedBill(int fixedBillId) async {
+    final response = await _requestExecutor.run(
+      (headers) => _requestExecutor.apiClient.delete(
+        '/api/v1/fixed-bills/$fixedBillId',
+        headers: headers,
+      ),
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+  }
+
+  @override
+  Future<ExpenseSummary> launchNextExpense(int fixedBillId) async {
+    final response = await _requestExecutor.run(
+      (headers) => _requestExecutor.apiClient.postJson(
+        '/api/v1/fixed-bills/$fixedBillId/launch-expense',
+        headers: headers,
+      ),
+    );
+
+    if (response.statusCode >= 400) {
+      throw ApiException.fromResponse(response);
+    }
+
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = payload['data'] as Map<String, dynamic>? ?? const {};
+    return ExpenseSummary.fromJson(data);
   }
 }

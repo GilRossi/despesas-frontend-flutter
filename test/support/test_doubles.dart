@@ -27,6 +27,8 @@ import 'package:despesas_frontend/features/financial_assistant/domain/financial_
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_reply.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/create_fixed_bill_input.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_frequency.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_generated_expense.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_operational_status.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_record.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_reference.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
@@ -726,17 +728,45 @@ class FakeFixedBillsRepository implements FixedBillsRepository {
     this.listError,
     this.createResult,
     this.createError,
+    this.getResult,
+    this.getError,
+    this.updateResult,
+    this.updateError,
+    this.deleteError,
+    this.launchResult,
+    this.launchError,
     this.onCreate,
+    this.onUpdate,
+    this.onDelete,
+    this.onLaunch,
   });
 
   List<FixedBillRecord>? listResult;
   Exception? listError;
   FixedBillRecord? createResult;
   Exception? createError;
+  FixedBillRecord? getResult;
+  Exception? getError;
+  FixedBillRecord? updateResult;
+  Exception? updateError;
+  Exception? deleteError;
+  ExpenseSummary? launchResult;
+  Exception? launchError;
   FutureOr<void> Function(CreateFixedBillInput input)? onCreate;
+  FutureOr<void> Function(int fixedBillId, CreateFixedBillInput input)? onUpdate;
+  FutureOr<void> Function(int fixedBillId)? onDelete;
+  FutureOr<void> Function(int fixedBillId)? onLaunch;
   int listCalls = 0;
   int createCalls = 0;
+  int getCalls = 0;
+  int updateCalls = 0;
+  int deleteCalls = 0;
+  int launchCalls = 0;
   CreateFixedBillInput? lastCreatedInput;
+  CreateFixedBillInput? lastUpdatedInput;
+  int? lastRequestedFixedBillId;
+  int? lastDeletedFixedBillId;
+  int? lastLaunchedFixedBillId;
 
   @override
   Future<List<FixedBillRecord>> listFixedBills() async {
@@ -745,6 +775,17 @@ class FakeFixedBillsRepository implements FixedBillsRepository {
       throw listError!;
     }
     return listResult ?? const [];
+  }
+
+  @override
+  Future<FixedBillRecord> getFixedBill(int fixedBillId) async {
+    getCalls += 1;
+    lastRequestedFixedBillId = fixedBillId;
+    if (getError != null) {
+      throw getError!;
+    }
+    return getResult ??
+        (listResult ?? const []).firstWhere((item) => item.id == fixedBillId);
   }
 
   @override
@@ -770,6 +811,65 @@ class FakeFixedBillsRepository implements FixedBillsRepository {
           spaceReference: input.spaceReferenceId == null
               ? null
               : fakeFixedBillReference(id: input.spaceReferenceId!),
+        );
+  }
+
+  @override
+  Future<FixedBillRecord> updateFixedBill({
+    required int fixedBillId,
+    required CreateFixedBillInput input,
+  }) async {
+    updateCalls += 1;
+    lastRequestedFixedBillId = fixedBillId;
+    lastUpdatedInput = input;
+    if (updateError != null) {
+      throw updateError!;
+    }
+    await onUpdate?.call(fixedBillId, input);
+    return updateResult ??
+        fakeFixedBillRecord(
+          id: fixedBillId,
+          description: input.description.trim(),
+          amount: input.amount,
+          firstDueDate: input.firstDueDate,
+          frequency: input.frequency,
+          category: fakeFixedBillReference(id: input.categoryId, name: 'Casa'),
+          subcategory: fakeFixedBillReference(
+            id: input.subcategoryId,
+            name: 'Internet',
+          ),
+          spaceReference: input.spaceReferenceId == null
+              ? null
+              : fakeFixedBillReference(id: input.spaceReferenceId!),
+        );
+  }
+
+  @override
+  Future<void> deleteFixedBill(int fixedBillId) async {
+    deleteCalls += 1;
+    lastDeletedFixedBillId = fixedBillId;
+    if (deleteError != null) {
+      throw deleteError!;
+    }
+    await onDelete?.call(fixedBillId);
+  }
+
+  @override
+  Future<ExpenseSummary> launchNextExpense(int fixedBillId) async {
+    launchCalls += 1;
+    lastLaunchedFixedBillId = fixedBillId;
+    if (launchError != null) {
+      throw launchError!;
+    }
+    await onLaunch?.call(fixedBillId);
+    return launchResult ??
+        fakeExpense(
+          id: 400 + fixedBillId,
+          description: 'Despesa gerada da conta fixa',
+          amount: 129.9,
+          dueDate: DateTime.utc(2026, 4, 5),
+          occurredOn: DateTime.utc(2026, 4, 5),
+          status: 'PREVISTA',
         );
   }
 }
@@ -1233,6 +1333,10 @@ FixedBillRecord fakeFixedBillRecord({
   FixedBillReference? spaceReference,
   bool active = true,
   DateTime? createdAt,
+  DateTime? nextDueDate,
+  FixedBillOperationalStatus operationalStatus =
+      FixedBillOperationalStatus.upcoming,
+  FixedBillGeneratedExpense? lastGeneratedExpense,
 }) {
   return FixedBillRecord(
     id: id,
@@ -1246,6 +1350,9 @@ FixedBillRecord fakeFixedBillRecord({
     spaceReference: spaceReference,
     active: active,
     createdAt: createdAt ?? DateTime.utc(2026, 3, 28, 12),
+    nextDueDate: nextDueDate ?? firstDueDate ?? DateTime.utc(2026, 4, 5),
+    operationalStatus: operationalStatus,
+    lastGeneratedExpense: lastGeneratedExpense,
   );
 }
 

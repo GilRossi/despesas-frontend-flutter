@@ -80,20 +80,31 @@ class FixedBillFormViewModel extends ChangeNotifier {
     }
   }
 
-  Future<FixedBillRecord?> createFixedBill(CreateFixedBillInput input) async {
+  Future<FixedBillRecord?> submitFixedBill({
+    int? fixedBillId,
+    required CreateFixedBillInput input,
+  }) async {
     _isSubmitting = true;
     _submitErrorMessage = null;
     _fieldErrors = const {};
     notifyListeners();
 
     try {
-      return await _fixedBillsRepository.createFixedBill(input);
+      if (fixedBillId == null) {
+        return await _fixedBillsRepository.createFixedBill(input);
+      }
+      return await _fixedBillsRepository.updateFixedBill(
+        fixedBillId: fixedBillId,
+        input: input,
+      );
     } on ApiException catch (error) {
       _submitErrorMessage = error.message;
       _fieldErrors = error.fieldErrors;
       return null;
     } catch (_) {
-      _submitErrorMessage = 'Nao foi possivel cadastrar a conta fixa agora.';
+      _submitErrorMessage = fixedBillId == null
+          ? 'Nao foi possivel cadastrar a conta fixa agora.'
+          : 'Nao foi possivel atualizar a conta fixa agora.';
       return null;
     } finally {
       _isSubmitting = false;

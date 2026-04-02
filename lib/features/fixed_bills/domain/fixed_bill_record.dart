@@ -1,4 +1,6 @@
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_frequency.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_generated_expense.dart';
+import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_operational_status.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_reference.dart';
 
 class FixedBillRecord {
@@ -12,7 +14,10 @@ class FixedBillRecord {
     required this.subcategory,
     required this.active,
     required this.createdAt,
+    required this.nextDueDate,
+    required this.operationalStatus,
     this.spaceReference,
+    this.lastGeneratedExpense,
   });
 
   final int id;
@@ -25,12 +30,17 @@ class FixedBillRecord {
   final FixedBillReference? spaceReference;
   final bool active;
   final DateTime createdAt;
+  final DateTime nextDueDate;
+  final FixedBillOperationalStatus operationalStatus;
+  final FixedBillGeneratedExpense? lastGeneratedExpense;
 
   factory FixedBillRecord.fromJson(Map<String, dynamic> json) {
     final categoryJson = json['category'] as Map<String, dynamic>? ?? const {};
     final subcategoryJson =
         json['subcategory'] as Map<String, dynamic>? ?? const {};
     final spaceReferenceJson = json['spaceReference'] as Map<String, dynamic>?;
+    final lastGeneratedExpenseJson =
+        json['lastGeneratedExpense'] as Map<String, dynamic>?;
 
     return FixedBillRecord(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -51,6 +61,15 @@ class FixedBillRecord {
       createdAt:
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      nextDueDate:
+          DateTime.tryParse('${json['nextDueDate']}T00:00:00') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      operationalStatus: FixedBillOperationalStatus.fromApiValue(
+        json['operationalStatus'] as String? ?? '',
+      ),
+      lastGeneratedExpense: lastGeneratedExpenseJson == null
+          ? null
+          : FixedBillGeneratedExpense.fromJson(lastGeneratedExpenseJson),
     );
   }
 }
