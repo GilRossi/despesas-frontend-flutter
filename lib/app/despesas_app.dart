@@ -16,6 +16,7 @@ import 'package:despesas_frontend/features/reports/domain/reports_repository.dar
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 class DespesasApp extends StatefulWidget {
@@ -95,6 +96,9 @@ class _DespesasAppState extends State<DespesasApp> {
       title: 'Despesas',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
+      locale: const Locale('pt', 'BR'),
+      supportedLocales: const [Locale('pt', 'BR')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: _router,
     );
   }

@@ -128,6 +128,8 @@ void main() {
       find.byKey(const ValueKey('dashboard-owner-household-summary-card')),
       findsOneWidget,
     );
+    expect(find.text('Responsáveis'), findsOneWidget);
+    expect(find.text('Convidados'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('dashboard-member-quick-actions-card')),
       findsNothing,

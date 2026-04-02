@@ -464,7 +464,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
             const SizedBox(height: 12),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: 'Periodicidade previsivel',
+                labelText: 'Periodicidade previsível',
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,8 +495,8 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _selectedFrequency == FixedBillFrequency.weekly
-                        ? 'Use semanal para contas previsiveis que se repetem toda semana.'
-                        : 'Use mensal para contas previsiveis que se repetem todo mes.',
+                        ? 'Use semanal para contas previsíveis que se repetem toda semana.'
+                        : 'Use mensal para contas previsíveis que se repetem todo mês.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF65727B),
                     ),

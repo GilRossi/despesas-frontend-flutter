@@ -87,6 +87,33 @@ void main() {
     expect(find.text('Período sem dados'), findsOneWidget);
   });
 
+  testWidgets('shows pt-br month label with ç when needed', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReportsScreen(
+          reportsRepository: FakeReportsRepository(
+            snapshot: fakeReportsSnapshot(
+              referenceMonth: DateTime(2026, 3, 1),
+              insights: fakeReportInsights(recurringExpenses: const []),
+            ),
+          ),
+          sessionController: buildSessionController(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Março 2026'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Nenhum padrão recorrente forte encontrado.'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Nenhum padrão recorrente forte encontrado.'), findsOneWidget);
+  });
+
   testWidgets('shows error state when reports request fails', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

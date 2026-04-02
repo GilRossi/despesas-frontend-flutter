@@ -420,7 +420,7 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
                       ? null
                       : _duplicateLastEntry,
                   icon: const Icon(Icons.copy_all_outlined),
-                  label: const Text('Duplicar ultimo item'),
+                  label: const Text('Duplicar último item'),
                 ),
               ],
             ),
