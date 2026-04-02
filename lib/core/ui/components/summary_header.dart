@@ -21,6 +21,8 @@ class SummaryHeader extends StatelessWidget {
         if (title != null)
           Text(
             title!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -29,6 +31,8 @@ class SummaryHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: const Color(0xFF65727B),
             ),
