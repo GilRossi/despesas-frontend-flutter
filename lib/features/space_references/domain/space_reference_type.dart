@@ -13,7 +13,7 @@ enum SpaceReferenceType {
   ),
   chacara(
     apiValue: 'CHACARA',
-    label: 'Chacara',
+    label: 'Chácara',
     group: SpaceReferenceTypeGroup.residencial,
   ),
   fazenda(
@@ -23,7 +23,7 @@ enum SpaceReferenceType {
   ),
   sitio(
     apiValue: 'SITIO',
-    label: 'Sitio',
+    label: 'Sítio',
     group: SpaceReferenceTypeGroup.residencial,
   ),
   terreno(
@@ -53,7 +53,7 @@ enum SpaceReferenceType {
   ),
   escritorio(
     apiValue: 'ESCRITORIO',
-    label: 'Escritorio',
+    label: 'Escritório',
     group: SpaceReferenceTypeGroup.comercialTrabalho,
   ),
   salaComercial(
@@ -68,22 +68,22 @@ enum SpaceReferenceType {
   ),
   galpao(
     apiValue: 'GALPAO',
-    label: 'Galpao',
+    label: 'Galpão',
     group: SpaceReferenceTypeGroup.comercialTrabalho,
   ),
   estudio(
     apiValue: 'ESTUDIO',
-    label: 'Estudio',
+    label: 'Estúdio',
     group: SpaceReferenceTypeGroup.comercialTrabalho,
   ),
   consultorio(
     apiValue: 'CONSULTORIO',
-    label: 'Consultorio',
+    label: 'Consultório',
     group: SpaceReferenceTypeGroup.comercialTrabalho,
   ),
   clinica(
     apiValue: 'CLINICA',
-    label: 'Clinica',
+    label: 'Clínica',
     group: SpaceReferenceTypeGroup.comercialTrabalho,
   ),
   oficina(
@@ -103,7 +103,7 @@ enum SpaceReferenceType {
   ),
   deposito(
     apiValue: 'DEPOSITO',
-    label: 'Deposito',
+    label: 'Depósito',
     group: SpaceReferenceTypeGroup.comercialTrabalho,
   ),
   trabalho(
@@ -153,13 +153,13 @@ enum SpaceReferenceType {
   ),
   caminhao(
     apiValue: 'CAMINHAO',
-    label: 'Caminhao',
+    label: 'Caminhão',
     group: SpaceReferenceTypeGroup.veiculos,
   ),
   van(apiValue: 'VAN', label: 'Van', group: SpaceReferenceTypeGroup.veiculos),
   utilitario(
     apiValue: 'UTILITARIO',
-    label: 'Utilitario',
+    label: 'Utilitário',
     group: SpaceReferenceTypeGroup.veiculos,
   ),
   lancha(
@@ -194,17 +194,17 @@ enum SpaceReferenceType {
   ),
   embarcacaoOutro(
     apiValue: 'EMBARCACAO_OUTRO',
-    label: 'Outra embarcacao',
+    label: 'Outra embarcação',
     group: SpaceReferenceTypeGroup.embarcacao,
   ),
   aviao(
     apiValue: 'AVIAO',
-    label: 'Aviao',
+    label: 'Avião',
     group: SpaceReferenceTypeGroup.aviacao,
   ),
   helicoptero(
     apiValue: 'HELICOPTERO',
-    label: 'Helicoptero',
+    label: 'Helicóptero',
     group: SpaceReferenceTypeGroup.aviacao,
   ),
   hangar(
@@ -214,7 +214,7 @@ enum SpaceReferenceType {
   ),
   aviacaoOutro(
     apiValue: 'AVIACAO_OUTRO',
-    label: 'Outra aviacao',
+    label: 'Outra aviação',
     group: SpaceReferenceTypeGroup.aviacao,
   );
 
@@ -234,7 +234,7 @@ enum SpaceReferenceType {
       orElse: () => throw ArgumentError.value(
         value,
         'value',
-        'Tipo de referencia desconhecido.',
+        'Tipo de referência desconhecido.',
       ),
     );
   }

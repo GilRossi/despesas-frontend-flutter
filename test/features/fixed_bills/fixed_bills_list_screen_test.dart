@@ -101,6 +101,7 @@ void main() {
     expect(find.text('R\$ 129,90'), findsOneWidget);
     expect(find.text('Mensal'), findsWidgets);
     expect(find.text('Referência Apartamento Centro'), findsOneWidget);
+    expect(find.textContaining('Próximo vencimento'), findsWidgets);
     expect(find.text('Faxina semanal'), findsOneWidget);
     expect(find.text('Lançar despesa'), findsNWidgets(2));
     expect(find.text('Editar regra'), findsNWidgets(2));

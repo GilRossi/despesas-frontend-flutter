@@ -4,9 +4,9 @@ enum SpaceReferenceTypeGroup {
     apiValue: 'COMERCIAL_TRABALHO',
     label: 'Comercial e trabalho',
   ),
-  veiculos(apiValue: 'VEICULOS', label: 'Veiculos'),
-  embarcacao(apiValue: 'EMBARCACAO', label: 'Embarcacao'),
-  aviacao(apiValue: 'AVIACAO', label: 'Aviacao');
+  veiculos(apiValue: 'VEICULOS', label: 'Veículos'),
+  embarcacao(apiValue: 'EMBARCACAO', label: 'Embarcação'),
+  aviacao(apiValue: 'AVIACAO', label: 'Aviação');
 
   const SpaceReferenceTypeGroup({required this.apiValue, required this.label});
 
@@ -19,7 +19,7 @@ enum SpaceReferenceTypeGroup {
       orElse: () => throw ArgumentError.value(
         value,
         'value',
-        'Grupo de referencia desconhecido.',
+        'Grupo de referência desconhecido.',
       ),
     );
   }
