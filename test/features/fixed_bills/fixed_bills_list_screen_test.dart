@@ -12,6 +12,8 @@ void main() {
     required FakeFixedBillsRepository repository,
     String initialLocation = '/fixed-bills',
   }) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final router = GoRouter(
       initialLocation: initialLocation,
       routes: [
@@ -28,6 +30,23 @@ void main() {
             spaceReferencesRepository: FakeSpaceReferencesRepository(),
           ),
         ),
+        GoRoute(
+          path: '/fixed-bills/:fixedBillId/edit',
+          builder: (context, state) => FixedBillFormScreen(
+            fixedBillId: int.tryParse(
+              state.pathParameters['fixedBillId'] ?? '',
+            ),
+            fixedBillsRepository: repository,
+            expensesRepository: FakeExpensesRepository(),
+            spaceReferencesRepository: FakeSpaceReferencesRepository(),
+          ),
+        ),
+        GoRoute(
+          path: '/expenses/:expenseId',
+          builder: (context, state) => Scaffold(
+            body: Text('Despesa ${state.pathParameters['expenseId']}'),
+          ),
+        ),
       ],
     );
 
@@ -42,6 +61,7 @@ void main() {
           id: 10,
           description: 'Internet fibra',
           amount: 129.9,
+          nextDueDate: DateTime.utc(2026, 4, 5),
           spaceReference: fakeFixedBillReference(
             id: 7,
             name: 'Apartamento Centro',
@@ -51,6 +71,7 @@ void main() {
           id: 11,
           description: 'Faxina semanal',
           amount: 90,
+          nextDueDate: DateTime.utc(2026, 4, 3),
         ),
       ],
     );
@@ -64,6 +85,9 @@ void main() {
     expect(find.text('Mensal'), findsWidgets);
     expect(find.text('Referencia Apartamento Centro'), findsOneWidget);
     expect(find.text('Faxina semanal'), findsOneWidget);
+    expect(find.text('Lancar despesa'), findsNWidgets(2));
+    expect(find.text('Editar regra'), findsNWidgets(2));
+    expect(find.text('Excluir regra'), findsNWidgets(2));
   });
 
   testWidgets('estado vazio orienta para cadastrar a primeira conta fixa', (
@@ -84,5 +108,55 @@ void main() {
 
     expect(find.byType(FixedBillFormScreen), findsOneWidget);
     expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+  });
+
+  testWidgets('lanca a proxima despesa operacional a partir da regra', (
+    tester,
+  ) async {
+    final repository = FakeFixedBillsRepository(
+      listResult: [
+        fakeFixedBillRecord(
+          id: 10,
+          description: 'Internet fibra',
+          lastGeneratedExpense: null,
+        ),
+      ],
+      launchResult: fakeExpense(id: 91, description: 'Internet fibra'),
+    );
+
+    await pumpRouter(tester, repository: repository);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('fixed-bills-launch-expense-10')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('fixed-bills-launch-expense-10')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.launchCalls, 1);
+    expect(repository.lastLaunchedFixedBillId, 10);
+    expect(find.text('Despesa 91'), findsOneWidget);
+  });
+
+  testWidgets('abre a edicao da regra a partir da lista', (tester) async {
+    final repository = FakeFixedBillsRepository(
+      listResult: [fakeFixedBillRecord(id: 10, description: 'Internet fibra')],
+      getResult: fakeFixedBillRecord(id: 10, description: 'Internet fibra'),
+    );
+
+    await pumpRouter(tester, repository: repository);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('fixed-bills-edit-10')));
+    await tester.tap(
+      find.byKey(const ValueKey('fixed-bills-edit-10')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.getCalls, 1);
+    expect(find.byType(FixedBillFormScreen), findsOneWidget);
+    expect(find.text('Editar conta fixa'), findsOneWidget);
   });
 }

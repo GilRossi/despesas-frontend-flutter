@@ -61,7 +61,7 @@ void main() {
   );
 
   test(
-    'createFixedBill returns the created record and clears feedback',
+    'submitFixedBill creates the record and clears feedback',
     () async {
       final repository = FakeFixedBillsRepository();
       final viewModel = FixedBillFormViewModel(
@@ -79,7 +79,7 @@ void main() {
         spaceReferenceId: 7,
       );
 
-      final result = await viewModel.createFixedBill(input);
+      final result = await viewModel.submitFixedBill(input: input);
       viewModel.clearFieldError('description');
       viewModel.clearSubmissionFeedback();
 
@@ -99,7 +99,7 @@ void main() {
     },
   );
 
-  test('createFixedBill exposes API messages and field errors', () async {
+  test('submitFixedBill exposes API messages and field errors', () async {
     final viewModel = FixedBillFormViewModel(
       fixedBillsRepository: FakeFixedBillsRepository(
         createError: const ApiException(
@@ -112,8 +112,8 @@ void main() {
       spaceReferencesRepository: FakeSpaceReferencesRepository(),
     );
 
-    final result = await viewModel.createFixedBill(
-      CreateFixedBillInput(
+    final result = await viewModel.submitFixedBill(
+      input: CreateFixedBillInput(
         description: 'Internet fibra',
         amount: 129.9,
         firstDueDate: DateTime(2026, 3, 10),

@@ -174,6 +174,27 @@ GoRouter createAppRouter({
             ),
           ),
           GoRoute(
+            path: '/fixed-bills/:fixedBillId/edit',
+            builder: (context, state) {
+              final fixedBillId = int.tryParse(
+                state.pathParameters['fixedBillId'] ?? '',
+              );
+              if (fixedBillId == null) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Nao foi possivel abrir esta conta fixa.'),
+                  ),
+                );
+              }
+              return FixedBillFormScreen(
+                fixedBillId: fixedBillId,
+                fixedBillsRepository: fixedBillsRepository,
+                expensesRepository: expensesRepository,
+                spaceReferencesRepository: spaceReferencesRepository,
+              );
+            },
+          ),
+          GoRoute(
             path: '/incomes/new',
             builder: (context, state) => IncomeFormScreen(
               incomesRepository: incomesRepository,

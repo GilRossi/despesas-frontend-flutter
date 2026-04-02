@@ -20,10 +20,14 @@ void main() {
     FakeFixedBillsRepository? fixedBillsRepository,
     FakeExpensesRepository? expensesRepository,
     FakeSpaceReferencesRepository? spaceReferencesRepository,
+    int? fixedBillId,
   }) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         home: FixedBillFormScreen(
+          fixedBillId: fixedBillId,
           fixedBillsRepository:
               fixedBillsRepository ?? FakeFixedBillsRepository(),
           expensesRepository: expensesRepository ?? FakeExpensesRepository(),
@@ -89,10 +93,6 @@ void main() {
     );
 
     await fillRequiredFields(tester);
-    await scrollTo(
-      tester,
-      find.byKey(const ValueKey('fixed-bill-form-continue-button')),
-    );
     await tester.tap(
       find.byKey(const ValueKey('fixed-bill-form-continue-button')),
       warnIfMissed: false,
@@ -193,6 +193,63 @@ void main() {
     expect(find.text('Conta fixa registrada'), findsOneWidget);
     expect(find.text('Cadastrar outra conta fixa'), findsOneWidget);
     expect(find.text('Semanal'), findsWidgets);
+  });
+
+  testWidgets('edicao carrega o rascunho existente e envia update', (
+    tester,
+  ) async {
+    final repository = FakeFixedBillsRepository(
+      getResult: fakeFixedBillRecord(
+        id: 10,
+        description: 'Internet fibra',
+        amount: 129.9,
+      ),
+      updateResult: fakeFixedBillRecord(
+        id: 10,
+        description: 'Internet fibra premium',
+        amount: 159.9,
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      fixedBillsRepository: repository,
+      fixedBillId: 10,
+    );
+
+    expect(repository.getCalls, 1);
+    expect(find.text('Editar conta fixa'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('fixed-bill-form-description-field')),
+      'Internet fibra premium',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('fixed-bill-form-amount-field')),
+      '159,90',
+    );
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('fixed-bill-form-continue-button')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('fixed-bill-form-continue-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('fixed-bill-review-confirm-button')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('fixed-bill-review-confirm-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls, 1);
+    expect(repository.lastUpdatedInput?.description, 'Internet fibra premium');
+    expect(find.text('Conta fixa atualizada'), findsOneWidget);
   });
 
   testWidgets('fieldErrors do backend voltam para a etapa de coleta', (

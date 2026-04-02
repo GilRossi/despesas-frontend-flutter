@@ -33,6 +33,13 @@ void main() {
               'spaceReference': {'id': 7, 'name': 'Projeto Horizonte'},
               'active': true,
               'createdAt': '2026-03-28T12:00:00Z',
+              'nextDueDate': '2026-04-05',
+              'operationalStatus': 'UPCOMING',
+              'lastGeneratedExpense': {
+                'expenseId': 31,
+                'dueDate': '2026-03-05',
+                'createdAt': '2026-03-05T12:00:00Z',
+              },
             },
             {
               'id': 11,
@@ -44,6 +51,8 @@ void main() {
               'subcategory': {'id': 21, 'name': 'Condominio'},
               'active': true,
               'createdAt': '2026-03-29T12:00:00Z',
+              'nextDueDate': '2026-04-03',
+              'operationalStatus': 'DUE_TODAY',
             },
           ],
         }),
@@ -83,6 +92,7 @@ void main() {
     expect(fixedBills, hasLength(2));
     expect(fixedBills.first.description, 'Internet fibra');
     expect(fixedBills.first.spaceReference?.name, 'Projeto Horizonte');
+    expect(fixedBills.first.lastGeneratedExpense?.expenseId, 31);
     expect(fixedBills.last.frequency, FixedBillFrequency.weekly);
   });
 
@@ -105,6 +115,8 @@ void main() {
               'spaceReference': {'id': 7, 'name': 'Projeto Horizonte'},
               'active': true,
               'createdAt': '2026-03-28T12:00:00Z',
+              'nextDueDate': '2026-04-05',
+              'operationalStatus': 'UPCOMING',
             },
           }),
           201,
@@ -162,6 +174,9 @@ void main() {
       expect(fixedBill.description, 'Internet fibra');
       expect(fixedBill.frequency, FixedBillFrequency.monthly);
       expect(fixedBill.spaceReference?.name, 'Projeto Horizonte');
+      expect(fixedBill.nextDueDate.year, 2026);
+      expect(fixedBill.nextDueDate.month, 4);
+      expect(fixedBill.nextDueDate.day, 5);
     },
   );
 
@@ -181,6 +196,8 @@ void main() {
             'subcategory': {'id': 21, 'name': 'Condominio'},
             'active': true,
             'createdAt': '2026-03-30T12:00:00Z',
+            'nextDueDate': '2026-04-03',
+            'operationalStatus': 'UPCOMING',
           },
         }),
         201,
@@ -222,6 +239,227 @@ void main() {
 
     expect(jsonDecode(capturedRequest.body)['frequency'], 'WEEKLY');
     expect(fixedBill.frequency, FixedBillFrequency.weekly);
+  });
+
+  test('getFixedBill carrega a regra operacional completa', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'id': 10,
+            'description': 'Internet fibra',
+            'amount': 129.9,
+            'firstDueDate': '2026-04-05',
+            'frequency': 'MONTHLY',
+            'category': {'id': 1, 'name': 'Casa'},
+            'subcategory': {'id': 11, 'name': 'Internet'},
+            'active': true,
+            'createdAt': '2026-03-28T12:00:00Z',
+            'nextDueDate': '2026-04-05',
+            'operationalStatus': 'UPCOMING',
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final repository = HttpFixedBillsRepository(
+      AuthorizedRequestExecutor(
+        apiClient: DespesasApiClient(
+          baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+          httpClient: client,
+        ),
+        sessionManager: sessionController,
+      ),
+    );
+
+    final fixedBill = await repository.getFixedBill(10);
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/fixed-bills/10',
+    );
+    expect(fixedBill.id, 10);
+    expect(fixedBill.description, 'Internet fibra');
+  });
+
+  test('updateFixedBill envia patch autenticado', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'id': 10,
+            'description': 'Internet fibra atualizada',
+            'amount': 159.9,
+            'firstDueDate': '2026-04-05',
+            'frequency': 'MONTHLY',
+            'category': {'id': 1, 'name': 'Casa'},
+            'subcategory': {'id': 11, 'name': 'Internet'},
+            'active': true,
+            'createdAt': '2026-03-28T12:00:00Z',
+            'nextDueDate': '2026-04-05',
+            'operationalStatus': 'UPCOMING',
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final repository = HttpFixedBillsRepository(
+      AuthorizedRequestExecutor(
+        apiClient: DespesasApiClient(
+          baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+          httpClient: client,
+        ),
+        sessionManager: sessionController,
+      ),
+    );
+
+    final fixedBill = await repository.updateFixedBill(
+      fixedBillId: 10,
+      input: CreateFixedBillInput(
+        description: 'Internet fibra atualizada',
+        amount: 159.9,
+        firstDueDate: DateTime.utc(2026, 4, 5),
+        frequency: FixedBillFrequency.monthly,
+        categoryId: 1,
+        subcategoryId: 11,
+      ),
+    );
+
+    expect(capturedRequest.method, 'PATCH');
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/fixed-bills/10',
+    );
+    expect(fixedBill.description, 'Internet fibra atualizada');
+  });
+
+  test('deleteFixedBill envia delete autenticado', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response('', 204);
+    });
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final repository = HttpFixedBillsRepository(
+      AuthorizedRequestExecutor(
+        apiClient: DespesasApiClient(
+          baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+          httpClient: client,
+        ),
+        sessionManager: sessionController,
+      ),
+    );
+
+    await repository.deleteFixedBill(10);
+
+    expect(capturedRequest.method, 'DELETE');
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/fixed-bills/10',
+    );
+  });
+
+  test('launchNextExpense cria a proxima despesa operacional', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'id': 91,
+            'description': 'Internet fibra',
+            'amount': 129.9,
+            'dueDate': '2026-04-05',
+            'occurredOn': '2026-04-05',
+            'category': {'id': 1, 'name': 'Casa'},
+            'subcategory': {'id': 11, 'name': 'Internet'},
+            'reference': null,
+            'notes': null,
+            'status': 'PREVISTA',
+            'paidAmount': 0,
+            'remainingAmount': 129.9,
+            'paymentsCount': 0,
+            'overdue': false,
+            'createdAt': '2026-04-01T18:00:00Z',
+            'updatedAt': '2026-04-01T18:00:00Z',
+          },
+        }),
+        201,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        ),
+      ),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
+    final repository = HttpFixedBillsRepository(
+      AuthorizedRequestExecutor(
+        apiClient: DespesasApiClient(
+          baseUrl: Uri.parse('https://app.rossicompany.com.br/'),
+          httpClient: client,
+        ),
+        sessionManager: sessionController,
+      ),
+    );
+
+    final expense = await repository.launchNextExpense(10);
+
+    expect(capturedRequest.method, 'POST');
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/fixed-bills/10/launch-expense',
+    );
+    expect(expense.id, 91);
+    expect(expense.description, 'Internet fibra');
   });
 
   test('createFixedBill propaga fieldErrors do backend', () async {

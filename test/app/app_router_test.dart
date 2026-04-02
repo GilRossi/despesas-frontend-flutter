@@ -259,6 +259,35 @@ void main() {
       expect(find.text('Internet fibra'), findsOneWidget);
     });
 
+    testWidgets('authenticated users can open /fixed-bills/:id/edit', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(
+        tester,
+        login: const Text('login'),
+        fixedBillsRepository: FakeFixedBillsRepository(
+          getResult: fakeFixedBillRecord(id: 10, description: 'Internet fibra'),
+        ),
+      );
+      router.go('/fixed-bills/10/edit');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FixedBillFormScreen), findsOneWidget);
+      expect(find.text('Editar conta fixa'), findsOneWidget);
+    });
+
     testWidgets('authenticated users can open /history/import', (tester) async {
       authRepository.loginResult = fakeSession(
         onboarding: AuthOnboarding(
