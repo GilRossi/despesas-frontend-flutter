@@ -109,6 +109,24 @@ void main() {
     expect(find.text('Mensal'), findsOneWidget);
   });
 
+  testWidgets('fluxo inicial oferece voltar para minhas contas, nao para o assistente', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await scrollTo(
+      tester,
+      find.byKey(const ValueKey('fixed-bill-form-open-list-button')),
+    );
+
+    expect(
+      find.byKey(const ValueKey('fixed-bill-form-open-list-button')),
+      findsOneWidget,
+    );
+    expect(find.text('Ver minhas contas'), findsOneWidget);
+    expect(find.text('Voltar ao assistente'), findsNothing);
+  });
+
   testWidgets('permite escolher recorrencia semanal no fluxo simples', (
     tester,
   ) async {

@@ -1,3 +1,4 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bills_list_screen.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,11 @@ void main() {
     required FakeFixedBillsRepository repository,
     String initialLocation = '/fixed-bills',
   }) async {
+    final controller = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await controller.login(email: 'gil@example.com', password: 'Senha123!');
     await tester.binding.setSurfaceSize(const Size(1200, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final router = GoRouter(
@@ -19,8 +25,10 @@ void main() {
       routes: [
         GoRoute(
           path: '/fixed-bills',
-          builder: (context, state) =>
-              FixedBillsListScreen(fixedBillsRepository: repository),
+          builder: (context, state) => FixedBillsListScreen(
+            fixedBillsRepository: repository,
+            sessionController: controller,
+          ),
         ),
         GoRoute(
           path: '/fixed-bills/new',
@@ -90,6 +98,30 @@ void main() {
     expect(find.text('Excluir regra'), findsNWidgets(2));
   });
 
+  testWidgets('mantem o cabecalho local alinhado ao padrao de Despesas', (
+    tester,
+  ) async {
+    final repository = FakeFixedBillsRepository(
+      listResult: [fakeFixedBillRecord(id: 10, description: 'Internet fibra')],
+    );
+
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpRouter(tester, repository: repository);
+
+    expect(find.text('Contas fixas'), findsOneWidget);
+    expect(find.text('Minhas contas fixas'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('fixed-bills-list-create-button')),
+      findsOneWidget,
+    );
+    expect(find.text('Contas fixas do household atual'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('estado vazio orienta para cadastrar a primeira conta fixa', (
     tester,
   ) async {
@@ -103,11 +135,14 @@ void main() {
     );
     expect(find.text('Nenhuma conta fixa cadastrada ainda'), findsOneWidget);
 
-    await tester.tap(find.text('Cadastrar conta fixa'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Cadastrar conta fixa').last,
+      warnIfMissed: false,
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(FixedBillFormScreen), findsOneWidget);
-    expect(find.text('Cadastrar minhas contas fixas'), findsWidgets);
+    expect(find.text('Cadastrar conta fixa'), findsWidgets);
   });
 
   testWidgets('lanca a proxima despesa operacional a partir da regra', (

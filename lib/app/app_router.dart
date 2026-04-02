@@ -163,6 +163,7 @@ GoRouter createAppRouter({
             path: '/fixed-bills',
             builder: (context, state) => FixedBillsListScreen(
               fixedBillsRepository: fixedBillsRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(
