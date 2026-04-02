@@ -238,7 +238,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                   ] else if (_viewModel.loadErrorMessage != null) ...[
                     _StateCard(
                       title: _viewModel.isForbidden
-                          ? 'Acesso restrito ao owner'
+                          ? 'Acesso restrito aos responsáveis'
                           : _viewModel.isUnauthorized
                           ? 'Sessão expirada'
                           : 'Não foi possível carregar os membros.',
@@ -369,9 +369,9 @@ class _StateCard extends StatelessWidget {
 String _formatRoleLabel(String role) {
   switch (role) {
     case 'OWNER':
-      return 'Owner';
+      return 'Responsável';
     case 'MEMBER':
-      return 'Membro';
+      return 'Convidado';
     default:
       return role;
   }

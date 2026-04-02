@@ -51,8 +51,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Gil Rossi'), findsOneWidget);
     expect(find.text('Bia Rossi'), findsOneWidget);
-    expect(find.text('Owner'), findsOneWidget);
-    expect(find.text('Membro'), findsOneWidget);
+    expect(find.text('Responsável'), findsOneWidget);
+    expect(find.text('Convidado'), findsOneWidget);
   });
 
   testWidgets('submits a new member from the minimal form', (tester) async {
@@ -108,7 +108,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Acesso restrito ao owner'), findsOneWidget);
+    expect(find.text('Acesso restrito aos responsáveis'), findsOneWidget);
     expect(find.text('Apenas owner pode acessar.'), findsOneWidget);
   });
 
@@ -179,7 +179,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('email.longo@example.com'), findsOneWidget);
-    expect(find.text('Owner'), findsOneWidget);
+    expect(find.text('Responsável'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

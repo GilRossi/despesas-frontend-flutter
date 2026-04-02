@@ -346,7 +346,7 @@ class _SecondaryReportsColumn extends StatelessWidget {
           title: 'Recorrências detectadas',
           subtitle: 'Padrões recorrentes encontrados no espaço.',
           items: snapshot.insights.recurringExpenses,
-          emptyMessage: 'Nenhum padrao recorrente forte encontrado.',
+          emptyMessage: 'Nenhum padrão recorrente forte encontrado.',
           itemBuilder: (recurring) =>
               _RecurringExpenseTile(recurring: recurring),
         ),
@@ -930,7 +930,7 @@ String _formatMonthLabel(DateTime month) {
   const labels = [
     'Janeiro',
     'Fevereiro',
-    'Marco',
+    'Março',
     'Abril',
     'Maio',
     'Junho',

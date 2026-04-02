@@ -819,11 +819,11 @@ class _HouseholdSummaryCard extends StatelessWidget {
                   value: householdSummary!.membersCount.toString(),
                 ),
                 _MetricTile(
-                  label: 'Owners',
+                  label: 'Responsáveis',
                   value: householdSummary!.ownersCount.toString(),
                 ),
                 _MetricTile(
-                  label: 'Members',
+                  label: 'Convidados',
                   value: householdSummary!.membersOnlyCount.toString(),
                 ),
                 _MetricTile(
