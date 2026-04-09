@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-void popOrGo(
-  BuildContext context,
-  String fallbackRoute, {
-  Object? result,
-}) {
+void popOrGo(BuildContext context, String fallbackRoute, {Object? result}) {
   try {
-    if (context.canPop()) {
-      context.pop(result);
-      return;
-    }
+    context.go(fallbackRoute);
+    return;
   } catch (_) {}
 
   final navigator = Navigator.maybeOf(context);

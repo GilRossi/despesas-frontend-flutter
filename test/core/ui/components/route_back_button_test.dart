@@ -4,9 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
-  testWidgets('pops the current navigator route when possible', (
-    tester,
-  ) async {
+  testWidgets('pops the current navigator route when possible', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
@@ -55,9 +53,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/fallback',
-          builder: (context, state) => const Scaffold(
-            body: Text('fallback-page'),
-          ),
+          builder: (context, state) =>
+              const Scaffold(body: Text('fallback-page')),
         ),
         GoRoute(
           path: '/detail',

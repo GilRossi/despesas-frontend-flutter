@@ -600,6 +600,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                       key: ValueKey(
                         'expense-form-space-reference-field-${_selectedSpaceReferenceId ?? 'none'}',
                       ),
+                      isExpanded: true,
                       initialValue: _selectedSpaceReferenceId,
                       decoration: InputDecoration(
                         labelText: 'Referência do espaço',
@@ -644,6 +645,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int>(
                       key: ValueKey('category-$_selectedCategoryId'),
+                      isExpanded: true,
                       initialValue: _selectedCategoryId,
                       decoration: InputDecoration(
                         labelText: 'Categoria',
@@ -653,7 +655,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         for (final option in _viewModel.catalogOptions)
                           DropdownMenuItem(
                             value: option.id,
-                            child: Text(option.name),
+                            child: Text(
+                              option.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                       ],
                       onChanged: (value) {
@@ -684,6 +689,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                       key: ValueKey(
                         'subcategory-$hasSubcategories-$_selectedSubcategoryId',
                       ),
+                      isExpanded: true,
                       initialValue: hasSubcategories
                           ? _selectedSubcategoryId
                           : null,
@@ -698,7 +704,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                         for (final option in _subcategoryOptions)
                           DropdownMenuItem(
                             value: option.id,
-                            child: Text(option.name),
+                            child: Text(
+                              option.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                       ],
                       onChanged: !hasSubcategories
@@ -805,6 +814,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                                   key: const ValueKey(
                                     'expense-form-initial-payment-method-field',
                                   ),
+                                  isExpanded: true,
                                   initialValue: _initialPaymentMethod,
                                   decoration: const InputDecoration(
                                     labelText: 'Método do pagamento',
