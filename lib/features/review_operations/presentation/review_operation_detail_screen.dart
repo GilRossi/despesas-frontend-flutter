@@ -1,7 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_item.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_view_model.dart';
@@ -96,237 +95,225 @@ class _ReviewOperationDetailScreenState
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(
-            leading: const RouteBackButton(fallbackRoute: '/review-operations'),
-            title: const Text('Detalhe da revisão'),
-            actions: buildAuthenticatedTopBarActions(
-              context: context,
-              sessionController: widget.sessionController,
-              currentLocation: '/review-operations/${widget.ingestionId}',
-              canReviewOperations:
-                  widget.sessionController.currentUser?.role == 'OWNER',
-            ),
-          ),
-          body: SafeArea(
-            top: false,
-            child: Builder(
-              builder: (context) {
-                if (_viewModel.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/review-operations/${widget.ingestionId}',
+          title: 'Detalhe da revisão',
+          fallbackRoute: '/',
+          body: Builder(
+            builder: (context) {
+              if (_viewModel.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (_viewModel.isNotFound) {
-                  return _StateCard(
-                    title: 'Revisão não encontrada',
-                    message:
-                        'Esse item pode ter sido resolvido ou não pertence ao espaço atual.',
-                    actionLabel: 'Voltar às revisoes',
-                    onAction: () => context.go('/review-operations'),
-                  );
-                }
-
-                if (_viewModel.hasError) {
-                  return _StateCard(
-                    title: _viewModel.isForbidden
-                        ? 'Acesso negado'
-                        : _viewModel.isUnauthorized
-                        ? 'Sessão expirada'
-                        : 'Não foi possível carregar a revisão.',
-                    message: _viewModel.errorMessage!,
-                    actionLabel: 'Tentar novamente',
-                    onAction: _viewModel.load,
-                  );
-                }
-
-                final detail = _viewModel.detail;
-                if (detail == null) {
-                  return const SizedBox.shrink();
-                }
-
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                detail.subject,
-                                style: theme.textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                detail.summary,
-                                style: theme.textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  _MetaChip(label: detail.sourceAccount),
-                                  _MetaChip(
-                                    label: _formatEnumLabel(
-                                      detail.classification,
-                                    ),
-                                  ),
-                                  _MetaChip(
-                                    label:
-                                        'Confiança ${detail.confidence.toStringAsFixed(2)}',
-                                  ),
-                                  _MetaChip(
-                                    label: _formatEnumLabel(
-                                      detail.finalDecision,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Dados da importação',
-                                style: theme.textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              _DetailField(
-                                label: 'Remetente',
-                                value: detail.sender,
-                              ),
-                              _DetailField(
-                                label: 'Recebido em',
-                                value: _formatDateTime(detail.receivedAt),
-                              ),
-                              _DetailField(
-                                label: 'Favorecido',
-                                value: detail.merchantOrPayee,
-                              ),
-                              _DetailField(
-                                label: 'Valor total',
-                                value: formatCurrency(detail.totalAmount),
-                              ),
-                              _DetailField(
-                                label: 'Moeda',
-                                value: detail.currency,
-                              ),
-                              _DetailField(
-                                label: 'Categoria sugerida',
-                                value:
-                                    '${detail.suggestedCategoryName} · ${detail.suggestedSubcategoryName}',
-                              ),
-                              if (detail.dueDate != null)
-                                _DetailField(
-                                  label: 'Vencimento',
-                                  value: _formatDate(detail.dueDate!),
-                                ),
-                              if (detail.occurredOn != null)
-                                _DetailField(
-                                  label: 'Ocorrido em',
-                                  value: _formatDate(detail.occurredOn!),
-                                ),
-                              _DetailField(
-                                label: 'Decisão desejada',
-                                value: _formatEnumLabel(detail.desiredDecision),
-                              ),
-                              _DetailField(
-                                label: 'Motivo da decisão',
-                                value: _formatEnumLabel(detail.decisionReason),
-                              ),
-                              _DetailField(
-                                label: 'Referência bruta',
-                                value: detail.rawReference,
-                              ),
-                              _DetailField(
-                                label: 'Mensagem externa',
-                                value: detail.externalMessageId,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Itens extraídos',
-                                style: theme.textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              if (!detail.hasItems)
-                                Text(
-                                  'Nenhum item estruturado foi extraído para esta importação.',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: const Color(0xFF65727B),
-                                  ),
-                                )
-                              else
-                                for (final item in detail.items) ...[
-                                  _ReviewItemTile(item: item),
-                                  if (item != detail.items.last) ...[
-                                    const SizedBox(height: 12),
-                                    const Divider(height: 1),
-                                    const SizedBox(height: 12),
-                                  ],
-                                ],
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Wrap(
-                            alignment: WrapAlignment.end,
-                            runSpacing: 12,
-                            spacing: 12,
-                            children: [
-                              OutlinedButton(
-                                onPressed: _viewModel.isSubmitting
-                                    ? null
-                                    : _reject,
-                                child: const Text('Rejeitar'),
-                              ),
-                              FilledButton(
-                                onPressed: _viewModel.isSubmitting
-                                    ? null
-                                    : _approve,
-                                child: _viewModel.isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Aprovar'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              if (_viewModel.isNotFound) {
+                return _StateCard(
+                  title: 'Revisão não encontrada',
+                  message:
+                      'Esse item pode ter sido resolvido ou não pertence ao espaço atual.',
+                  actionLabel: 'Voltar às revisoes',
+                  onAction: () => context.go('/review-operations'),
                 );
-              },
-            ),
+              }
+
+              if (_viewModel.hasError) {
+                return _StateCard(
+                  title: _viewModel.isForbidden
+                      ? 'Acesso negado'
+                      : _viewModel.isUnauthorized
+                      ? 'Sessão expirada'
+                      : 'Não foi possível carregar a revisão.',
+                  message: _viewModel.errorMessage!,
+                  actionLabel: 'Tentar novamente',
+                  onAction: _viewModel.load,
+                );
+              }
+
+              final detail = _viewModel.detail;
+              if (detail == null) {
+                return const SizedBox.shrink();
+              }
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              detail.subject,
+                              style: theme.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              detail.summary,
+                              style: theme.textTheme.bodyLarge,
+                            ),
+                            const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _MetaChip(label: detail.sourceAccount),
+                                _MetaChip(
+                                  label: _formatEnumLabel(
+                                    detail.classification,
+                                  ),
+                                ),
+                                _MetaChip(
+                                  label:
+                                      'Confiança ${detail.confidence.toStringAsFixed(2)}',
+                                ),
+                                _MetaChip(
+                                  label: _formatEnumLabel(detail.finalDecision),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Dados da importação',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 16),
+                            _DetailField(
+                              label: 'Remetente',
+                              value: detail.sender,
+                            ),
+                            _DetailField(
+                              label: 'Recebido em',
+                              value: _formatDateTime(detail.receivedAt),
+                            ),
+                            _DetailField(
+                              label: 'Favorecido',
+                              value: detail.merchantOrPayee,
+                            ),
+                            _DetailField(
+                              label: 'Valor total',
+                              value: formatCurrency(detail.totalAmount),
+                            ),
+                            _DetailField(
+                              label: 'Moeda',
+                              value: detail.currency,
+                            ),
+                            _DetailField(
+                              label: 'Categoria sugerida',
+                              value:
+                                  '${detail.suggestedCategoryName} · ${detail.suggestedSubcategoryName}',
+                            ),
+                            if (detail.dueDate != null)
+                              _DetailField(
+                                label: 'Vencimento',
+                                value: _formatDate(detail.dueDate!),
+                              ),
+                            if (detail.occurredOn != null)
+                              _DetailField(
+                                label: 'Ocorrido em',
+                                value: _formatDate(detail.occurredOn!),
+                              ),
+                            _DetailField(
+                              label: 'Decisão desejada',
+                              value: _formatEnumLabel(detail.desiredDecision),
+                            ),
+                            _DetailField(
+                              label: 'Motivo da decisão',
+                              value: _formatEnumLabel(detail.decisionReason),
+                            ),
+                            _DetailField(
+                              label: 'Referência bruta',
+                              value: detail.rawReference,
+                            ),
+                            _DetailField(
+                              label: 'Mensagem externa',
+                              value: detail.externalMessageId,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Itens extraídos',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 16),
+                            if (!detail.hasItems)
+                              Text(
+                                'Nenhum item estruturado foi extraído para esta importação.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: const Color(0xFF65727B),
+                                ),
+                              )
+                            else
+                              for (final item in detail.items) ...[
+                                _ReviewItemTile(item: item),
+                                if (item != detail.items.last) ...[
+                                  const SizedBox(height: 12),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 12),
+                                ],
+                              ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Wrap(
+                          alignment: WrapAlignment.end,
+                          runSpacing: 12,
+                          spacing: 12,
+                          children: [
+                            OutlinedButton(
+                              onPressed: _viewModel.isSubmitting
+                                  ? null
+                                  : _reject,
+                              child: const Text('Rejeitar'),
+                            ),
+                            FilledButton(
+                              onPressed: _viewModel.isSubmitting
+                                  ? null
+                                  : _approve,
+                              child: _viewModel.isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Aprovar'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },

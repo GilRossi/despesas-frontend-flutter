@@ -1,4 +1,6 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
@@ -19,12 +21,14 @@ class ExpenseFormScreen extends StatefulWidget {
   const ExpenseFormScreen({
     super.key,
     required this.expensesRepository,
+    this.sessionController,
     this.spaceReferencesRepository,
     this.initialExpense,
     this.standalone = false,
   });
 
   final ExpensesRepository expensesRepository;
+  final SessionController? sessionController;
   final SpaceReferencesRepository? spaceReferencesRepository;
   final ExpenseDetail? initialExpense;
   final bool standalone;
@@ -354,611 +358,577 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         : widget.standalone
         ? 'Lançar despesa'
         : 'Nova despesa';
+    final body = ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        if (successState != null) {
+          return _ExpenseFormSuccessState(
+            successState: successState,
+            onCreateAnother: _startAnotherExpense,
+            onOpenExpenses: () =>
+                context.go('/expenses?highlight=${successState.expenseId}'),
+          );
+        }
 
-    return RoutePopScope<Object?>(
-      fallbackRoute: '/expenses',
-      child: Scaffold(
-        appBar: AppBar(
-          leading: const RouteBackButton(fallbackRoute: '/expenses'),
-          title: Text(title),
-        ),
-        body: SafeArea(
-          top: false,
-          child: ListenableBuilder(
-            listenable: _viewModel,
-            builder: (context, _) {
-              if (successState != null) {
-                return _ExpenseFormSuccessState(
-                  successState: successState,
-                  onCreateAnother: _startAnotherExpense,
-                  onOpenExpenses: () => context.go(
-                    '/expenses?highlight=${successState.expenseId}',
-                  ),
-                );
-              }
+        if (_viewModel.isLoadingCatalog && !_viewModel.hasCatalogOptions) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              if (_viewModel.isLoadingCatalog &&
-                  !_viewModel.hasCatalogOptions) {
-                return const Center(child: CircularProgressIndicator());
-              }
+        if (_viewModel.loadErrorMessage != null &&
+            !_viewModel.hasCatalogOptions) {
+          return _FormStateCard(
+            title: 'Não foi possível carregar o catálogo.',
+            message: _viewModel.loadErrorMessage!,
+            actionLabel: 'Tentar novamente',
+            onAction: _loadDependencies,
+          );
+        }
 
-              if (_viewModel.loadErrorMessage != null &&
-                  !_viewModel.hasCatalogOptions) {
-                return _FormStateCard(
-                  title: 'Não foi possível carregar o catálogo.',
-                  message: _viewModel.loadErrorMessage!,
-                  actionLabel: 'Tentar novamente',
-                  onAction: _loadDependencies,
-                );
-              }
+        if (!_viewModel.hasCatalogOptions) {
+          return const _FormStateCard(
+            title: 'Catálogo indisponível',
+            message:
+                'Cadastre ao menos uma categoria e subcategoria ativas antes de criar despesas.',
+          );
+        }
 
-              if (!_viewModel.hasCatalogOptions) {
-                return const _FormStateCard(
-                  title: 'Catálogo indisponível',
-                  message:
-                      'Cadastre ao menos uma categoria e subcategoria ativas antes de criar despesas.',
-                );
-              }
+        final category = _selectedCategory;
+        final hasSubcategories = _subcategoryOptions.isNotEmpty;
 
-              final category = _selectedCategory;
-              final hasSubcategories = _subcategoryOptions.isNotEmpty;
+        return ResponsiveScrollBody(
+          maxWidth: 820,
+          padding: const EdgeInsets.all(20),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isEditing
+                          ? 'Ajuste o lançamento e mantenha o dado coerente com o que realmente aconteceu.'
+                          : 'Escolha o tipo de lançamento e registre a despesa do jeito certo, sem forçar vencimento quando ele não existe.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: const Color(0xFF58616A),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _FlowGuidanceCard(
+                      onOpenFixedBills: () => context.go('/fixed-bills/new'),
+                      onOpenHistoryImport: () => context.go('/history/import'),
+                      onOpenReferences: () => context.go('/space/references'),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Como essa despesa entra no sistema?',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth < 560) {
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('Avulsa / pontual'),
+                                avatar: const Icon(Icons.flash_on_outlined),
+                                selected:
+                                    _launchMode == _ExpenseLaunchMode.oneOff,
+                                onSelected: (_) =>
+                                    _setLaunchMode(_ExpenseLaunchMode.oneOff),
+                              ),
+                              ChoiceChip(
+                                label: const Text('Com vencimento'),
+                                avatar: const Icon(Icons.event_outlined),
+                                selected:
+                                    _launchMode == _ExpenseLaunchMode.dueDated,
+                                onSelected: (_) =>
+                                    _setLaunchMode(_ExpenseLaunchMode.dueDated),
+                              ),
+                            ],
+                          );
+                        }
 
-              return ResponsiveScrollBody(
-                maxWidth: 820,
-                padding: const EdgeInsets.all(20),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        return SegmentedButton<_ExpenseLaunchMode>(
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment(
+                              value: _ExpenseLaunchMode.oneOff,
+                              label: Text('Avulsa / pontual'),
+                              icon: Icon(Icons.flash_on_outlined),
+                            ),
+                            ButtonSegment(
+                              value: _ExpenseLaunchMode.dueDated,
+                              label: Text('Com vencimento'),
+                              icon: Icon(Icons.event_outlined),
+                            ),
+                          ],
+                          selected: {_launchMode},
+                          onSelectionChanged: (selection) {
+                            final mode = selection.first;
+                            _setLaunchMode(mode);
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F8F7),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFDCE5E1)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _launchMode == _ExpenseLaunchMode.oneOff
+                              ? 'Use avulsa/pontual para casos como combustível, mercado rápido ou qualquer gasto do dia que não tenha vencimento formal.'
+                              : 'Use com vencimento quando existe uma data clara para pagar ou acompanhar atraso.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF58616A),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      key: const ValueKey('expense-form-description-field'),
+                      controller: _descriptionController,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Descrição',
+                        errorText: _viewModel.fieldError('description'),
+                      ),
+                      maxLength: 140,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Informe a descrição da despesa.';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) =>
+                          _viewModel.clearFieldError('description'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      key: const ValueKey('expense-form-amount-field'),
+                      controller: _amountController,
+                      textInputAction: TextInputAction.next,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Valor',
+                        hintText: 'Ex.: 129,90',
+                        errorText: _viewModel.fieldError('amount'),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Informe o valor da despesa.';
+                        }
+                        final amount = _parseAmount(value);
+                        if (amount == null || amount <= 0) {
+                          return 'Informe um valor maior que zero.';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) => _viewModel.clearFieldError('amount'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      key: const ValueKey('expense-form-occurred-on-field'),
+                      controller: _occurredOnController,
+                      readOnly: true,
+                      onTap: _pickOccurredOn,
+                      decoration: InputDecoration(
+                        labelText: 'Data da ocorrência',
+                        errorText: _viewModel.fieldError('occurredOn'),
+                        suffixIcon: IconButton(
+                          tooltip: 'Selecionar data',
+                          onPressed: _pickOccurredOn,
+                          icon: const Icon(Icons.calendar_today_outlined),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Informe a data em que isso aconteceu.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    if (_launchMode == _ExpenseLaunchMode.dueDated)
+                      TextFormField(
+                        key: const ValueKey('expense-form-due-date-field'),
+                        controller: _dueDateController,
+                        readOnly: true,
+                        onTap: _pickDueDate,
+                        decoration: InputDecoration(
+                          labelText: 'Vencimento',
+                          helperText:
+                              'Use quando existir uma data clara para pagar.',
+                          errorText: _viewModel.fieldError('dueDate'),
+                          suffixIcon: IconButton(
+                            tooltip: 'Selecionar data',
+                            onPressed: _pickDueDate,
+                            icon: const Icon(Icons.event_available_outlined),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (_launchMode != _ExpenseLaunchMode.dueDated) {
+                            return null;
+                          }
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Informe a data de vencimento.';
+                          }
+                          return null;
+                        },
+                      )
+                    else
+                      _InlineInfoCard(
+                        title: 'Sem vencimento obrigatório',
+                        message:
+                            'Esta despesa vai usar a data da ocorrência como referência principal e não será tratada como vencida automaticamente.',
+                      ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int?>(
+                      key: ValueKey(
+                        'expense-form-space-reference-field-${_selectedSpaceReferenceId ?? 'none'}',
+                      ),
+                      initialValue: _selectedSpaceReferenceId,
+                      decoration: InputDecoration(
+                        labelText: 'Referência do espaço',
+                        helperText: _viewModel.hasReferences
+                            ? 'Opcional. Use quando o gasto estiver ligado à casa, veículo, cliente, projeto ou outra referência cadastrada.'
+                            : _viewModel.loadReferencesErrorMessage ??
+                                  'Nenhuma referência cadastrada ainda. Você pode seguir sem isso ou abrir o Espaço para cadastrar.',
+                        errorText: _viewModel.fieldError('spaceReferenceId'),
+                      ),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('Sem referência'),
+                        ),
+                        for (final reference in _viewModel.references)
+                          DropdownMenuItem<int?>(
+                            value: reference.id,
+                            child: Text(
+                              '${reference.name} · ${reference.type.label}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        setState(() => _selectedSpaceReferenceId = value);
+                        _viewModel.clearFieldError('spaceReferenceId');
+                      },
+                    ),
+                    if (_selectedReference != null) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          Text(
-                            _isEditing
-                                ? 'Ajuste o lançamento e mantenha o dado coerente com o que realmente aconteceu.'
-                                : 'Escolha o tipo de lançamento e registre a despesa do jeito certo, sem forçar vencimento quando ele não existe.',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: const Color(0xFF58616A),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _FlowGuidanceCard(
-                            onOpenFixedBills: () =>
-                                context.go('/fixed-bills/new'),
-                            onOpenHistoryImport: () =>
-                                context.go('/history/import'),
-                            onOpenReferences: () =>
-                                context.go('/space/references'),
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            'Como essa despesa entra no sistema?',
-                            style: theme.textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              if (constraints.maxWidth < 560) {
-                                return Wrap(
-                                  spacing: 12,
-                                  runSpacing: 12,
-                                  children: [
-                                    ChoiceChip(
-                                      label: const Text('Avulsa / pontual'),
-                                      avatar: const Icon(
-                                        Icons.flash_on_outlined,
-                                      ),
-                                      selected:
-                                          _launchMode ==
-                                          _ExpenseLaunchMode.oneOff,
-                                      onSelected: (_) => _setLaunchMode(
-                                        _ExpenseLaunchMode.oneOff,
-                                      ),
-                                    ),
-                                    ChoiceChip(
-                                      label: const Text('Com vencimento'),
-                                      avatar: const Icon(Icons.event_outlined),
-                                      selected:
-                                          _launchMode ==
-                                          _ExpenseLaunchMode.dueDated,
-                                      onSelected: (_) => _setLaunchMode(
-                                        _ExpenseLaunchMode.dueDated,
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }
-
-                              return SegmentedButton<_ExpenseLaunchMode>(
-                                showSelectedIcon: false,
-                                segments: const [
-                                  ButtonSegment(
-                                    value: _ExpenseLaunchMode.oneOff,
-                                    label: Text('Avulsa / pontual'),
-                                    icon: Icon(Icons.flash_on_outlined),
-                                  ),
-                                  ButtonSegment(
-                                    value: _ExpenseLaunchMode.dueDated,
-                                    label: Text('Com vencimento'),
-                                    icon: Icon(Icons.event_outlined),
-                                  ),
-                                ],
-                                selected: {_launchMode},
-                                onSelectionChanged: (selection) {
-                                  final mode = selection.first;
-                                  _setLaunchMode(mode);
-                                },
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F8F7),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFDCE5E1),
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                _launchMode == _ExpenseLaunchMode.oneOff
-                                    ? 'Use avulsa/pontual para casos como combustível, mercado rápido ou qualquer gasto do dia que não tenha vencimento formal.'
-                                    : 'Use com vencimento quando existe uma data clara para pagar ou acompanhar atraso.',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF58616A),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            key: const ValueKey(
-                              'expense-form-description-field',
-                            ),
-                            controller: _descriptionController,
-                            textInputAction: TextInputAction.next,
-                            decoration: InputDecoration(
-                              labelText: 'Descrição',
-                              errorText: _viewModel.fieldError('description'),
-                            ),
-                            maxLength: 140,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Informe a descrição da despesa.';
-                              }
-                              return null;
-                            },
-                            onChanged: (_) =>
-                                _viewModel.clearFieldError('description'),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            key: const ValueKey('expense-form-amount-field'),
-                            controller: _amountController,
-                            textInputAction: TextInputAction.next,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Valor',
-                              hintText: 'Ex.: 129,90',
-                              errorText: _viewModel.fieldError('amount'),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Informe o valor da despesa.';
-                              }
-                              final amount = _parseAmount(value);
-                              if (amount == null || amount <= 0) {
-                                return 'Informe um valor maior que zero.';
-                              }
-                              return null;
-                            },
-                            onChanged: (_) =>
-                                _viewModel.clearFieldError('amount'),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            key: const ValueKey(
-                              'expense-form-occurred-on-field',
-                            ),
-                            controller: _occurredOnController,
-                            readOnly: true,
-                            onTap: _pickOccurredOn,
-                            decoration: InputDecoration(
-                              labelText: 'Data da ocorrência',
-                              errorText: _viewModel.fieldError('occurredOn'),
-                              suffixIcon: IconButton(
-                                tooltip: 'Selecionar data',
-                                onPressed: _pickOccurredOn,
-                                icon: const Icon(Icons.calendar_today_outlined),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Informe a data em que isso aconteceu.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          if (_launchMode == _ExpenseLaunchMode.dueDated)
-                            TextFormField(
-                              key: const ValueKey(
-                                'expense-form-due-date-field',
-                              ),
-                              controller: _dueDateController,
-                              readOnly: true,
-                              onTap: _pickDueDate,
-                              decoration: InputDecoration(
-                                labelText: 'Vencimento',
-                                helperText:
-                                    'Use quando existir uma data clara para pagar.',
-                                errorText: _viewModel.fieldError('dueDate'),
-                                suffixIcon: IconButton(
-                                  tooltip: 'Selecionar data',
-                                  onPressed: _pickDueDate,
-                                  icon: const Icon(
-                                    Icons.event_available_outlined,
-                                  ),
-                                ),
-                              ),
-                              validator: (value) {
-                                if (_launchMode !=
-                                    _ExpenseLaunchMode.dueDated) {
-                                  return null;
-                                }
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Informe a data de vencimento.';
-                                }
-                                return null;
-                              },
-                            )
-                          else
-                            _InlineInfoCard(
-                              title: 'Sem vencimento obrigatório',
-                              message:
-                                  'Esta despesa vai usar a data da ocorrência como referência principal e não será tratada como vencida automaticamente.',
-                            ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<int?>(
-                            key: ValueKey(
-                              'expense-form-space-reference-field-${_selectedSpaceReferenceId ?? 'none'}',
-                            ),
-                            initialValue: _selectedSpaceReferenceId,
-                            decoration: InputDecoration(
-                              labelText: 'Referência do espaço',
-                              helperText: _viewModel.hasReferences
-                                  ? 'Opcional. Use quando o gasto estiver ligado à casa, veículo, cliente, projeto ou outra referência cadastrada.'
-                                  : _viewModel.loadReferencesErrorMessage ??
-                                        'Nenhuma referência cadastrada ainda. Você pode seguir sem isso ou abrir o Espaço para cadastrar.',
-                              errorText: _viewModel.fieldError(
-                                'spaceReferenceId',
-                              ),
-                            ),
-                            items: [
-                              const DropdownMenuItem<int?>(
-                                value: null,
-                                child: Text('Sem referência'),
-                              ),
-                              for (final reference in _viewModel.references)
-                                DropdownMenuItem<int?>(
-                                  value: reference.id,
-                                  child: Text(
-                                    '${reference.name} · ${reference.type.label}',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                            ],
-                            onChanged: (value) {
-                              setState(() => _selectedSpaceReferenceId = value);
-                              _viewModel.clearFieldError('spaceReferenceId');
-                            },
-                          ),
-                          if (_selectedReference != null) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                Chip(label: Text(_selectedReference!.name)),
-                                Chip(
-                                  label: Text(
-                                    _selectedReference!.typeGroup.label,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<int>(
-                            key: ValueKey('category-$_selectedCategoryId'),
-                            initialValue: _selectedCategoryId,
-                            decoration: InputDecoration(
-                              labelText: 'Categoria',
-                              errorText: _viewModel.fieldError('categoryId'),
-                            ),
-                            items: [
-                              for (final option in _viewModel.catalogOptions)
-                                DropdownMenuItem(
-                                  value: option.id,
-                                  child: Text(option.name),
-                                ),
-                            ],
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() {
-                                _selectedCategoryId = value;
-                                final category = _selectedCategory;
-                                _selectedSubcategoryId =
-                                    category != null &&
-                                        category.subcategories.isNotEmpty
-                                    ? category.subcategories.first.id
-                                    : null;
-                              });
-                              _viewModel.clearFieldError('categoryId');
-                              _viewModel.clearFieldError('subcategoryId');
-                            },
-                            validator: (value) {
-                              if (value == null) {
-                                return 'Selecione a categoria.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<int>(
-                            key: ValueKey(
-                              'subcategory-$hasSubcategories-$_selectedSubcategoryId',
-                            ),
-                            initialValue: hasSubcategories
-                                ? _selectedSubcategoryId
-                                : null,
-                            decoration: InputDecoration(
-                              labelText: 'Subcategoria',
-                              helperText: category != null && !hasSubcategories
-                                  ? 'A categoria selecionada não possui subcategorias ativas.'
-                                  : null,
-                              errorText: _viewModel.fieldError('subcategoryId'),
-                            ),
-                            items: [
-                              for (final option in _subcategoryOptions)
-                                DropdownMenuItem(
-                                  value: option.id,
-                                  child: Text(option.name),
-                                ),
-                            ],
-                            onChanged: !hasSubcategories
-                                ? null
-                                : (value) {
-                                    setState(
-                                      () => _selectedSubcategoryId = value,
-                                    );
-                                    _viewModel.clearFieldError('subcategoryId');
-                                  },
-                            validator: (value) {
-                              if (!hasSubcategories) {
-                                return 'Selecione outra categoria com subcategorias ativas.';
-                              }
-                              if (value == null) {
-                                return 'Selecione a subcategoria.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            key: const ValueKey('expense-form-notes-field'),
-                            controller: _notesController,
-                            minLines: 3,
-                            maxLines: 5,
-                            decoration: InputDecoration(
-                              labelText: 'Observações',
-                              alignLabelWithHint: true,
-                              errorText: _viewModel.fieldError('notes'),
-                            ),
-                            maxLength: 255,
-                            onChanged: (_) =>
-                                _viewModel.clearFieldError('notes'),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Opcional. Use para posto, motivo, detalhes do gasto ou alguma anotação útil.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFF65727B),
-                            ),
-                          ),
-                          if (!_isEditing) ...[
-                            const SizedBox(height: 20),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF6F8F7),
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: const Color(0xFFDCE5E1),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(18),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SwitchListTile.adaptive(
-                                      key: const ValueKey(
-                                        'expense-form-initial-payment-toggle',
-                                      ),
-                                      contentPadding: EdgeInsets.zero,
-                                      value: _registerInitialPayment,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _registerInitialPayment = value;
-                                          if (value) {
-                                            _initialPaymentPaidAt = _occurredOn;
-                                          }
-                                        });
-                                      },
-                                      title: const Text('Já foi paga?'),
-                                      subtitle: const Text(
-                                        'Marque apenas quando esta despesa já estiver totalmente quitada. Pagamento parcial continua no fluxo de pagamento separado.',
-                                      ),
-                                    ),
-                                    if (_registerInitialPayment) ...[
-                                      const SizedBox(height: 8),
-                                      InkWell(
-                                        key: const ValueKey(
-                                          'expense-form-initial-payment-date-field',
-                                        ),
-                                        onTap: _pickInitialPaymentDate,
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: InputDecorator(
-                                          decoration: const InputDecoration(
-                                            labelText: 'Data do pagamento',
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  formatExpensePaymentDate(
-                                                    _initialPaymentPaidAt,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              const Icon(
-                                                Icons.calendar_today_outlined,
-                                                size: 18,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      DropdownButtonFormField<String>(
-                                        key: const ValueKey(
-                                          'expense-form-initial-payment-method-field',
-                                        ),
-                                        initialValue: _initialPaymentMethod,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Método do pagamento',
-                                        ),
-                                        items: expensePaymentMethods
-                                            .map(
-                                              (method) =>
-                                                  DropdownMenuItem<String>(
-                                                    value: method,
-                                                    child: Text(
-                                                      formatExpenseEnumLabel(
-                                                        method,
-                                                      ),
-                                                    ),
-                                                  ),
-                                            )
-                                            .toList(growable: false),
-                                        onChanged: (value) {
-                                          if (value == null) {
-                                            return;
-                                          }
-                                          setState(
-                                            () => _initialPaymentMethod = value,
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'O sistema vai registrar um pagamento integral com o mesmo valor desta despesa.',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: const Color(0xFF65727B),
-                                            ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (_viewModel.submitErrorMessage != null) ...[
-                            const SizedBox(height: 12),
-                            Text(
-                              _viewModel.submitErrorMessage!,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              final stackButtons = constraints.maxWidth < 540;
-                              final cancelButton = OutlinedButton(
-                                onPressed: _viewModel.isSubmitting
-                                    ? null
-                                    : () => widget.standalone
-                                          ? context.go('/expenses')
-                                          : Navigator.of(context).maybePop(),
-                                child: Text(
-                                  widget.standalone
-                                      ? 'Ver despesas'
-                                      : 'Cancelar',
-                                ),
-                              );
-                              final submitButton = FilledButton(
-                                key: const ValueKey(
-                                  'expense-form-submit-button',
-                                ),
-                                onPressed: _viewModel.isSubmitting
-                                    ? null
-                                    : _submit,
-                                child: _viewModel.isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : Text(
-                                        _isEditing ? 'Salvar' : 'Criar despesa',
-                                      ),
-                              );
-
-                              if (stackButtons) {
-                                return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    cancelButton,
-                                    const SizedBox(height: 12),
-                                    submitButton,
-                                  ],
-                                );
-                              }
-
-                              return Row(
-                                children: [
-                                  Expanded(child: cancelButton),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: submitButton),
-                                ],
-                              );
-                            },
+                          Chip(label: Text(_selectedReference!.name)),
+                          Chip(
+                            label: Text(_selectedReference!.typeGroup.label),
                           ),
                         ],
                       ),
+                    ],
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      key: ValueKey('category-$_selectedCategoryId'),
+                      initialValue: _selectedCategoryId,
+                      decoration: InputDecoration(
+                        labelText: 'Categoria',
+                        errorText: _viewModel.fieldError('categoryId'),
+                      ),
+                      items: [
+                        for (final option in _viewModel.catalogOptions)
+                          DropdownMenuItem(
+                            value: option.id,
+                            child: Text(option.name),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedCategoryId = value;
+                          final category = _selectedCategory;
+                          _selectedSubcategoryId =
+                              category != null &&
+                                  category.subcategories.isNotEmpty
+                              ? category.subcategories.first.id
+                              : null;
+                        });
+                        _viewModel.clearFieldError('categoryId');
+                        _viewModel.clearFieldError('subcategoryId');
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Selecione a categoria.';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      key: ValueKey(
+                        'subcategory-$hasSubcategories-$_selectedSubcategoryId',
+                      ),
+                      initialValue: hasSubcategories
+                          ? _selectedSubcategoryId
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: 'Subcategoria',
+                        helperText: category != null && !hasSubcategories
+                            ? 'A categoria selecionada não possui subcategorias ativas.'
+                            : null,
+                        errorText: _viewModel.fieldError('subcategoryId'),
+                      ),
+                      items: [
+                        for (final option in _subcategoryOptions)
+                          DropdownMenuItem(
+                            value: option.id,
+                            child: Text(option.name),
+                          ),
+                      ],
+                      onChanged: !hasSubcategories
+                          ? null
+                          : (value) {
+                              setState(() => _selectedSubcategoryId = value);
+                              _viewModel.clearFieldError('subcategoryId');
+                            },
+                      validator: (value) {
+                        if (!hasSubcategories) {
+                          return 'Selecione outra categoria com subcategorias ativas.';
+                        }
+                        if (value == null) {
+                          return 'Selecione a subcategoria.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      key: const ValueKey('expense-form-notes-field'),
+                      controller: _notesController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        labelText: 'Observações',
+                        alignLabelWithHint: true,
+                        errorText: _viewModel.fieldError('notes'),
+                      ),
+                      maxLength: 255,
+                      onChanged: (_) => _viewModel.clearFieldError('notes'),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Opcional. Use para posto, motivo, detalhes do gasto ou alguma anotação útil.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: const Color(0xFF65727B),
+                      ),
+                    ),
+                    if (!_isEditing) ...[
+                      const SizedBox(height: 20),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF6F8F7),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFDCE5E1)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SwitchListTile.adaptive(
+                                key: const ValueKey(
+                                  'expense-form-initial-payment-toggle',
+                                ),
+                                contentPadding: EdgeInsets.zero,
+                                value: _registerInitialPayment,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _registerInitialPayment = value;
+                                    if (value) {
+                                      _initialPaymentPaidAt = _occurredOn;
+                                    }
+                                  });
+                                },
+                                title: const Text('Já foi paga?'),
+                                subtitle: const Text(
+                                  'Marque apenas quando esta despesa já estiver totalmente quitada. Pagamento parcial continua no fluxo de pagamento separado.',
+                                ),
+                              ),
+                              if (_registerInitialPayment) ...[
+                                const SizedBox(height: 8),
+                                InkWell(
+                                  key: const ValueKey(
+                                    'expense-form-initial-payment-date-field',
+                                  ),
+                                  onTap: _pickInitialPaymentDate,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: InputDecorator(
+                                    decoration: const InputDecoration(
+                                      labelText: 'Data do pagamento',
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            formatExpensePaymentDate(
+                                              _initialPaymentPaidAt,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Icon(
+                                          Icons.calendar_today_outlined,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                DropdownButtonFormField<String>(
+                                  key: const ValueKey(
+                                    'expense-form-initial-payment-method-field',
+                                  ),
+                                  initialValue: _initialPaymentMethod,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Método do pagamento',
+                                  ),
+                                  items: expensePaymentMethods
+                                      .map(
+                                        (method) => DropdownMenuItem<String>(
+                                          value: method,
+                                          child: Text(
+                                            formatExpenseEnumLabel(method),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                  onChanged: (value) {
+                                    if (value == null) {
+                                      return;
+                                    }
+                                    setState(
+                                      () => _initialPaymentMethod = value,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'O sistema vai registrar um pagamento integral com o mesmo valor desta despesa.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: const Color(0xFF65727B),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (_viewModel.submitErrorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _viewModel.submitErrorMessage!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final stackButtons = constraints.maxWidth < 540;
+                        final cancelButton = OutlinedButton(
+                          onPressed: _viewModel.isSubmitting
+                              ? null
+                              : () => widget.standalone
+                                    ? context.go('/')
+                                    : Navigator.of(context).maybePop(),
+                          child: Text(
+                            widget.standalone
+                                ? 'Voltar ao dashboard'
+                                : 'Cancelar',
+                          ),
+                        );
+                        final submitButton = FilledButton(
+                          key: const ValueKey('expense-form-submit-button'),
+                          onPressed: _viewModel.isSubmitting ? null : _submit,
+                          child: _viewModel.isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(_isEditing ? 'Salvar' : 'Criar despesa'),
+                        );
+
+                        if (stackButtons) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              cancelButton,
+                              const SizedBox(height: 12),
+                              submitButton,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(child: cancelButton),
+                            const SizedBox(width: 12),
+                            Expanded(child: submitButton),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              );
-            },
+              ),
+            ),
           ),
+        );
+      },
+    );
+
+    if (widget.sessionController != null) {
+      return AuthenticatedShellScaffold(
+        sessionController: widget.sessionController!,
+        currentLocation: _isEditing
+            ? '/expenses/${_initialExpense?.id ?? 'new'}/edit'
+            : '/expenses/new',
+        title: title,
+        fallbackRoute: '/',
+        body: body,
+      );
+    }
+
+    return RoutePopScope<Object?>(
+      fallbackRoute: '/',
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const RouteBackButton(fallbackRoute: '/'),
+          title: Text(title),
         ),
+        body: SafeArea(top: false, child: body),
       ),
     );
   }

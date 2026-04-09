@@ -1,8 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/empty_state.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_summary.dart';
@@ -67,8 +65,10 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   Future<void> _openCreateExpense() async {
     final result = await _pushOrNavigate<ExpenseFlowResult>(
       '/expenses/new',
-      fallbackBuilder: () =>
-          ExpenseFormScreen(expensesRepository: widget.expensesRepository),
+      fallbackBuilder: () => ExpenseFormScreen(
+        expensesRepository: widget.expensesRepository,
+        sessionController: widget.sessionController,
+      ),
     );
     await _handleFlowResult(result);
   }
@@ -79,6 +79,7 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       fallbackBuilder: () => ExpenseDetailScreen(
         expenseId: expense.id,
         expensesRepository: widget.expensesRepository,
+        sessionController: widget.sessionController,
       ),
     );
     await _handleFlowResult(result);
@@ -124,18 +125,13 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
       listenable: Listenable.merge([widget.sessionController, _viewModel]),
       builder: (context, _) {
         final user = widget.sessionController.currentUser;
-        final canReviewOperations = user?.role == 'OWNER';
 
-        return AppScaffold(
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/expenses',
           title: 'Despesas',
           subtitle: user?.name,
-          leading: const RouteBackButton(fallbackRoute: '/'),
-          actions: buildAuthenticatedTopBarActions(
-            context: context,
-            sessionController: widget.sessionController,
-            currentLocation: '/expenses',
-            canReviewOperations: canReviewOperations,
-          ),
+          fallbackRoute: '/',
           body: RefreshIndicator(
             onRefresh: _viewModel.load,
             child: ListView(

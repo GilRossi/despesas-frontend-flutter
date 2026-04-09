@@ -83,9 +83,7 @@ void main() {
     expect(find.text('Conta de Luz'), findsOneWidget);
     expect(find.text('R\$ 129,90'), findsOneWidget);
     expect(
-      find.text(
-        'Cada item mostra status, vencimento e quanto falta pagar.',
-      ),
+      find.text('Cada item mostra status, vencimento e quanto falta pagar.'),
       findsOneWidget,
     );
   });
@@ -422,7 +420,12 @@ void main() {
 
       expect(find.text('Pagamento registrado com sucesso.'), findsOneWidget);
 
-      await tester.tap(find.byType(BackButton));
+      tester
+          .widget<IconButton>(
+            find.byKey(const ValueKey('authenticated-shell-back-button')),
+          )
+          .onPressed!
+          .call();
       await tester.pumpAndSettle();
 
       expect(find.byType(ExpensesListScreen), findsOneWidget);

@@ -1,11 +1,9 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
-import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/summary_header.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
@@ -293,20 +291,15 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
       listenable: Listenable.merge([widget.sessionController, _viewModel]),
       builder: (context, _) {
         final user = widget.sessionController.currentUser;
-        final canReviewOperations = user?.role == 'OWNER';
 
-        return AppScaffold(
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: _isEditMode
+              ? '/fixed-bills/${widget.fixedBillId}/edit'
+              : '/fixed-bills/new',
           title: _isEditMode ? 'Editar conta fixa' : 'Cadastrar conta fixa',
           subtitle: user?.name,
-          leading: const RouteBackButton(fallbackRoute: '/fixed-bills'),
-          actions: buildAuthenticatedTopBarActions(
-            context: context,
-            sessionController: widget.sessionController,
-            currentLocation: _isEditMode
-                ? '/fixed-bills/${widget.fixedBillId}/edit'
-                : '/fixed-bills/new',
-            canReviewOperations: canReviewOperations,
-          ),
+          fallbackRoute: '/',
           padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + keyboardBottomInset),
           body: ResponsiveScrollBody(
             maxWidth: 860,
@@ -337,8 +330,7 @@ class _FixedBillFormScreenState extends State<FixedBillFormScreen> {
                     _loadInitialRecordMessage == null) ...[
                   if (_step == _FixedBillFlowStep.collect) _buildCollectStep(),
                   if (_step == _FixedBillFlowStep.review) _buildReviewStep(),
-                  if (_step == _FixedBillFlowStep.success)
-                    _buildSuccessStep(),
+                  if (_step == _FixedBillFlowStep.success) _buildSuccessStep(),
                 ],
               ],
             ),

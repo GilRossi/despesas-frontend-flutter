@@ -1,3 +1,6 @@
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/space_references/domain/create_space_reference_input.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_reference_create_result.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_reference_item.dart';
@@ -5,17 +8,17 @@ import 'package:despesas_frontend/features/space_references/domain/space_referen
 import 'package:despesas_frontend/features/space_references/domain/space_reference_type_group.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_references_repository.dart';
 import 'package:despesas_frontend/features/space_references/presentation/space_references_view_model.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class SpaceReferencesScreen extends StatefulWidget {
   const SpaceReferencesScreen({
     super.key,
     required this.spaceReferencesRepository,
+    this.sessionController,
   });
 
   final SpaceReferencesRepository spaceReferencesRepository;
+  final SessionController? sessionController;
 
   @override
   State<SpaceReferencesScreen> createState() => _SpaceReferencesScreenState();
@@ -105,303 +108,287 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
       listenable: _viewModel,
       builder: (context, _) {
         final duplicateSuggestion = _viewModel.lastCreateResult;
-
-        return RoutePopScope<Object?>(
-          fallbackRoute: '/assistant',
-          child: Scaffold(
-            appBar: AppBar(
-              leading: const RouteBackButton(fallbackRoute: '/assistant'),
-              title: const Text('Referências do seu espaço'),
-              actions: [
-                TextButton.icon(
-                  key: const ValueKey('space-references-back-to-assistant'),
-                  onPressed: () => context.go('/assistant'),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Assistente'),
-                ),
-              ],
-            ),
-            body: SafeArea(
-              top: false,
-              child: RefreshIndicator(
-                onRefresh: _viewModel.load,
-                child: ListView(
+        final body = RefreshIndicator(
+          onRefresh: _viewModel.load,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Card(
+                child: Padding(
                   padding: const EdgeInsets.all(20),
-                  children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Use o que já existe antes de criar algo novo',
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Seu espaço fica mais organizado quando você reaproveita referências parecidas e cria novas só quando fizer sentido.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: const Color(0xFF65727B),
-                              ),
-                            ),
-                          ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Use o que já existe antes de criar algo novo',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Seu espaço fica mais organizado quando você reaproveita referências parecidas e cria novas só quando fizer sentido.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF65727B),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_viewModel.selectedReference != null) ...[
-                      _SelectedReferenceCard(
-                        reference: _viewModel.selectedReference!,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Referências existentes',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Comece olhando o que já está disponível no seu espaço.',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: const Color(0xFF65727B),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              key: const ValueKey(
-                                'space-references-search-field',
-                              ),
-                              controller: _searchController,
-                              textInputAction: TextInputAction.search,
-                              decoration: const InputDecoration(
-                                labelText: 'Buscar pelo nome',
-                                hintText: 'Ex.: Projeto Acme, Casa da Praia',
-                              ),
-                              onFieldSubmitted: (_) => _applyFilters(),
-                            ),
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<SpaceReferenceTypeGroup?>(
-                              key: const ValueKey(
-                                'space-references-group-filter',
-                              ),
-                              initialValue: _selectedGroup,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Grupo',
-                              ),
-                              items: [
-                                const DropdownMenuItem<
-                                  SpaceReferenceTypeGroup?
-                                >(
-                                  value: null,
-                                  child: Text(
-                                    'Todos os grupos',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                for (final group
-                                    in SpaceReferenceTypeGroup.values)
-                                  DropdownMenuItem<SpaceReferenceTypeGroup?>(
-                                    value: group,
-                                    child: Text(
-                                      group.label,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                              ],
-                              onChanged: (value) {
-                                setState(() => _selectedGroup = value);
-                                _applyFilters();
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                FilledButton.icon(
-                                  key: const ValueKey(
-                                    'space-references-apply-filters',
-                                  ),
-                                  onPressed: _viewModel.isLoading
-                                      ? null
-                                      : _applyFilters,
-                                  icon: const Icon(Icons.search),
-                                  label: const Text('Filtrar'),
-                                ),
-                                TextButton(
-                                  key: const ValueKey(
-                                    'space-references-clear-filters',
-                                  ),
-                                  onPressed: _viewModel.isLoading
-                                      ? null
-                                      : _clearFilters,
-                                  child: const Text('Limpar filtros'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_viewModel.isLoading) ...[
-                      const SizedBox(height: 120),
-                      const Center(child: CircularProgressIndicator()),
-                    ] else if (_viewModel.loadErrorMessage != null) ...[
-                      _StateCard(
-                        title: _viewModel.isUnauthorized
-                            ? 'Sessão expirada'
-                            : 'Não foi possível carregar as referências.',
-                        message: _viewModel.loadErrorMessage!,
-                        actionLabel: 'Tentar novamente',
-                        onAction: _viewModel.load,
-                      ),
-                    ] else if (_viewModel.isEmpty) ...[
-                      const _StateCard(
-                        title: 'Nenhuma referência encontrada',
-                        message:
-                            'Ainda não há referências no seu espaço com esse filtro. Você pode criar a primeira logo abaixo.',
-                      ),
-                    ] else ...[
-                      for (final reference in _viewModel.references) ...[
-                        _SpaceReferenceCard(
-                          reference: reference,
-                          isSelected:
-                              _viewModel.selectedReference?.id == reference.id,
-                          onUse: () => _viewModel.selectReference(reference),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ],
-                    if (duplicateSuggestion?.isDuplicateSuggestion ??
-                        false) ...[
-                      const SizedBox(height: 16),
-                      _DuplicateSuggestionCard(
-                        result: duplicateSuggestion!,
-                        onUseSuggestion: _viewModel.useSuggestedReference,
                       ),
                     ],
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Form(
-                          key: _createFormKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Criar nova referência',
-                                style: theme.textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Se não encontrar o que você precisa, crie uma referência nova em poucos passos.',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: const Color(0xFF65727B),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              DropdownButtonFormField<SpaceReferenceType>(
-                                key: const ValueKey(
-                                  'space-references-type-field',
-                                ),
-                                initialValue: _selectedType,
-                                isExpanded: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Tipo',
-                                  errorText: _viewModel.fieldError('type'),
-                                ),
-                                items: [
-                                  for (final type in SpaceReferenceType.values)
-                                    DropdownMenuItem(
-                                      value: type,
-                                      child: Text(
-                                        '${type.group.label} • ${type.label}',
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                ],
-                                onChanged: (value) {
-                                  if (value == null) {
-                                    return;
-                                  }
-                                  setState(() => _selectedType = value);
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                key: const ValueKey(
-                                  'space-references-name-field',
-                                ),
-                                controller: _createNameController,
-                                textInputAction: TextInputAction.done,
-                                decoration: InputDecoration(
-                                  labelText: 'Nome da referência',
-                                  hintText: 'Ex.: Projeto Acme, Casa da Praia',
-                                  errorText: _viewModel.fieldError('name'),
-                                ),
-                                onFieldSubmitted: (_) => _submitCreate(),
-                                validator: (value) {
-                                  final trimmed = value?.trim() ?? '';
-                                  if (trimmed.isEmpty) {
-                                    return 'Informe o nome da referência.';
-                                  }
-                                  if (trimmed.length > 120) {
-                                    return 'Use no maximo 120 caracteres.';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              if (_viewModel.submitErrorMessage != null) ...[
-                                const SizedBox(height: 12),
-                                Text(
-                                  _viewModel.submitErrorMessage!,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.error,
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 16),
-                              FilledButton.icon(
-                                key: const ValueKey(
-                                  'space-references-submit-button',
-                                ),
-                                onPressed: _viewModel.isSubmitting
-                                    ? null
-                                    : _submitCreate,
-                                icon: _viewModel.isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.add_circle_outline),
-                                label: Text(
-                                  _viewModel.isSubmitting
-                                      ? 'Salvando...'
-                                      : 'Criar referência',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 16),
+              if (_viewModel.selectedReference != null) ...[
+                _SelectedReferenceCard(
+                  reference: _viewModel.selectedReference!,
+                ),
+                const SizedBox(height: 16),
+              ],
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Referências existentes',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Comece olhando o que já está disponível no seu espaço.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF65727B),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        key: const ValueKey('space-references-search-field'),
+                        controller: _searchController,
+                        textInputAction: TextInputAction.search,
+                        decoration: const InputDecoration(
+                          labelText: 'Buscar pelo nome',
+                          hintText: 'Ex.: Projeto Acme, Casa da Praia',
+                        ),
+                        onFieldSubmitted: (_) => _applyFilters(),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<SpaceReferenceTypeGroup?>(
+                        key: const ValueKey('space-references-group-filter'),
+                        initialValue: _selectedGroup,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Grupo'),
+                        items: [
+                          const DropdownMenuItem<SpaceReferenceTypeGroup?>(
+                            value: null,
+                            child: Text(
+                              'Todos os grupos',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          for (final group in SpaceReferenceTypeGroup.values)
+                            DropdownMenuItem<SpaceReferenceTypeGroup?>(
+                              value: group,
+                              child: Text(
+                                group.label,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          setState(() => _selectedGroup = value);
+                          _applyFilters();
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          FilledButton.icon(
+                            key: const ValueKey(
+                              'space-references-apply-filters',
+                            ),
+                            onPressed: _viewModel.isLoading
+                                ? null
+                                : _applyFilters,
+                            icon: const Icon(Icons.search),
+                            label: const Text('Filtrar'),
+                          ),
+                          TextButton(
+                            key: const ValueKey(
+                              'space-references-clear-filters',
+                            ),
+                            onPressed: _viewModel.isLoading
+                                ? null
+                                : _clearFilters,
+                            child: const Text('Limpar filtros'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_viewModel.isLoading) ...[
+                const SizedBox(height: 120),
+                const Center(child: CircularProgressIndicator()),
+              ] else if (_viewModel.loadErrorMessage != null) ...[
+                _StateCard(
+                  title: _viewModel.isUnauthorized
+                      ? 'Sessão expirada'
+                      : 'Não foi possível carregar as referências.',
+                  message: _viewModel.loadErrorMessage!,
+                  actionLabel: 'Tentar novamente',
+                  onAction: _viewModel.load,
+                ),
+              ] else if (_viewModel.isEmpty) ...[
+                const _StateCard(
+                  title: 'Nenhuma referência encontrada',
+                  message:
+                      'Ainda não há referências no seu espaço com esse filtro. Você pode criar a primeira logo abaixo.',
+                ),
+              ] else ...[
+                for (final reference in _viewModel.references) ...[
+                  _SpaceReferenceCard(
+                    reference: reference,
+                    isSelected:
+                        _viewModel.selectedReference?.id == reference.id,
+                    onUse: () => _viewModel.selectReference(reference),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ],
+              if (duplicateSuggestion?.isDuplicateSuggestion ?? false) ...[
+                const SizedBox(height: 16),
+                _DuplicateSuggestionCard(
+                  result: duplicateSuggestion!,
+                  onUseSuggestion: _viewModel.useSuggestedReference,
+                ),
+              ],
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _createFormKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Criar nova referência',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Se não encontrar o que você precisa, crie uma referência nova em poucos passos.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF65727B),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<SpaceReferenceType>(
+                          key: const ValueKey('space-references-type-field'),
+                          initialValue: _selectedType,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: 'Tipo',
+                            errorText: _viewModel.fieldError('type'),
+                          ),
+                          items: [
+                            for (final type in SpaceReferenceType.values)
+                              DropdownMenuItem(
+                                value: type,
+                                child: Text(
+                                  '${type.group.label} • ${type.label}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() => _selectedType = value);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          key: const ValueKey('space-references-name-field'),
+                          controller: _createNameController,
+                          textInputAction: TextInputAction.done,
+                          decoration: InputDecoration(
+                            labelText: 'Nome da referência',
+                            hintText: 'Ex.: Projeto Acme, Casa da Praia',
+                            errorText: _viewModel.fieldError('name'),
+                          ),
+                          onFieldSubmitted: (_) => _submitCreate(),
+                          validator: (value) {
+                            final trimmed = value?.trim() ?? '';
+                            if (trimmed.isEmpty) {
+                              return 'Informe o nome da referência.';
+                            }
+                            if (trimmed.length > 120) {
+                              return 'Use no maximo 120 caracteres.';
+                            }
+                            return null;
+                          },
+                        ),
+                        if (_viewModel.submitErrorMessage != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _viewModel.submitErrorMessage!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          key: const ValueKey('space-references-submit-button'),
+                          onPressed: _viewModel.isSubmitting
+                              ? null
+                              : _submitCreate,
+                          icon: _viewModel.isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.add_circle_outline),
+                          label: Text(
+                            _viewModel.isSubmitting
+                                ? 'Salvando...'
+                                : 'Criar referência',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (widget.sessionController != null) {
+          return AuthenticatedShellScaffold(
+            sessionController: widget.sessionController!,
+            currentLocation: '/space/references',
+            title: 'Referências do seu espaço',
+            fallbackRoute: '/',
+            body: body,
+          );
+        }
+
+        return RoutePopScope<Object?>(
+          fallbackRoute: '/',
+          child: Scaffold(
+            appBar: AppBar(
+              leading: const RouteBackButton(fallbackRoute: '/'),
+              title: const Text('Referências do seu espaço'),
             ),
+            body: SafeArea(top: false, child: body),
           ),
         );
       },

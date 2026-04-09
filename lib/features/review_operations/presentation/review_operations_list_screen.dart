@@ -1,7 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/features/review_operations/domain/email_ingestion_review_summary.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
 import 'package:despesas_frontend/features/review_operations/presentation/review_operation_detail_screen.dart';
@@ -90,86 +89,76 @@ class _ReviewOperationsListScreenState
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(
-            leading: const RouteBackButton(fallbackRoute: '/expenses'),
-            title: const Text('Revisões pendentes'),
-            actions: buildAuthenticatedTopBarActions(
-              context: context,
-              sessionController: widget.sessionController,
-              currentLocation: '/review-operations',
-              canReviewOperations:
-                  widget.sessionController.currentUser?.role == 'OWNER',
-            ),
-          ),
-          body: SafeArea(
-            top: false,
-            child: RefreshIndicator(
-              onRefresh: () => _viewModel.load(page: _viewModel.currentPage),
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Revisões pendentes do espaço',
-                            style: theme.textTheme.titleLarge,
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/review-operations',
+          title: 'Revisões pendentes',
+          fallbackRoute: '/',
+          body: RefreshIndicator(
+            onRefresh: () => _viewModel.load(page: _viewModel.currentPage),
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Revisões pendentes do espaço',
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Revise as importações que ainda dependem de decisão humana antes da confirmação final.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF65727B),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Revise as importações que ainda dependem de decisão humana antes da confirmação final.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF65727B),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                if (_viewModel.isLoading) ...[
+                  const SizedBox(height: 120),
+                  const Center(child: CircularProgressIndicator()),
+                ] else if (_viewModel.errorMessage != null) ...[
+                  _StateCard(
+                    title: _viewModel.isForbidden
+                        ? 'Acesso negado'
+                        : _viewModel.isUnauthorized
+                        ? 'Sessão expirada'
+                        : 'Não foi possível carregar as revisões.',
+                    message: _viewModel.errorMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: () =>
+                        _viewModel.load(page: _viewModel.currentPage),
+                  ),
+                ] else if (_viewModel.isEmpty) ...[
+                  const _StateCard(
+                    title: 'Nenhuma revisão pendente',
+                    message:
+                        'Não há importações aguardando decisão manual no espaço atual.',
+                  ),
+                ] else ...[
+                  Text(
+                    'Revisões encontradas',
+                    style: theme.textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 16),
-                  if (_viewModel.isLoading) ...[
-                    const SizedBox(height: 120),
-                    const Center(child: CircularProgressIndicator()),
-                  ] else if (_viewModel.errorMessage != null) ...[
-                    _StateCard(
-                      title: _viewModel.isForbidden
-                          ? 'Acesso negado'
-                          : _viewModel.isUnauthorized
-                          ? 'Sessão expirada'
-                          : 'Não foi possível carregar as revisões.',
-                      message: _viewModel.errorMessage!,
-                      actionLabel: 'Tentar novamente',
-                      onAction: () =>
-                          _viewModel.load(page: _viewModel.currentPage),
+                  for (final review in _viewModel.reviews) ...[
+                    _ReviewSummaryCard(
+                      review: review,
+                      onTap: () => _openDetail(review),
                     ),
-                  ] else if (_viewModel.isEmpty) ...[
-                    const _StateCard(
-                      title: 'Nenhuma revisão pendente',
-                      message:
-                          'Não há importações aguardando decisão manual no espaço atual.',
-                    ),
-                  ] else ...[
-                    Text(
-                      'Revisões encontradas',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    for (final review in _viewModel.reviews) ...[
-                      _ReviewSummaryCard(
-                        review: review,
-                        onTap: () => _openDetail(review),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    const SizedBox(height: 8),
-                    _PaginationBar(viewModel: _viewModel),
+                    const SizedBox(height: 12),
                   ],
+                  const SizedBox(height: 8),
+                  _PaginationBar(viewModel: _viewModel),
                 ],
-              ),
+              ],
             ),
           ),
         );

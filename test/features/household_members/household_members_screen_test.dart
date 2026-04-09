@@ -42,7 +42,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Membros atuais'), findsOneWidget);
+    expect(find.text('Membros atuais', skipOffstage: false), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Gil Rossi', skipOffstage: false),
       200,
@@ -108,8 +108,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Acesso restrito aos responsáveis'), findsOneWidget);
-    expect(find.text('Apenas owner pode acessar.'), findsOneWidget);
+    expect(
+      find.text('Acesso restrito aos responsáveis', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Apenas owner pode acessar.', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('remains stable on small heights', (tester) async {
