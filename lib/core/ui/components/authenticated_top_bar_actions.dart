@@ -62,6 +62,7 @@ List<Widget> buildAuthenticatedTopBarActions({
     PopupMenuButton<String>(
       key: const ValueKey('authenticated-top-bar-menu-button'),
       tooltip: 'Menu principal',
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 248),
       icon: const Icon(Icons.menu),
       onSelected: (route) {
         if (!context.mounted) {
@@ -75,12 +76,21 @@ List<Widget> buildAuthenticatedTopBarActions({
             PopupMenuItem<String>(
               key: ValueKey('authenticated-top-bar-menu-item-${entry.route}'),
               value: entry.route,
-              child: Row(
-                children: [
-                  Icon(entry.icon, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(entry.label)),
-                ],
+              child: SizedBox(
+                width: 200,
+                child: Row(
+                  children: [
+                    Icon(entry.icon, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        entry.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ];

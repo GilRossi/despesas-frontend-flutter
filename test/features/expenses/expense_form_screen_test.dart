@@ -478,7 +478,10 @@ void main() {
       authRepository: FakeAuthRepository(loginResult: fakeSession()),
       sessionStore: MemorySessionStore(),
     );
-    await sessionController.login(email: 'gil@example.com', password: 'Senha123!');
+    await sessionController.login(
+      email: 'gil@example.com',
+      password: 'Senha123!',
+    );
 
     router = GoRouter(
       initialLocation: '/expenses/new',
@@ -598,6 +601,44 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Criar despesa'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('mantem a shell autenticada utilizavel em largura estreita', (
+    tester,
+  ) async {
+    configureSmallViewport(tester);
+
+    final sessionController = SessionController(
+      authRepository: FakeAuthRepository(loginResult: fakeSession()),
+      sessionStore: MemorySessionStore(),
+    );
+    await sessionController.login(
+      email: 'teste@teste.com',
+      password: 'teste123',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ExpenseFormScreen(
+          expensesRepository: FakeExpensesRepository(),
+          sessionController: sessionController,
+          standalone: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('authenticated-top-bar-menu-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('authenticated-top-bar-menu-item-/reports')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
