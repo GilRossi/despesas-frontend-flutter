@@ -73,7 +73,7 @@ void main() {
       find.text('Antes de lancar, confirme o tipo certo'),
     );
     await _tap(tester, find.text('Historico'));
-    await _pumpUntilVisible(tester, find.text('Trazer meu historico'));
+    await _pumpUntilVisible(tester, find.text('Trazer meu histórico'));
     await _tap(
       tester,
       find.byKey(
@@ -210,7 +210,7 @@ void main() {
     await _tap(tester, find.byKey(const ValueKey('expenses-assistant-button')));
     await _pumpUntilVisible(
       tester,
-      find.text('Assistente financeiro oficial do household'),
+      find.text('Assistente financeiro do seu espaço'),
     );
     await tester.enterText(
       find.byKey(const ValueKey('assistant-question-field')),

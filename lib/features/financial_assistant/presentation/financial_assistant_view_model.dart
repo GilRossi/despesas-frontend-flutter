@@ -94,7 +94,7 @@ class FinancialAssistantViewModel extends ChangeNotifier {
       _errorMessage = error.message;
       _errorStatusCode = error.statusCode;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel consultar o assistente financeiro.';
+      _errorMessage = 'Não foi possível consultar o assistente.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -125,8 +125,7 @@ class FinancialAssistantViewModel extends ChangeNotifier {
       _starterErrorMessage = error.message;
       _starterErrorStatusCode = error.statusCode;
     } catch (_) {
-      _starterErrorMessage =
-          'Nao foi possivel preparar essa proxima etapa agora.';
+      _starterErrorMessage = 'Não foi possível preparar essa próxima etapa.';
     } finally {
       _isStarterLoading = false;
       notifyListeners();
@@ -157,7 +156,7 @@ class FinancialAssistantViewModel extends ChangeNotifier {
     } on ApiException catch (error) {
       _onboardingErrorMessage = error.message;
     } catch (_) {
-      _onboardingErrorMessage = 'Nao foi possivel concluir essa etapa agora.';
+      _onboardingErrorMessage = 'Não foi possível concluir o guia.';
     } finally {
       _isCompletingOnboarding = false;
       notifyListeners();
