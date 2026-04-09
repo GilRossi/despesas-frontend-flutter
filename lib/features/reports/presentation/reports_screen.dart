@@ -1,7 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
@@ -48,112 +47,100 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(
-            leading: const RouteBackButton(fallbackRoute: '/'),
-            title: const Text('Relatórios'),
-            actions: buildAuthenticatedTopBarActions(
-              context: context,
-              sessionController: widget.sessionController,
-              currentLocation: '/reports',
-              canReviewOperations:
-                  widget.sessionController.currentUser?.role == 'OWNER',
-            ),
-          ),
-          body: SafeArea(
-            top: false,
-            child: Builder(
-              builder: (context) {
-                if (_viewModel.isLoading && !_viewModel.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/reports',
+          title: 'Relatórios',
+          fallbackRoute: '/',
+          body: Builder(
+            builder: (context) {
+              if (_viewModel.isLoading && !_viewModel.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (_viewModel.errorMessage != null && !_viewModel.hasData) {
-                  return _StateCard(
-                    title: _viewModel.isUnauthorized
-                        ? 'Sessão expirada'
-                        : 'Não foi possível carregar os relatórios.',
-                    message: _viewModel.errorMessage!,
-                    actionLabel: 'Tentar novamente',
-                    onAction: _viewModel.load,
-                  );
-                }
+              if (_viewModel.errorMessage != null && !_viewModel.hasData) {
+                return _StateCard(
+                  title: _viewModel.isUnauthorized
+                      ? 'Sessão expirada'
+                      : 'Não foi possível carregar os relatórios.',
+                  message: _viewModel.errorMessage!,
+                  actionLabel: 'Tentar novamente',
+                  onAction: _viewModel.load,
+                );
+              }
 
-                final snapshot = _viewModel.snapshot;
-                if (snapshot == null) {
-                  return const SizedBox.shrink();
-                }
+              final snapshot = _viewModel.snapshot;
+              if (snapshot == null) {
+                return const SizedBox.shrink();
+              }
 
-                return RefreshIndicator(
-                  onRefresh: _viewModel.load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      _ReportsHeroCard(
-                        referenceMonth: _viewModel.referenceMonth,
-                        comparePrevious: _viewModel.comparePrevious,
-                        isLoading: _viewModel.isLoading,
-                        onPreviousMonth: _viewModel.goToPreviousMonth,
-                        onNextMonth: _viewModel.goToNextMonth,
-                        onCompareChanged: _viewModel.setComparePrevious,
-                      ),
-                      if (_viewModel.errorMessage != null) ...[
-                        const SizedBox(height: 16),
-                        _InlineMessageCard(
-                          title: 'Falha ao atualizar',
-                          message: _viewModel.errorMessage!,
-                        ),
-                      ],
+              return RefreshIndicator(
+                onRefresh: _viewModel.load,
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    _ReportsHeroCard(
+                      referenceMonth: _viewModel.referenceMonth,
+                      comparePrevious: _viewModel.comparePrevious,
+                      isLoading: _viewModel.isLoading,
+                      onPreviousMonth: _viewModel.goToPreviousMonth,
+                      onNextMonth: _viewModel.goToNextMonth,
+                      onCompareChanged: _viewModel.setComparePrevious,
+                    ),
+                    if (_viewModel.errorMessage != null) ...[
                       const SizedBox(height: 16),
-                      _KpiGrid(snapshot: snapshot),
-                      if (!snapshot.summary.hasData) ...[
-                        const SizedBox(height: 16),
-                        const _InlineMessageCard(
-                          title: 'Período sem dados',
-                          message:
-                              'Não há despesas registradas no mês selecionado. Ajuste o período para liberar a leitura completa.',
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isWide = constraints.maxWidth >= 980;
-                          if (!isWide) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _PrimaryReportsColumn(snapshot: snapshot),
-                                const SizedBox(height: 16),
-                                _SecondaryReportsColumn(snapshot: snapshot),
-                              ],
-                            );
-                          }
-
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 5,
-                                child: _PrimaryReportsColumn(
-                                  snapshot: snapshot,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                flex: 4,
-                                child: _SecondaryReportsColumn(
-                                  snapshot: snapshot,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                      _InlineMessageCard(
+                        title: 'Falha ao atualizar',
+                        message: _viewModel.errorMessage!,
                       ),
                     ],
-                  ),
-                );
-              },
-            ),
+                    const SizedBox(height: 16),
+                    _KpiGrid(snapshot: snapshot),
+                    if (!snapshot.summary.hasData) ...[
+                      const SizedBox(height: 16),
+                      const _InlineMessageCard(
+                        title: 'Período sem dados',
+                        message:
+                            'Não há despesas registradas no mês selecionado. Ajuste o período para liberar a leitura completa.',
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 980;
+                        if (!isWide) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _PrimaryReportsColumn(snapshot: snapshot),
+                              const SizedBox(height: 16),
+                              _SecondaryReportsColumn(snapshot: snapshot),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: _PrimaryReportsColumn(snapshot: snapshot),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 4,
+                              child: _SecondaryReportsColumn(
+                                snapshot: snapshot,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },

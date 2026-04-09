@@ -1,8 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
-import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bill_operational_status.dart';
@@ -177,19 +175,14 @@ class _FixedBillsListScreenState extends State<FixedBillsListScreen> {
       listenable: widget.sessionController,
       builder: (context, _) {
         final user = widget.sessionController.currentUser;
-        final canReviewOperations = user?.role == 'OWNER';
         final theme = Theme.of(context);
 
-        return AppScaffold(
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/fixed-bills',
           title: 'Contas fixas',
           subtitle: user?.name,
-          leading: const RouteBackButton(fallbackRoute: '/'),
-          actions: buildAuthenticatedTopBarActions(
-            context: context,
-            sessionController: widget.sessionController,
-            currentLocation: '/fixed-bills',
-            canReviewOperations: canReviewOperations,
-          ),
+          fallbackRoute: '/',
           body: RefreshIndicator(
             onRefresh: _load,
             child: ListView(

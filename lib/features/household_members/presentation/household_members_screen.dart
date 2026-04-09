@@ -1,6 +1,5 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/features/household_members/domain/create_household_member_input.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_member.dart';
 import 'package:despesas_frontend/features/household_members/domain/household_members_repository.dart';
@@ -83,185 +82,169 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(
-            leading: const RouteBackButton(fallbackRoute: '/expenses'),
-            title: const Text('Membros do espaço'),
-            actions: buildAuthenticatedTopBarActions(
-              context: context,
-              sessionController: widget.sessionController,
-              currentLocation: '/household-members',
-              canReviewOperations:
-                  widget.sessionController.currentUser?.role == 'OWNER',
-            ),
-          ),
-          body: SafeArea(
-            top: false,
-            child: RefreshIndicator(
-              onRefresh: _viewModel.load,
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/household-members',
+          title: 'Membros do espaço',
+          fallbackRoute: '/',
+          body: RefreshIndicator(
+            onRefresh: _viewModel.load,
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Fluxo mínimo multiusuário',
+                          style: theme.textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'O responsável pode adicionar um novo login ao espaço atual. A nova pessoa entra pela mesma tela de login do produto.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF65727B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Form(
+                      key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Fluxo mínimo multiusuário',
-                            style: theme.textTheme.titleLarge,
+                            'Adicionar membro',
+                            style: theme.textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'O responsável pode adicionar um novo login ao espaço atual. A nova pessoa entra pela mesma tela de login do produto.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: const Color(0xFF65727B),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            key: const ValueKey('household-member-name-field'),
+                            controller: _nameController,
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
+                              labelText: 'Nome',
+                              errorText: _viewModel.fieldError('name'),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Informe o nome.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            key: const ValueKey('household-member-email-field'),
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
+                              labelText: 'E-mail',
+                              errorText: _viewModel.fieldError('email'),
+                            ),
+                            validator: (value) {
+                              final trimmed = value?.trim() ?? '';
+                              if (trimmed.isEmpty || !trimmed.contains('@')) {
+                                return 'Informe um e-mail válido.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            key: const ValueKey(
+                              'household-member-password-field',
+                            ),
+                            controller: _passwordController,
+                            obscureText: true,
+                            textInputAction: TextInputAction.done,
+                            decoration: InputDecoration(
+                              labelText: 'Senha inicial',
+                              errorText: _viewModel.fieldError('password'),
+                            ),
+                            onFieldSubmitted: (_) => _submit(),
+                            validator: (value) {
+                              if (value == null || value.length < 6) {
+                                return 'A senha deve ter ao menos 6 caracteres.';
+                              }
+                              return null;
+                            },
+                          ),
+                          if (_viewModel.submitErrorMessage != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              _viewModel.submitErrorMessage!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          FilledButton.icon(
+                            key: const ValueKey(
+                              'household-member-submit-button',
+                            ),
+                            onPressed: _viewModel.isSubmitting ? null : _submit,
+                            icon: _viewModel.isSubmitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.person_add_alt_1),
+                            label: Text(
+                              _viewModel.isSubmitting
+                                  ? 'Adicionando...'
+                                  : 'Adicionar membro',
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Adicionar membro',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              key: const ValueKey(
-                                'household-member-name-field',
-                              ),
-                              controller: _nameController,
-                              textInputAction: TextInputAction.next,
-                              decoration: InputDecoration(
-                                labelText: 'Nome',
-                                errorText: _viewModel.fieldError('name'),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Informe o nome.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              key: const ValueKey(
-                                'household-member-email-field',
-                              ),
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              decoration: InputDecoration(
-                                labelText: 'E-mail',
-                                errorText: _viewModel.fieldError('email'),
-                              ),
-                              validator: (value) {
-                                final trimmed = value?.trim() ?? '';
-                                if (trimmed.isEmpty || !trimmed.contains('@')) {
-                                  return 'Informe um e-mail válido.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              key: const ValueKey(
-                                'household-member-password-field',
-                              ),
-                              controller: _passwordController,
-                              obscureText: true,
-                              textInputAction: TextInputAction.done,
-                              decoration: InputDecoration(
-                                labelText: 'Senha inicial',
-                                errorText: _viewModel.fieldError('password'),
-                              ),
-                              onFieldSubmitted: (_) => _submit(),
-                              validator: (value) {
-                                if (value == null || value.length < 6) {
-                                  return 'A senha deve ter ao menos 6 caracteres.';
-                                }
-                                return null;
-                              },
-                            ),
-                            if (_viewModel.submitErrorMessage != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                _viewModel.submitErrorMessage!,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.error,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            FilledButton.icon(
-                              key: const ValueKey(
-                                'household-member-submit-button',
-                              ),
-                              onPressed: _viewModel.isSubmitting
-                                  ? null
-                                  : _submit,
-                              icon: _viewModel.isSubmitting
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.person_add_alt_1),
-                              label: Text(
-                                _viewModel.isSubmitting
-                                    ? 'Adicionando...'
-                                    : 'Adicionar membro',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 16),
+                if (_viewModel.isLoading) ...[
+                  const SizedBox(height: 120),
+                  const Center(child: CircularProgressIndicator()),
+                ] else if (_viewModel.loadErrorMessage != null) ...[
+                  _StateCard(
+                    title: _viewModel.isForbidden
+                        ? 'Acesso restrito aos responsáveis'
+                        : _viewModel.isUnauthorized
+                        ? 'Sessão expirada'
+                        : 'Não foi possível carregar os membros.',
+                    message: _viewModel.loadErrorMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: _viewModel.load,
                   ),
+                ] else if (_viewModel.isEmpty) ...[
+                  const _StateCard(
+                    title: 'Nenhum membro encontrado',
+                    message:
+                        'O espaço atual ainda não possui membros listados.',
+                  ),
+                ] else ...[
+                  Text('Membros atuais', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 16),
-                  if (_viewModel.isLoading) ...[
-                    const SizedBox(height: 120),
-                    const Center(child: CircularProgressIndicator()),
-                  ] else if (_viewModel.loadErrorMessage != null) ...[
-                    _StateCard(
-                      title: _viewModel.isForbidden
-                          ? 'Acesso restrito aos responsáveis'
-                          : _viewModel.isUnauthorized
-                          ? 'Sessão expirada'
-                          : 'Não foi possível carregar os membros.',
-                      message: _viewModel.loadErrorMessage!,
-                      actionLabel: 'Tentar novamente',
-                      onAction: _viewModel.load,
-                    ),
-                  ] else if (_viewModel.isEmpty) ...[
-                    const _StateCard(
-                      title: 'Nenhum membro encontrado',
-                      message:
-                          'O espaço atual ainda não possui membros listados.',
-                    ),
-                  ] else ...[
-                    Text('Membros atuais', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 16),
-                    for (final member in _viewModel.members) ...[
-                      _HouseholdMemberCard(member: member),
-                      const SizedBox(height: 12),
-                    ],
+                  for (final member in _viewModel.members) ...[
+                    _HouseholdMemberCard(member: member),
+                    const SizedBox(height: 12),
                   ],
                 ],
-              ),
+              ],
             ),
           ),
         );

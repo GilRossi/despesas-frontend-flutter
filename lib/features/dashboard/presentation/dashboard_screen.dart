@@ -1,7 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
-import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
@@ -70,18 +69,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final firstName = _firstName(widget.sessionController.currentUser?.name);
     final showFirstUseCard = widget.sessionController.requiresOnboarding;
 
-    return AppScaffold(
+    return AuthenticatedShellScaffold(
+      sessionController: widget.sessionController,
+      currentLocation: '/',
       title: 'Dashboard',
       subtitle: firstName == null
           ? 'O que merece sua atenção hoje'
           : '$firstName, aqui está o que merece sua atenção hoje',
-      actions: buildAuthenticatedTopBarActions(
-        context: context,
-        sessionController: widget.sessionController,
-        currentLocation: '/',
-        canReviewOperations:
-            widget.sessionController.currentUser?.role == 'OWNER',
-      ),
       body: FutureBuilder<DashboardSummary>(
         future: _future,
         builder: (context, snapshot) {

@@ -1,5 +1,7 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
 import 'package:despesas_frontend/features/expenses/domain/expense_detail.dart';
@@ -18,11 +20,13 @@ class ExpenseDetailScreen extends StatefulWidget {
     super.key,
     required this.expenseId,
     required this.expensesRepository,
+    this.sessionController,
     this.spaceReferencesRepository,
   });
 
   final int expenseId;
   final ExpensesRepository expensesRepository;
+  final SessionController? sessionController;
   final SpaceReferencesRepository? spaceReferencesRepository;
 
   @override
@@ -51,15 +55,15 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
   void _close() {
     try {
-      final navigator = Navigator.maybeOf(context);
-      if (navigator != null && navigator.canPop()) {
-        navigator.pop(_resultOnClose);
-        return;
-      }
+      context.go('/');
+      return;
     } catch (_) {}
 
     try {
-      context.go('/expenses');
+      final navigator = Navigator.maybeOf(context);
+      if (navigator != null && navigator.canPop()) {
+        navigator.pop(_resultOnClose);
+      }
     } catch (_) {}
   }
 
@@ -68,6 +72,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       MaterialPageRoute(
         builder: (_) => ExpenseFormScreen(
           expensesRepository: widget.expensesRepository,
+          sessionController: widget.sessionController,
           spaceReferencesRepository: widget.spaceReferencesRepository,
           initialExpense: expense,
         ),
@@ -223,95 +228,95 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope<Object?>(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          _close();
-        }
-      },
-      child: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          final expense = _viewModel.expense;
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        final expense = _viewModel.expense;
 
-          return Scaffold(
+        final actions = <Widget>[
+          if (expense != null && !_viewModel.isLoading) ...[
+            IconButton(
+              tooltip: 'Editar',
+              onPressed: _isDeleting ? null : () => _openEditExpense(expense),
+              icon: const Icon(Icons.edit_outlined),
+            ),
+            IconButton(
+              tooltip: 'Excluir',
+              onPressed: _isDeleting ? null : () => _confirmDelete(expense),
+              icon: _isDeleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_outline),
+            ),
+          ],
+        ];
+
+        Widget content;
+        if (_viewModel.isLoading) {
+          content = const Center(child: CircularProgressIndicator());
+        } else if (_viewModel.isNotFound) {
+          content = _DetailStateCard(
+            title: 'Despesa não encontrada',
+            message:
+                'Esse lançamento pode ter sido removido ou não pertence ao espaço atual.',
+            primaryActionLabel: 'Voltar às despesas',
+            onPrimaryAction: _close,
+          );
+        } else if (_viewModel.hasError) {
+          content = _DetailStateCard(
+            title: 'Não foi possível carregar a despesa.',
+            message: _viewModel.errorMessage!,
+            primaryActionLabel: 'Tentar novamente',
+            onPrimaryAction: _viewModel.load,
+            secondaryActionLabel: 'Voltar às despesas',
+            onSecondaryAction: _close,
+          );
+        } else if (expense == null) {
+          content = const SizedBox.shrink();
+        } else {
+          content = _DetailContent(
+            expense: expense,
+            showPaymentForm: expense.remainingAmount > 0,
+            isSubmittingPayment: _viewModel.isSubmittingPayment,
+            removingPaymentId: _viewModel.removingPaymentId,
+            paymentErrorMessage: _viewModel.paymentErrorMessage,
+            onSubmitPayment: _handleSubmitPayment,
+            onDeletePayment: _confirmDeletePayment,
+          );
+        }
+
+        if (widget.sessionController != null) {
+          return AuthenticatedShellScaffold(
+            sessionController: widget.sessionController!,
+            currentLocation: '/expenses/${widget.expenseId}',
+            title: 'Detalhe da despesa',
+            fallbackRoute: '/',
+            fallbackResultProvider: () => _resultOnClose,
+            extraActions: actions,
+            body: content,
+          );
+        }
+
+        return PopScope<Object?>(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) {
+              _close();
+            }
+          },
+          child: Scaffold(
             appBar: AppBar(
               leading: BackButton(onPressed: _close),
               title: const Text('Detalhe da despesa'),
-              actions: [
-                if (expense != null && !_viewModel.isLoading) ...[
-                  IconButton(
-                    tooltip: 'Editar',
-                    onPressed: _isDeleting
-                        ? null
-                        : () => _openEditExpense(expense),
-                    icon: const Icon(Icons.edit_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Excluir',
-                    onPressed: _isDeleting
-                        ? null
-                        : () => _confirmDelete(expense),
-                    icon: _isDeleting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.delete_outline),
-                  ),
-                ],
-              ],
+              actions: actions,
             ),
-            body: SafeArea(
-              top: false,
-              child: Builder(
-                builder: (context) {
-                  if (_viewModel.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (_viewModel.isNotFound) {
-                    return _DetailStateCard(
-                      title: 'Despesa não encontrada',
-                      message:
-                          'Esse lançamento pode ter sido removido ou não pertence ao espaço atual.',
-                      primaryActionLabel: 'Voltar às despesas',
-                      onPrimaryAction: _close,
-                    );
-                  }
-
-                  if (_viewModel.hasError) {
-                    return _DetailStateCard(
-                      title: 'Não foi possível carregar a despesa.',
-                      message: _viewModel.errorMessage!,
-                      primaryActionLabel: 'Tentar novamente',
-                      onPrimaryAction: _viewModel.load,
-                      secondaryActionLabel: 'Voltar às despesas',
-                      onSecondaryAction: _close,
-                    );
-                  }
-
-                  if (expense == null) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return _DetailContent(
-                    expense: expense,
-                    showPaymentForm: expense.remainingAmount > 0,
-                    isSubmittingPayment: _viewModel.isSubmittingPayment,
-                    removingPaymentId: _viewModel.removingPaymentId,
-                    paymentErrorMessage: _viewModel.paymentErrorMessage,
-                    onSubmitPayment: _handleSubmitPayment,
-                    onDeletePayment: _confirmDeletePayment,
-                  );
-                },
-              ),
-            ),
-          );
-        },
-      ),
+            body: SafeArea(top: false, child: content),
+          ),
+        );
+      },
     );
   }
 }

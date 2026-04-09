@@ -202,12 +202,14 @@ GoRouter createAppRouter({
             builder: (context, state) => IncomeFormScreen(
               incomesRepository: incomesRepository,
               spaceReferencesRepository: spaceReferencesRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(
             path: '/space/references',
             builder: (context, state) => SpaceReferencesScreen(
               spaceReferencesRepository: spaceReferencesRepository,
+              sessionController: sessionController,
             ),
           ),
           GoRoute(
@@ -228,6 +230,7 @@ GoRouter createAppRouter({
             path: '/expenses/new',
             builder: (context, state) => ExpenseFormScreen(
               expensesRepository: expensesRepository,
+              sessionController: sessionController,
               spaceReferencesRepository: spaceReferencesRepository,
               standalone: true,
             ),
@@ -248,6 +251,7 @@ GoRouter createAppRouter({
               return ExpensePaymentScreen(
                 expenseId: expenseId,
                 expensesRepository: expensesRepository,
+                sessionController: sessionController,
               );
             },
           ),
@@ -268,6 +272,7 @@ GoRouter createAppRouter({
               return ExpenseDetailScreen(
                 expenseId: expenseId,
                 expensesRepository: expensesRepository,
+                sessionController: sessionController,
                 spaceReferencesRepository: spaceReferencesRepository,
               );
             },

@@ -1,7 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_conversation_entry.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
@@ -113,152 +112,135 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return RoutePopScope<Object?>(
+        return AuthenticatedShellScaffold(
+          sessionController: widget.sessionController,
+          currentLocation: '/assistant',
+          title: 'Assistente financeiro',
           fallbackRoute: '/',
-          child: Scaffold(
-            appBar: AppBar(
-              leading: const RouteBackButton(fallbackRoute: '/'),
-              title: const Text('Assistente financeiro'),
-              actions: buildAuthenticatedTopBarActions(
-                context: context,
-                sessionController: widget.sessionController,
-                currentLocation: '/assistant',
-                canReviewOperations:
-                    widget.sessionController.currentUser?.role == 'OWNER',
-              ),
-            ),
-            body: SafeArea(
-              top: false,
-              child: ResponsiveScrollBody(
-                controller: _scrollController,
-                maxWidth: 1180,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.fromLTRB(
-                  20,
-                  20,
-                  20,
-                  20 + MediaQuery.viewInsetsOf(context).bottom,
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            20 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          body: ResponsiveScrollBody(
+            controller: _scrollController,
+            maxWidth: 1180,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _HeroCard(
+                  firstName: _viewModel.firstName,
+                  referenceMonth: _viewModel.referenceMonth,
+                  isLoading: _viewModel.isLoading,
+                  isTourVisible: _viewModel.isTourVisible,
+                  showWelcome: _viewModel.showWelcome,
+                  onPreviousMonth: _viewModel.goToPreviousMonth,
+                  onNextMonth: _viewModel.goToNextMonth,
+                  onReopenTour: _viewModel.reopenTour,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _HeroCard(
-                      firstName: _viewModel.firstName,
-                      referenceMonth: _viewModel.referenceMonth,
-                      isLoading: _viewModel.isLoading,
-                      isTourVisible: _viewModel.isTourVisible,
-                      showWelcome: _viewModel.showWelcome,
-                      onPreviousMonth: _viewModel.goToPreviousMonth,
-                      onNextMonth: _viewModel.goToNextMonth,
-                      onReopenTour: _viewModel.reopenTour,
+                const SizedBox(height: 16),
+                if (_viewModel.isTourVisible) ...[
+                  _TourCard(
+                    firstName: _viewModel.firstName,
+                    isCompletingOnboarding: _viewModel.isCompletingOnboarding,
+                    onDismiss: _viewModel.dismissTour,
+                    onComplete: _viewModel.completeOnboarding,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (_viewModel.onboardingErrorMessage != null) ...[
+                  _InlineErrorCard(
+                    title: 'Nao foi possivel concluir a apresentacao.',
+                    message: _viewModel.onboardingErrorMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: _viewModel.completeOnboarding,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (_viewModel.showOfficialStarterState) ...[
+                  _OfficialStarterStateCard(
+                    isLoading: _viewModel.isStarterLoading,
+                    reply: _viewModel.starterReply,
+                    options: _viewModel.starterOptions,
+                    onSelectStarterIntent: _viewModel.selectStarterIntent,
+                    onPrimaryActionRequested:
+                        widget.onStarterPrimaryActionRequested,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (_viewModel.starterErrorMessage != null) ...[
+                  _InlineErrorCard(
+                    title: _viewModel.isUnauthorized
+                        ? 'Sessao expirada'
+                        : 'Nao foi possivel preparar essa proxima etapa.',
+                    message: _viewModel.starterErrorMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: _viewModel.retryStarterIntent,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                _QuestionComposer(
+                  formKey: _formKey,
+                  controller: _questionController,
+                  isLoading: _viewModel.isLoading,
+                  onSubmit: _submit,
+                ),
+                const SizedBox(height: 16),
+                if (_viewModel.errorMessage != null) ...[
+                  _InlineErrorCard(
+                    title: _viewModel.isUnauthorized
+                        ? 'Sessao expirada'
+                        : 'Nao foi possivel consultar o assistente.',
+                    message: _viewModel.errorMessage!,
+                    actionLabel: _viewModel.hasConversation
+                        ? 'Tentar novamente'
+                        : 'Reenviar ultima pergunta',
+                    onAction: _viewModel.retryLastQuestion,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (_viewModel.isLoading) ...[
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              'Consultando o backend do assistente financeiro no household atual...',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (_viewModel.hasConversation)
+                  for (
+                    var index = 0;
+                    index < _viewModel.entries.length;
+                    index++
+                  ) ...[
+                    KeyedSubtree(
+                      key: index == _viewModel.entries.length - 1
+                          ? _latestEntryKey
+                          : null,
+                      child: _ConversationEntryCard(
+                        entry: _viewModel.entries[index],
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    if (_viewModel.isTourVisible) ...[
-                      _TourCard(
-                        firstName: _viewModel.firstName,
-                        isCompletingOnboarding:
-                            _viewModel.isCompletingOnboarding,
-                        onDismiss: _viewModel.dismissTour,
-                        onComplete: _viewModel.completeOnboarding,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_viewModel.onboardingErrorMessage != null) ...[
-                      _InlineErrorCard(
-                        title: 'Nao foi possivel concluir a apresentacao.',
-                        message: _viewModel.onboardingErrorMessage!,
-                        actionLabel: 'Tentar novamente',
-                        onAction: _viewModel.completeOnboarding,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_viewModel.showOfficialStarterState) ...[
-                      _OfficialStarterStateCard(
-                        isLoading: _viewModel.isStarterLoading,
-                        reply: _viewModel.starterReply,
-                        options: _viewModel.starterOptions,
-                        onSelectStarterIntent: _viewModel.selectStarterIntent,
-                        onPrimaryActionRequested:
-                            widget.onStarterPrimaryActionRequested,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_viewModel.starterErrorMessage != null) ...[
-                      _InlineErrorCard(
-                        title: _viewModel.isUnauthorized
-                            ? 'Sessao expirada'
-                            : 'Nao foi possivel preparar essa proxima etapa.',
-                        message: _viewModel.starterErrorMessage!,
-                        actionLabel: 'Tentar novamente',
-                        onAction: _viewModel.retryStarterIntent,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    _QuestionComposer(
-                      formKey: _formKey,
-                      controller: _questionController,
-                      isLoading: _viewModel.isLoading,
-                      onSubmit: _submit,
-                    ),
-                    const SizedBox(height: 16),
-                    if (_viewModel.errorMessage != null) ...[
-                      _InlineErrorCard(
-                        title: _viewModel.isUnauthorized
-                            ? 'Sessao expirada'
-                            : 'Nao foi possivel consultar o assistente.',
-                        message: _viewModel.errorMessage!,
-                        actionLabel: _viewModel.hasConversation
-                            ? 'Tentar novamente'
-                            : 'Reenviar ultima pergunta',
-                        onAction: _viewModel.retryLastQuestion,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_viewModel.isLoading) ...[
-                      const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  'Consultando o backend do assistente financeiro no household atual...',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    if (_viewModel.hasConversation)
-                      for (
-                        var index = 0;
-                        index < _viewModel.entries.length;
-                        index++
-                      ) ...[
-                        KeyedSubtree(
-                          key: index == _viewModel.entries.length - 1
-                              ? _latestEntryKey
-                              : null,
-                          child: _ConversationEntryCard(
-                            entry: _viewModel.entries[index],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
                   ],
-                ),
-              ),
+              ],
             ),
           ),
         );

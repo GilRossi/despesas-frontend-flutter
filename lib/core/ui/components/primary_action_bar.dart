@@ -14,15 +14,22 @@ class PrimaryActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: alignment,
-      children: [
-        if (secondary != null) ...[
-          secondary!,
-          const SizedBox(width: 12),
-        ],
-        primary,
-      ],
+    return Wrap(
+      alignment: _wrapAlignment(alignment),
+      spacing: 12,
+      runSpacing: 12,
+      children: [?secondary, primary],
     );
+  }
+
+  WrapAlignment _wrapAlignment(MainAxisAlignment value) {
+    return switch (value) {
+      MainAxisAlignment.start => WrapAlignment.start,
+      MainAxisAlignment.center => WrapAlignment.center,
+      MainAxisAlignment.end => WrapAlignment.end,
+      MainAxisAlignment.spaceBetween => WrapAlignment.spaceBetween,
+      MainAxisAlignment.spaceAround => WrapAlignment.spaceAround,
+      MainAxisAlignment.spaceEvenly => WrapAlignment.spaceEvenly,
+    };
   }
 }

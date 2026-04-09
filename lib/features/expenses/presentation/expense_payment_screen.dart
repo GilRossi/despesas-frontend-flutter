@@ -1,5 +1,7 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/ui/components/app_scaffold.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/create_expense_payment_input.dart';
@@ -15,10 +17,12 @@ class ExpensePaymentScreen extends StatefulWidget {
     super.key,
     required this.expenseId,
     required this.expensesRepository,
+    this.sessionController,
   });
 
   final int expenseId;
   final ExpensesRepository expensesRepository;
+  final SessionController? sessionController;
 
   @override
   State<ExpensePaymentScreen> createState() => _ExpensePaymentScreenState();
@@ -80,97 +84,110 @@ class _ExpensePaymentScreenState extends State<ExpensePaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final body = ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        final successState = _successState;
+        if (successState != null) {
+          return _ExpensePaymentSuccessView(
+            successState: successState,
+            onOpenExpenses: _openExpenses,
+            onOpenDashboard: _openDashboard,
+          );
+        }
+
+        if (_viewModel.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (_viewModel.isNotFound) {
+          return _PaymentStateCard(
+            title: 'Despesa não encontrada',
+            message:
+                'Não foi possível abrir este pagamento porque a despesa não existe ou não pertence ao espaço atual.',
+            primaryActionLabel: 'Ver despesas',
+            onPrimaryAction: _openExpenses,
+            secondaryActionLabel: 'Voltar ao dashboard',
+            onSecondaryAction: _openDashboard,
+          );
+        }
+
+        if (_viewModel.hasError) {
+          return _PaymentStateCard(
+            title: 'Não foi possível abrir o fluxo de pagamento.',
+            message: _viewModel.errorMessage!,
+            primaryActionLabel: 'Tentar novamente',
+            onPrimaryAction: _reload,
+            secondaryActionLabel: 'Voltar ao dashboard',
+            onSecondaryAction: _openDashboard,
+          );
+        }
+
+        final expense = _viewModel.expense;
+        if (expense == null) {
+          return const SizedBox.shrink();
+        }
+
+        if (expense.remainingAmount <= 0) {
+          return ResponsiveScrollBody(
+            maxWidth: 720,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ExpensePaymentSummaryCard(expense: expense),
+                const SizedBox(height: 16),
+                _PaymentStateCard(
+                  title: 'Despesa já quitada',
+                  message:
+                      'Não existe saldo pendente para registrar. Se precisar, acompanhe o histórico em Despesas.',
+                  primaryActionLabel: 'Ver despesas',
+                  onPrimaryAction: _openExpenses,
+                  secondaryActionLabel: 'Voltar ao dashboard',
+                  onSecondaryAction: _openDashboard,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ResponsiveScrollBody(
+          maxWidth: 720,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ExpensePaymentSummaryCard(expense: expense),
+              const SizedBox(height: 16),
+              ExpensePaymentFormCard(
+                expense: expense,
+                isSubmitting: _viewModel.isSubmittingPayment,
+                errorMessage: _viewModel.paymentErrorMessage,
+                onSubmit: _handleSubmit,
+                title: 'Confirmar pagamento',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (widget.sessionController != null) {
+      return AuthenticatedShellScaffold(
+        sessionController: widget.sessionController!,
+        currentLocation: '/expenses/${widget.expenseId}/pay',
+        title: 'Registrar pagamento',
+        subtitle: 'Quitar uma despesa existente com rapidez',
+        fallbackRoute: '/',
+        body: body,
+      );
+    }
+
     return RoutePopScope<Object?>(
-      fallbackRoute: '/expenses',
+      fallbackRoute: '/',
       child: AppScaffold(
         title: 'Registrar pagamento',
         subtitle: 'Quitar uma despesa existente com rapidez',
-        leading: const RouteBackButton(fallbackRoute: '/expenses'),
-        body: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            final successState = _successState;
-            if (successState != null) {
-              return _ExpensePaymentSuccessView(
-                successState: successState,
-                onOpenExpenses: _openExpenses,
-                onOpenDashboard: _openDashboard,
-              );
-            }
-
-            if (_viewModel.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (_viewModel.isNotFound) {
-              return _PaymentStateCard(
-                title: 'Despesa não encontrada',
-                message:
-                    'Não foi possível abrir este pagamento porque a despesa não existe ou não pertence ao espaço atual.',
-                primaryActionLabel: 'Ver despesas',
-                onPrimaryAction: _openExpenses,
-                secondaryActionLabel: 'Voltar ao dashboard',
-                onSecondaryAction: _openDashboard,
-              );
-            }
-
-            if (_viewModel.hasError) {
-              return _PaymentStateCard(
-                title: 'Não foi possível abrir o fluxo de pagamento.',
-                message: _viewModel.errorMessage!,
-                primaryActionLabel: 'Tentar novamente',
-                onPrimaryAction: _reload,
-                secondaryActionLabel: 'Voltar ao dashboard',
-                onSecondaryAction: _openDashboard,
-              );
-            }
-
-            final expense = _viewModel.expense;
-            if (expense == null) {
-              return const SizedBox.shrink();
-            }
-
-            if (expense.remainingAmount <= 0) {
-              return ResponsiveScrollBody(
-                maxWidth: 720,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ExpensePaymentSummaryCard(expense: expense),
-                    const SizedBox(height: 16),
-                    _PaymentStateCard(
-                      title: 'Despesa já quitada',
-                      message:
-                          'Não existe saldo pendente para registrar. Se precisar, acompanhe o histórico em Despesas.',
-                      primaryActionLabel: 'Ver despesas',
-                      onPrimaryAction: _openExpenses,
-                      secondaryActionLabel: 'Voltar ao dashboard',
-                      onSecondaryAction: _openDashboard,
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return ResponsiveScrollBody(
-              maxWidth: 720,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ExpensePaymentSummaryCard(expense: expense),
-                  const SizedBox(height: 16),
-                  ExpensePaymentFormCard(
-                    expense: expense,
-                    isSubmitting: _viewModel.isSubmittingPayment,
-                    errorMessage: _viewModel.paymentErrorMessage,
-                    onSubmit: _handleSubmit,
-                    title: 'Confirmar pagamento',
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+        leading: const RouteBackButton(fallbackRoute: '/'),
+        body: body,
       ),
     );
   }

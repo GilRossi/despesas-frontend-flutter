@@ -1,9 +1,8 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
-import 'package:despesas_frontend/core/ui/components/authenticated_top_bar_actions.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
-import 'package:despesas_frontend/core/ui/components/route_back_button.dart';
 import 'package:despesas_frontend/core/ui/components/summary_header.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/expenses/domain/catalog_option.dart';
@@ -266,48 +265,32 @@ class _HistoryImportFormScreenState extends State<HistoryImportFormScreen> {
   Widget build(BuildContext context) {
     final keyboardBottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const RouteBackButton(fallbackRoute: '/expenses/new'),
-        title: const Text('Trazer meu histórico'),
-        actions: buildAuthenticatedTopBarActions(
-          context: context,
-          sessionController: widget.sessionController,
-          currentLocation: '/history/import',
-          canReviewOperations:
-              widget.sessionController.currentUser?.role == 'OWNER',
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            return ResponsiveScrollBody(
-              maxWidth: 920,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                20 + keyboardBottomInset,
-              ),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _HeroCard(step: _step),
-                  const SizedBox(height: 16),
-                  if (_step == _HistoryImportFlowStep.collect)
-                    _buildCollectStep(),
-                  if (_step == _HistoryImportFlowStep.review)
-                    _buildReviewStep(),
-                  if (_step == _HistoryImportFlowStep.success)
-                    _buildSuccessStep(),
-                ],
-              ),
-            );
-          },
-        ),
+    return AuthenticatedShellScaffold(
+      sessionController: widget.sessionController,
+      currentLocation: '/history/import',
+      title: 'Trazer meu histórico',
+      fallbackRoute: '/',
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + keyboardBottomInset),
+      body: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) {
+          return ResponsiveScrollBody(
+            maxWidth: 920,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _HeroCard(step: _step),
+                const SizedBox(height: 16),
+                if (_step == _HistoryImportFlowStep.collect)
+                  _buildCollectStep(),
+                if (_step == _HistoryImportFlowStep.review) _buildReviewStep(),
+                if (_step == _HistoryImportFlowStep.success)
+                  _buildSuccessStep(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

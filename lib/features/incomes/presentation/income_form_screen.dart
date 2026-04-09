@@ -1,4 +1,6 @@
+import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
+import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/draft_review_panel.dart';
 import 'package:despesas_frontend/core/ui/components/primary_action_bar.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
@@ -21,10 +23,12 @@ class IncomeFormScreen extends StatefulWidget {
     super.key,
     required this.incomesRepository,
     required this.spaceReferencesRepository,
+    this.sessionController,
   });
 
   final IncomesRepository incomesRepository;
   final SpaceReferencesRepository spaceReferencesRepository;
+  final SessionController? sessionController;
 
   @override
   State<IncomeFormScreen> createState() => _IncomeFormScreenState();
@@ -165,40 +169,43 @@ class _IncomeFormScreenState extends State<IncomeFormScreen> {
   @override
   Widget build(BuildContext context) {
     final keyboardBottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final body = ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return ResponsiveScrollBody(
+          maxWidth: 860,
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + keyboardBottomInset),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _HeroCard(step: _step),
+              const SizedBox(height: 16),
+              if (_step == _IncomeFlowStep.collect) _buildCollectStep(),
+              if (_step == _IncomeFlowStep.review) _buildReviewStep(),
+              if (_step == _IncomeFlowStep.success) _buildSuccessStep(),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (widget.sessionController != null) {
+      return AuthenticatedShellScaffold(
+        sessionController: widget.sessionController!,
+        currentLocation: '/incomes/new',
+        title: 'Cadastrar meus ganhos',
+        fallbackRoute: '/',
+        body: body,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        leading: const RouteBackButton(fallbackRoute: '/assistant'),
+        leading: const RouteBackButton(fallbackRoute: '/'),
         title: const Text('Cadastrar meus ganhos'),
       ),
-      body: SafeArea(
-        top: false,
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            return ResponsiveScrollBody(
-              maxWidth: 860,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                20 + keyboardBottomInset,
-              ),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _HeroCard(step: _step),
-                  const SizedBox(height: 16),
-                  if (_step == _IncomeFlowStep.collect) _buildCollectStep(),
-                  if (_step == _IncomeFlowStep.review) _buildReviewStep(),
-                  if (_step == _IncomeFlowStep.success) _buildSuccessStep(),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+      body: SafeArea(top: false, child: body),
     );
   }
 
