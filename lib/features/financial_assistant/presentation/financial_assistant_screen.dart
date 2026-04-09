@@ -131,11 +131,9 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _HeroCard(
-                  firstName: _viewModel.firstName,
                   referenceMonth: _viewModel.referenceMonth,
                   isLoading: _viewModel.isLoading,
                   isTourVisible: _viewModel.isTourVisible,
-                  showWelcome: _viewModel.showWelcome,
                   onPreviousMonth: _viewModel.goToPreviousMonth,
                   onNextMonth: _viewModel.goToNextMonth,
                   onReopenTour: _viewModel.reopenTour,
@@ -143,7 +141,6 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                 const SizedBox(height: 16),
                 if (_viewModel.isTourVisible) ...[
                   _TourCard(
-                    firstName: _viewModel.firstName,
                     isCompletingOnboarding: _viewModel.isCompletingOnboarding,
                     onDismiss: _viewModel.dismissTour,
                     onComplete: _viewModel.completeOnboarding,
@@ -152,7 +149,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                 ],
                 if (_viewModel.onboardingErrorMessage != null) ...[
                   _InlineErrorCard(
-                    title: 'Nao foi possivel concluir a apresentacao.',
+                    title: 'Não foi possível concluir o guia',
                     message: _viewModel.onboardingErrorMessage!,
                     actionLabel: 'Tentar novamente',
                     onAction: _viewModel.completeOnboarding,
@@ -173,8 +170,8 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                 if (_viewModel.starterErrorMessage != null) ...[
                   _InlineErrorCard(
                     title: _viewModel.isUnauthorized
-                        ? 'Sessao expirada'
-                        : 'Nao foi possivel preparar essa proxima etapa.',
+                        ? 'Sessão expirada'
+                        : 'Não foi possível preparar essa próxima etapa',
                     message: _viewModel.starterErrorMessage!,
                     actionLabel: 'Tentar novamente',
                     onAction: _viewModel.retryStarterIntent,
@@ -191,12 +188,12 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                 if (_viewModel.errorMessage != null) ...[
                   _InlineErrorCard(
                     title: _viewModel.isUnauthorized
-                        ? 'Sessao expirada'
-                        : 'Nao foi possivel consultar o assistente.',
+                        ? 'Sessão expirada'
+                        : 'Não foi possível consultar o assistente',
                     message: _viewModel.errorMessage!,
                     actionLabel: _viewModel.hasConversation
                         ? 'Tentar novamente'
-                        : 'Reenviar ultima pergunta',
+                        : 'Reenviar última pergunta',
                     onAction: _viewModel.retryLastQuestion,
                   ),
                   const SizedBox(height: 16),
@@ -214,9 +211,7 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
                           ),
                           SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              'Consultando o backend do assistente financeiro no household atual...',
-                            ),
+                            child: Text('Tentando buscar sua resposta...'),
                           ),
                         ],
                       ),
@@ -251,21 +246,17 @@ class _FinancialAssistantScreenState extends State<FinancialAssistantScreen> {
 
 class _HeroCard extends StatelessWidget {
   const _HeroCard({
-    required this.firstName,
     required this.referenceMonth,
     required this.isLoading,
     required this.isTourVisible,
-    required this.showWelcome,
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onReopenTour,
   });
 
-  final String firstName;
   final DateTime referenceMonth;
   final bool isLoading;
   final bool isTourVisible;
-  final bool showWelcome;
   final Future<void> Function() onPreviousMonth;
   final Future<void> Function() onNextMonth;
   final VoidCallback onReopenTour;
@@ -289,16 +280,12 @@ class _HeroCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    showWelcome
-                        ? 'Bem-vindo ao seu Espaco, $firstName'
-                        : 'Assistente financeiro do seu Espaco',
+                    'Assistente financeiro do seu espaço',
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    showWelcome
-                        ? 'Voce chegou no ponto certo para comecar. O assistente te apresenta as primeiras escolhas e continua ao seu lado nas proximas conversas.'
-                        : 'Escolha uma proxima etapa ou pergunte direto sobre gastos, comparacoes e recorrencias. O contexto financeiro continua vindo do backend.',
+                    'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF65727B),
                     ),
@@ -313,7 +300,7 @@ class _HeroCard extends StatelessWidget {
               children: [
                 OutlinedButton(
                   onPressed: isLoading ? null : () => onPreviousMonth(),
-                  child: const Text('Mes anterior'),
+                  child: const Text('Mês anterior'),
                 ),
                 FilledButton.tonal(
                   onPressed: null,
@@ -324,12 +311,12 @@ class _HeroCard extends StatelessWidget {
                   onPressed: isTourVisible ? null : onReopenTour,
                   icon: const Icon(Icons.play_circle_outline),
                   label: Text(
-                    isTourVisible ? 'Tour em andamento' : 'Abrir tour guiado',
+                    isTourVisible ? 'Guia em andamento' : 'Abrir guia rápido',
                   ),
                 ),
                 OutlinedButton(
                   onPressed: isLoading ? null : () => onNextMonth(),
-                  child: const Text('Proximo mes'),
+                  child: const Text('Próximo mês'),
                 ),
               ],
             ),
@@ -342,13 +329,11 @@ class _HeroCard extends StatelessWidget {
 
 class _TourCard extends StatelessWidget {
   const _TourCard({
-    required this.firstName,
     required this.isCompletingOnboarding,
     required this.onDismiss,
     required this.onComplete,
   });
 
-  final String firstName;
   final bool isCompletingOnboarding;
   final VoidCallback onDismiss;
   final Future<void> Function() onComplete;
@@ -365,28 +350,31 @@ class _TourCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Boas-vindas ao Espaco', style: theme.textTheme.titleMedium),
+            Text(
+              'Seja bem-vindo(a) ao seu espaço',
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text(
-              '$firstName, este tour e curto e pratico. A ideia aqui e te mostrar por onde comecar sem te jogar numa tela fria.',
+              'Este guia é curto. Ele mostra por onde começar, sem complicar.',
             ),
             const SizedBox(height: 16),
             const _TourStep(
-              title: '1. Escolha o primeiro passo',
+              title: 'Escolha o primeiro passo',
               message:
-                  'As quatro opcoes abaixo representam os caminhos aprovados para o inicio do seu Espaco.',
+                  'As opções abaixo ajudam você a começar pelo que faz mais sentido agora.',
             ),
             const SizedBox(height: 12),
             const _TourStep(
-              title: '2. O assistente organiza a conversa',
+              title: 'Receba uma orientação curta',
               message:
-                  'Ao tocar em uma opcao, o backend responde com a proxima orientacao estruturada sem executar nenhuma acao real ainda.',
+                  'Ao tocar em uma opção, o assistente mostra o próximo passo. Nada é lançado automaticamente.',
             ),
             const SizedBox(height: 12),
             const _TourStep(
-              title: '3. Depois disso, o fluxo segue normal',
+              title: 'Depois, siga pelo fluxo normal',
               message:
-                  'Quando voce concluir esta apresentacao, os proximos acessos deixam de abrir o tour automaticamente.',
+                  'Quando você concluir este guia, ele não abre sozinho nos próximos acessos.',
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -395,7 +383,7 @@ class _TourCard extends StatelessWidget {
               children: [
                 OutlinedButton(
                   onPressed: isCompletingOnboarding ? null : onDismiss,
-                  child: const Text('Agora nao'),
+                  child: const Text('Agora não'),
                 ),
                 FilledButton.icon(
                   key: const ValueKey('assistant-complete-onboarding-button'),
@@ -407,7 +395,7 @@ class _TourCard extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check_circle_outline),
-                  label: const Text('Concluir apresentacao'),
+                  label: const Text('Concluir guia'),
                 ),
               ],
             ),
@@ -482,12 +470,12 @@ class _OfficialStarterStateCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Comece pelo que faz mais sentido agora',
+              'Escolha por onde quer começar',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Estas quatro opcoes formam o estado oficial de entrada do assistente neste bloco. Escolha uma e eu trago a proxima orientacao sem executar a acao real ainda.',
+              'Escolha uma opção para receber uma orientação curta. Nenhuma ação é feita sem você confirmar.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF65727B),
               ),
@@ -571,15 +559,45 @@ class _StarterReplyCard extends StatelessWidget {
   String? get _primaryActionLabel {
     switch (reply.primaryActionKey) {
       case 'OPEN_IMPORT_HISTORY':
-        return 'Abrir importacao de historico';
+        return 'Abrir importação de histórico';
       case 'OPEN_FIXED_BILLS':
         return 'Abrir cadastro de contas fixas';
       case 'OPEN_REGISTER_INCOME':
         return 'Abrir cadastro de ganhos';
       case 'OPEN_CONFIGURE_SPACE':
-        return 'Abrir referencias do Espaco';
+        return 'Abrir referências do seu espaço';
       default:
         return null;
+    }
+  }
+
+  String get _resolvedTitle {
+    switch (reply.primaryActionKey) {
+      case 'OPEN_FIXED_BILLS':
+        return 'Vamos começar pelas suas contas fixas';
+      case 'OPEN_IMPORT_HISTORY':
+        return 'Vamos trazer seu histórico';
+      case 'OPEN_REGISTER_INCOME':
+        return 'Vamos registrar seus ganhos';
+      case 'OPEN_CONFIGURE_SPACE':
+        return 'Vamos configurar seu espaço';
+      default:
+        return reply.title;
+    }
+  }
+
+  String get _resolvedMessage {
+    switch (reply.primaryActionKey) {
+      case 'OPEN_FIXED_BILLS':
+        return 'Você pode registrar aluguel, internet, energia e outras despesas que se repetem.';
+      case 'OPEN_IMPORT_HISTORY':
+        return 'Se você já organiza sua vida financeira em outro lugar, comece trazendo esse histórico.';
+      case 'OPEN_REGISTER_INCOME':
+        return 'Registrar seus ganhos ajuda a acompanhar entradas e saídas desde o início.';
+      case 'OPEN_CONFIGURE_SPACE':
+        return 'Ajuste seu espaço para refletir sua rotina antes dos próximos lançamentos.';
+      default:
+        return reply.message;
     }
   }
 
@@ -596,19 +614,12 @@ class _StarterReplyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(reply.title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(reply.message),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _MetaChip(label: reply.kind),
-                _MetaChip(label: _formatEnumLabel(reply.intent.apiValue)),
-                _MetaChip(label: _formatEnumLabel(reply.primaryActionKey)),
-              ],
+            Text(
+              _resolvedTitle,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
+            const SizedBox(height: 8),
+            Text(_resolvedMessage),
             if (primaryActionLabel != null &&
                 onPrimaryActionRequested != null) ...[
               const SizedBox(height: 16),
@@ -653,7 +664,7 @@ class _QuestionComposer extends StatelessWidget {
             Text('Pergunte do seu jeito', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'Se preferir, escreva uma pergunta livre. O app envia apenas sua pergunta e o mes de referencia; o restante do contexto vem do backend.',
+              'Se preferir, escreva uma pergunta livre sobre seus gastos, comparações ou recorrências.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF65727B),
               ),
@@ -674,9 +685,9 @@ class _QuestionComposer extends StatelessWidget {
                     textInputAction: TextInputAction.send,
                     onFieldSubmitted: (_) => onSubmit(),
                     decoration: const InputDecoration(
-                      labelText: 'O que voce quer entender?',
+                      labelText: 'O que você quer entender?',
                       hintText:
-                          'Ex.: Como posso economizar este mes sem mexer nas contas essenciais?',
+                          'Ex.: Como posso economizar este mês sem mexer nas contas essenciais?',
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -777,7 +788,7 @@ class _ConversationEntryCard extends StatelessWidget {
                   Text(reply.question, style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 8),
                   Text(
-                    'Mes de referencia: ${_formatMonthLabel(entry.referenceMonth)}',
+                    'Mês de referência: ${_formatMonthLabel(entry.referenceMonth)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF4B5B67),
                     ),
@@ -788,24 +799,16 @@ class _ConversationEntryCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text('Resposta do assistente', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text(reply.answer, style: theme.textTheme.bodyLarge),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _MetaChip(label: 'Modo ${reply.mode}'),
-                _MetaChip(label: _formatEnumLabel(reply.intent)),
-                if (reply.aiUsage != null)
-                  _MetaChip(
-                    label:
-                        '${reply.aiUsage!.model} · ${reply.aiUsage!.totalTokens} tokens',
-                  ),
-              ],
+            Text(
+              _formatAssistantAnswer(reply.answer, entry.referenceMonth),
+              style: theme.textTheme.bodyLarge,
             ),
             if (reply.hasSupportingData) ...[
               const SizedBox(height: 20),
-              Text('Sinais de apoio', style: theme.textTheme.titleSmall),
+              Text(
+                'Dados usados na resposta',
+                style: theme.textTheme.titleSmall,
+              ),
               const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -901,7 +904,7 @@ class _SummarySupportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SupportCard(
-      title: 'Resumo do periodo',
+      title: 'Resumo do período',
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
@@ -919,7 +922,7 @@ class _SummarySupportCard extends StatelessWidget {
             value: formatCurrency(summary.remainingAmount),
           ),
           _SupportMetric(
-            label: 'Lancamentos',
+            label: 'Lançamentos',
             value: '${summary.totalExpenses}',
           ),
         ],
@@ -936,7 +939,7 @@ class _ComparisonSupportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SupportCard(
-      title: 'Comparacao mensal',
+      title: 'Comparação mensal',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -972,7 +975,7 @@ class _CategorySupportCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${formatCurrency(category.totalAmount)} • ${category.sharePercentage.toStringAsFixed(2)}% do periodo',
+            '${formatCurrency(category.totalAmount)} • ${category.sharePercentage.toStringAsFixed(2)}% do período',
           ),
         ],
       ),
@@ -1017,7 +1020,7 @@ class _RecommendationsSupportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SupportCard(
-      title: 'Recomendacoes',
+      title: 'Recomendações',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1055,7 +1058,7 @@ class _IncreaseAlertsSupportCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${alert.deltaPercentage.toStringAsFixed(2)}% vs mes anterior',
+              '${alert.deltaPercentage.toStringAsFixed(2)}% vs mês anterior',
             ),
             const SizedBox(height: 12),
           ],
@@ -1073,7 +1076,7 @@ class _RecurringSupportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SupportCard(
-      title: 'Recorrencias detectadas',
+      title: 'Recorrências detectadas',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1084,7 +1087,7 @@ class _RecurringSupportCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${expense.occurrences} ocorrencias • media ${formatCurrency(expense.averageAmount)}',
+              '${expense.occurrences} ocorrências • média ${formatCurrency(expense.averageAmount)}',
             ),
             const SizedBox(height: 12),
           ],
@@ -1147,26 +1150,11 @@ class _SupportMetric extends StatelessWidget {
   }
 }
 
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
-  }
-}
-
 String _formatMonthLabel(DateTime month) {
   const months = [
     'janeiro',
     'fevereiro',
-    'marco',
+    'março',
     'abril',
     'maio',
     'junho',
@@ -1181,15 +1169,13 @@ String _formatMonthLabel(DateTime month) {
   return '${months[month.month - 1]}/${month.year}';
 }
 
-String _formatEnumLabel(String value) {
-  return value
-      .split('_')
-      .map((part) {
-        if (part.isEmpty) {
-          return part;
-        }
-        final lower = part.toLowerCase();
-        return '${lower[0].toUpperCase()}${lower.substring(1)}';
-      })
-      .join(' ');
+String _formatAssistantAnswer(String answer, DateTime referenceMonth) {
+  final normalized = answer.trim();
+  final noExpensesPattern = RegExp(
+    r'^(Nao|Não) ha despesas registradas em \d{4}-\d{2}\.$',
+  );
+  if (noExpensesPattern.hasMatch(normalized)) {
+    return 'Não há despesas registradas em ${_formatMonthLabel(referenceMonth)}.';
+  }
+  return normalized;
 }

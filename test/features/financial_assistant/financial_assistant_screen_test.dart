@@ -58,12 +58,20 @@ void main() {
       onboarding: const AuthOnboarding(completed: false),
     );
 
-    expect(find.text('Bem-vindo ao seu Espaco, Gil'), findsOneWidget);
+    expect(find.text('Assistente financeiro do seu espaço'), findsOneWidget);
     expect(find.byKey(const ValueKey('assistant-tour-card')), findsOneWidget);
+    expect(find.text('Seja bem-vindo(a) ao seu espaço'), findsOneWidget);
+    expect(
+      find.text(
+        'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Escolha por onde quer começar'), findsOneWidget);
     expect(find.text('Cadastrar minhas contas fixas'), findsOneWidget);
-    expect(find.text('Trazer meu historico'), findsOneWidget);
+    expect(find.text('Trazer meu histórico'), findsOneWidget);
     expect(find.text('Cadastrar meus ganhos'), findsOneWidget);
-    expect(find.text('Configurar meu Espaco'), findsOneWidget);
+    expect(find.text('Configurar meu espaço'), findsOneWidget);
   });
 
   testWidgets('review tour button reopens the local tour', (tester) async {
@@ -124,11 +132,16 @@ void main() {
       find.byKey(const ValueKey('assistant-starter-response-card')),
       findsOneWidget,
     );
-    expect(find.text('Vamos organizar seu historico'), findsOneWidget);
+    expect(find.text('Vamos trazer seu histórico'), findsOneWidget);
     expect(
-      find.text('Primeiro eu vou te orientar sobre o que trazer para ca.'),
+      find.text(
+        'Se você já organiza sua vida financeira em outro lugar, comece trazendo esse histórico.',
+      ),
       findsOneWidget,
     );
+    expect(find.text('STARTER'), findsNothing);
+    expect(find.text('Import History'), findsNothing);
+    expect(find.text('Open Import History'), findsNothing);
   });
 
   testWidgets('starter primary action repassa OPEN_FIXED_BILLS para o shell', (
@@ -176,6 +189,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(requestedAction, 'OPEN_FIXED_BILLS');
+    expect(find.text('Abrir cadastro de contas fixas'), findsOneWidget);
   });
 
   testWidgets(
@@ -223,6 +237,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(requestedAction, 'OPEN_IMPORT_HISTORY');
+      expect(find.text('Abrir importação de histórico'), findsOneWidget);
     },
   );
 
@@ -273,15 +288,17 @@ void main() {
       ),
       repository: FakeFinancialAssistantRepository(
         reply: fakeFinancialAssistantReply(
-          question: 'Como posso economizar este mes?',
-          answer: 'Revise moradia e despesas recorrentes.',
+          question: 'Como posso economizar este mês?',
+          mode: 'FALLBACK',
+          intent: 'PERIOD_SUMMARY',
+          answer: 'Nao ha despesas registradas em 2026-03.',
         ),
       ),
     );
 
     await tester.enterText(
       find.byType(TextFormField),
-      'Como posso economizar este mes?',
+      'Como posso economizar este mês?',
     );
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('assistant-submit-button')),
@@ -296,7 +313,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Resposta do assistente'), findsOneWidget);
-    expect(find.text('Revise moradia e despesas recorrentes.'), findsOneWidget);
-    expect(find.text('Sinais de apoio'), findsOneWidget);
+    expect(
+      find.text('Não há despesas registradas em março/2026.'),
+      findsOneWidget,
+    );
+    expect(find.text('Dados usados na resposta'), findsOneWidget);
+    expect(find.text('Modo FALLBACK'), findsNothing);
+    expect(find.text('Period Summary'), findsNothing);
+    expect(find.text('deepseek-chat · 120 tokens'), findsNothing);
+  });
+
+  testWidgets('shows approved loading and validation copy', (tester) async {
+    await pumpAssistant(
+      tester,
+      onboarding: AuthOnboarding(
+        completed: true,
+        completedAt: DateTime.utc(2026, 3, 28, 12),
+      ),
+      repository: FakeFinancialAssistantRepository(
+        onAsk: (question, referenceMonth) =>
+            Future<void>.delayed(const Duration(milliseconds: 300)),
+      ),
+    );
+
+    final formState = tester.state<FormState>(find.byType(Form));
+    expect(formState.validate(), isFalse);
+    await tester.pump();
+
+    expect(find.text('Informe uma pergunta financeira.'), findsOneWidget);
+
+    await tester.enterText(
+      find.byType(TextFormField),
+      'Quero revisar meus gastos deste mês.',
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('assistant-submit-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('assistant-submit-button')),
+      warnIfMissed: false,
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Tentando buscar sua resposta...'), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(milliseconds: 400));
   });
 }
