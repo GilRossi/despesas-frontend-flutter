@@ -457,9 +457,9 @@ void main() {
       initialLocation: '/expenses/1',
       routes: [
         GoRoute(
-          path: '/expenses',
+          path: '/',
           builder: (context, state) =>
-              const Scaffold(body: Text('expenses-root-page')),
+              const Scaffold(body: Text('dashboard-root-page')),
         ),
         GoRoute(
           path: '/expenses/:expenseId',
@@ -481,6 +481,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.deleteCalls, 1);
-    expect(find.text('expenses-root-page'), findsOneWidget);
+    expect(find.text('dashboard-root-page'), findsOneWidget);
   });
 }

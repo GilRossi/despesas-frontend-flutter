@@ -206,14 +206,14 @@ void main() {
     },
   );
 
-  testWidgets('header action returns to the assistant flow', (tester) async {
+  testWidgets('header action returns to the dashboard flow', (tester) async {
     final router = GoRouter(
       initialLocation: '/space/references',
       routes: [
         GoRoute(
-          path: '/assistant',
+          path: '/',
           builder: (context, state) =>
-              const Scaffold(body: Text('assistant-page')),
+              const Scaffold(body: Text('dashboard-page')),
         ),
         GoRoute(
           path: '/space/references',
@@ -228,16 +228,15 @@ void main() {
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const ValueKey('space-references-back-to-assistant')),
-      findsOneWidget,
+    final backButtonFinder = find.widgetWithIcon(
+      IconButton,
+      Icons.arrow_back,
     );
+    expect(backButtonFinder, findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const ValueKey('space-references-back-to-assistant')),
-    );
+    await tester.tap(backButtonFinder);
     await tester.pumpAndSettle();
 
-    expect(find.text('assistant-page'), findsOneWidget);
+    expect(find.text('dashboard-page'), findsOneWidget);
   });
 }
