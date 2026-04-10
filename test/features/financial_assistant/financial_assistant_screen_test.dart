@@ -63,6 +63,12 @@ void main() {
     expect(find.text('Seja bem-vindo(a) ao seu espaço'), findsOneWidget);
     expect(
       find.text(
+        'Quando você concluir este guia, ele não será aberto automaticamente nos próximos acessos.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
         'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
       ),
       findsOneWidget,

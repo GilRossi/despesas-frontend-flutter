@@ -208,6 +208,37 @@ void main() {
     expect(find.text('assistant-page'), findsOneWidget);
   });
 
+  testWidgets('card do assistente usa a copy aprovada na dashboard', (
+    tester,
+  ) async {
+    final repository = FakeDashboardRepository(
+      summary: fakeDashboardSummary(role: 'OWNER'),
+    );
+    final sessionController = buildSessionController(role: 'OWNER');
+
+    await pumpDashboard(
+      tester,
+      repository: repository,
+      sessionController: sessionController,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('dashboard-open-assistant-button')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Assistente financeiro do seu espaço'), findsOneWidget);
+    expect(
+      find.text(
+        'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('primeiro uso mostra onboarding curto orientado ao manual', (
     tester,
   ) async {

@@ -978,6 +978,51 @@ void main() {
     });
 
     testWidgets(
+      'dashboard opens assistant with approved top copy and guide ending',
+      (tester) async {
+        authRepository.loginResult = fakeSession(
+          onboarding: const AuthOnboarding(completed: false),
+        );
+
+        await sessionController.login(
+          email: 'user@example.com',
+          password: 'password',
+        );
+
+        await pumpRouter(
+          tester,
+          login: const Text('login'),
+          dashboardRepository: FakeDashboardRepository(
+            summary: fakeDashboardSummary(role: 'OWNER'),
+          ),
+        );
+
+        await scrollTo(
+          tester,
+          find.byKey(const ValueKey('dashboard-open-assistant-button')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('dashboard-open-assistant-button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Assistente financeiro do seu espaço'), findsOneWidget);
+        expect(
+          find.text(
+            'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            'Quando você concluir este guia, ele não será aberto automaticamente nos próximos acessos.',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
       'first access users can still open the assistant as optional help',
       (tester) async {
         authRepository.loginResult = fakeSession(
