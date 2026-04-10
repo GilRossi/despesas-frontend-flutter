@@ -624,18 +624,12 @@ class _AssistantCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SectionTitle(
-                  title: assistantCard.title,
-                  subtitle: 'Apoio rápido, tour reabrivel e próximos passos',
+                  title: 'Assistente financeiro do seu espaço',
+                  subtitle:
+                      'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
                 ),
                 const SizedBox(height: 12),
                 Text(assistantCard.message),
-                const SizedBox(height: 12),
-                Text(
-                  'Se der dúvida sobre por onde começar, abra o assistente e reative o tour guiado sem depender do onboarding inicial.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF65727B),
-                  ),
-                ),
               ],
             ),
           ),

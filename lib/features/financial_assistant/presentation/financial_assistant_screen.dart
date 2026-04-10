@@ -374,7 +374,7 @@ class _TourCard extends StatelessWidget {
             const _TourStep(
               title: 'Depois, siga pelo fluxo normal',
               message:
-                  'Quando você concluir este guia, ele não abre sozinho nos próximos acessos.',
+                  'Quando você concluir este guia, ele não será aberto automaticamente nos próximos acessos.',
             ),
             const SizedBox(height: 16),
             Wrap(
