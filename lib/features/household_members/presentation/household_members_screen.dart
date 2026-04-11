@@ -85,7 +85,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
         return AuthenticatedShellScaffold(
           sessionController: widget.sessionController,
           currentLocation: '/household-members',
-          title: 'Membros do espaço',
+          title: 'Membros do grupo',
           fallbackRoute: '/',
           body: RefreshIndicator(
             onRefresh: _viewModel.load,
@@ -99,12 +99,12 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Fluxo mínimo multiusuário',
+                          'Convide pessoas para o seu espaço',
                           style: theme.textTheme.titleLarge,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'O responsável pode adicionar um novo login ao espaço atual. A nova pessoa entra pela mesma tela de login do produto.',
+                          'Crie o acesso inicial de quem vai entrar neste espaço. Depois, a pessoa entra com esse e-mail e essa senha.',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF65727B),
                           ),

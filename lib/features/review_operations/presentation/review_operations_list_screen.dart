@@ -106,12 +106,12 @@ class _ReviewOperationsListScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Revisões pendentes do espaço',
+                          'O que ainda precisa da sua decisão',
                           style: theme.textTheme.titleLarge,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Revise as importações que ainda dependem de decisão humana antes da confirmação final.',
+                          'Veja as importações que ainda precisam da sua decisão antes da confirmação.',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF65727B),
                           ),
@@ -140,7 +140,7 @@ class _ReviewOperationsListScreenState
                   const _StateCard(
                     title: 'Nenhuma revisão pendente',
                     message:
-                        'Não há importações aguardando decisão manual no espaço atual.',
+                        'Não há importações esperando sua decisão neste espaço.',
                   ),
                 ] else ...[
                   Text(

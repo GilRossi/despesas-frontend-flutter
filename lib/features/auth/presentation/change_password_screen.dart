@@ -59,8 +59,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           title: const Text('Senha atualizada'),
           content: Text(
             result.revokedRefreshTokens > 0
-                ? 'A senha foi alterada com sucesso. As sessoes antigas foram invalidadas e sera necessario entrar novamente.'
-                : 'A senha foi alterada com sucesso. Sera necessario entrar novamente.',
+                ? 'A senha foi alterada com sucesso. As sessões antigas foram invalidadas e será necessário entrar novamente.'
+                : 'A senha foi alterada com sucesso. Será necessário entrar novamente.',
           ),
           actions: [
             FilledButton(
@@ -111,7 +111,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return AuthenticatedShellScaffold(
       sessionController: widget.sessionController,
       currentLocation: '/change-password',
-      title: 'Seguranca da conta',
+      title: 'Minha senha',
       fallbackRoute: '/',
       body: ResponsiveScrollBody(
         maxWidth: 560,
@@ -129,8 +129,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   const SizedBox(height: 8),
                   Text(
                     user == null
-                        ? 'Atualize a senha da sessão atual e entre novamente depois da confirmação.'
-                        : 'Conta ativa: ${user.email}. A troca invalida as sessoes antigas e exige novo login.',
+                        ? 'Depois da troca, será preciso entrar novamente.'
+                        : 'Conta ativa: ${user.email}. Depois da troca, será preciso entrar novamente.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF65727B),
                     ),

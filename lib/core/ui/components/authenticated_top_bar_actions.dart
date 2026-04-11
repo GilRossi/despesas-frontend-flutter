@@ -43,7 +43,7 @@ List<Widget> buildAuthenticatedTopBarActions({
             if (canReviewOperations)
               const _TopBarMenuEntry(
                 route: '/household-members',
-                label: 'Membros do espaço',
+                label: 'Membros do grupo',
                 icon: Icons.group_outlined,
               ),
             if (canReviewOperations)

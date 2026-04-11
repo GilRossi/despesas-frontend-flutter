@@ -699,6 +699,7 @@ void main() {
         ),
         findsNothing,
       );
+      expect(find.text('Membros do grupo'), findsOneWidget);
       expect(
         find.byKey(
           const ValueKey('authenticated-top-bar-menu-item-/household-members'),
@@ -1006,7 +1007,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Assistente financeiro do seu espaço'), findsOneWidget);
+        expect(
+          find.text('Assistente financeiro do seu espaço'),
+          findsOneWidget,
+        );
         expect(
           find.text(
             'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',

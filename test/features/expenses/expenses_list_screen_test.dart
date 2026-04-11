@@ -591,7 +591,7 @@ void main() {
     expect(find.text('Assistente financeiro'), findsNothing);
     expect(find.text('Relatórios'), findsNothing);
     expect(find.text('Minha senha'), findsNothing);
-    expect(find.text('Membros do espaço'), findsNothing);
+    expect(find.text('Membros do grupo'), findsNothing);
     expect(find.text('Revisões pendentes'), findsNothing);
   });
 
@@ -619,7 +619,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Membros do espaço'), findsNothing);
+    expect(find.text('Membros do grupo'), findsNothing);
   });
 
   testWidgets('shows clearer payment progress and status labels', (

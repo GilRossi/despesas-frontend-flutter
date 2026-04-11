@@ -31,7 +31,18 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(find.text('O que ainda precisa da sua decisão'), findsOneWidget);
+    expect(
+      find.text(
+        'Veja as importações que ainda precisam da sua decisão antes da confirmação.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Nenhuma revisão pendente'), findsOneWidget);
+    expect(
+      find.text('Não há importações esperando sua decisão neste espaço.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows error state when review list fails', (tester) async {
