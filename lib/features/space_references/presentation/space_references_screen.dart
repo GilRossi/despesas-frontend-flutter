@@ -120,12 +120,12 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Use o que já existe antes de criar algo novo',
+                        'Use referências já existentes antes de criar novas',
                         style: theme.textTheme.titleLarge,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Seu espaço fica mais organizado quando você reaproveita referências parecidas e cria novas só quando fizer sentido.',
+                        'Reaproveite o que já existe para manter seu espaço mais organizado.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF65727B),
                         ),
@@ -153,7 +153,7 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Comece olhando o que já está disponível no seu espaço.',
+                        'Veja primeiro o que já existe no seu espaço.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF65727B),
                         ),
@@ -174,7 +174,9 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                         key: const ValueKey('space-references-group-filter'),
                         initialValue: _selectedGroup,
                         isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Grupo'),
+                        decoration: const InputDecoration(
+                          labelText: 'Grupo da referência',
+                        ),
                         items: [
                           const DropdownMenuItem<SpaceReferenceTypeGroup?>(
                             value: null,
@@ -279,7 +281,7 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Se não encontrar o que você precisa, crie uma referência nova em poucos passos.',
+                          'Se não encontrar o que precisa, crie uma nova referência.',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF65727B),
                           ),
@@ -290,7 +292,7 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                           initialValue: _selectedType,
                           isExpanded: true,
                           decoration: InputDecoration(
-                            labelText: 'Tipo',
+                            labelText: 'Tipo de referência',
                             errorText: _viewModel.fieldError('type'),
                           ),
                           items: [
@@ -327,7 +329,7 @@ class _SpaceReferencesScreenState extends State<SpaceReferencesScreen> {
                               return 'Informe o nome da referência.';
                             }
                             if (trimmed.length > 120) {
-                              return 'Use no maximo 120 caracteres.';
+                              return 'Use no máximo 120 caracteres.';
                             }
                             return null;
                           },

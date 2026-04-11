@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/features/space_references/domain/space_reference_create_result_type.dart';
 import 'package:despesas_frontend/features/space_references/domain/space_reference_type.dart';
+import 'package:despesas_frontend/features/space_references/domain/space_reference_type_group.dart';
 import 'package:despesas_frontend/features/space_references/presentation/space_references_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,6 +50,28 @@ void main() {
     );
 
     await pumpScreen(tester, repository: repository);
+
+    expect(
+      find.text(
+        'Use referências já existentes antes de criar novas',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Reaproveite o que já existe para manter seu espaço mais organizado.',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Veja primeiro o que já existe no seu espaço.',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
     await scrollTo(
       tester,
       find.byKey(const ValueKey('space-reference-card-1')),
@@ -78,6 +101,14 @@ void main() {
     await scrollTo(
       tester,
       find.byKey(const ValueKey('space-references-search-field')),
+    );
+
+    expect(
+      find.widgetWithText(
+        DropdownButtonFormField<SpaceReferenceTypeGroup?>,
+        'Grupo da referência',
+      ),
+      findsOneWidget,
     );
 
     await tester.enterText(
@@ -137,6 +168,18 @@ void main() {
     await scrollTo(
       tester,
       find.byKey(const ValueKey('space-references-name-field')),
+    );
+
+    expect(
+      find.text('Se não encontrar o que precisa, crie uma nova referência.'),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(
+        DropdownButtonFormField<SpaceReferenceType>,
+        'Tipo de referência',
+      ),
+      findsOneWidget,
     );
 
     await tester.enterText(
@@ -228,10 +271,7 @@ void main() {
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
 
-    final backButtonFinder = find.widgetWithIcon(
-      IconButton,
-      Icons.arrow_back,
-    );
+    final backButtonFinder = find.widgetWithIcon(IconButton, Icons.arrow_back);
     expect(backButtonFinder, findsOneWidget);
 
     await tester.tap(backButtonFinder);

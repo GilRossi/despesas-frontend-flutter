@@ -42,6 +42,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Membros do grupo', skipOffstage: false), findsOneWidget);
+    expect(
+      find.text('Convide pessoas para o seu espaço', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Crie o acesso inicial de quem vai entrar neste espaço. Depois, a pessoa entra com esse e-mail e essa senha.',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Membros atuais', skipOffstage: false), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Gil Rossi', skipOffstage: false),

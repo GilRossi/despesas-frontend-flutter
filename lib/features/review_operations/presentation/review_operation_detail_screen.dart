@@ -111,7 +111,7 @@ class _ReviewOperationDetailScreenState
                   title: 'Revisão não encontrada',
                   message:
                       'Esse item pode ter sido resolvido ou não pertence ao espaço atual.',
-                  actionLabel: 'Voltar às revisoes',
+                  actionLabel: 'Voltar às revisões',
                   onAction: () => context.go('/review-operations'),
                 );
               }

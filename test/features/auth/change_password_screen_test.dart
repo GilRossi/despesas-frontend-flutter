@@ -10,7 +10,9 @@ void main() {
     tester,
   ) async {
     final sessionController = SessionController(
-      authRepository: FakeAuthRepository(),
+      authRepository: FakeAuthRepository(
+        loginResult: fakeSession(email: 'owner@local.invalid'),
+      ),
       sessionStore: MemorySessionStore(),
     );
     await sessionController.login(
@@ -22,6 +24,16 @@ void main() {
       MaterialApp(
         home: ChangePasswordScreen(sessionController: sessionController),
       ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Minha senha'), findsOneWidget);
+    expect(find.text('Trocar minha senha'), findsWidgets);
+    expect(
+      find.text(
+        'Conta ativa: owner@local.invalid. Depois da troca, será preciso entrar novamente.',
+      ),
+      findsOneWidget,
     );
 
     await tester.enterText(
@@ -44,6 +56,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Senha atualizada'), findsOneWidget);
+    expect(
+      find.text(
+        'A senha foi alterada com sucesso. As sessões antigas foram invalidadas e será necessário entrar novamente.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(
       find.byKey(const ValueKey('change-password-success-close-button')),
@@ -58,6 +76,7 @@ void main() {
   ) async {
     final sessionController = SessionController(
       authRepository: FakeAuthRepository(
+        loginResult: fakeSession(email: 'owner@local.invalid'),
         changePasswordError: fakeApiException(
           statusCode: 401,
           message: 'Authentication failed',
@@ -75,6 +94,7 @@ void main() {
         home: ChangePasswordScreen(sessionController: sessionController),
       ),
     );
+    await tester.pumpAndSettle();
 
     await tester.enterText(
       find.byKey(const ValueKey('change-password-current-field')),
