@@ -962,7 +962,7 @@ void main() {
 
       await pumpRouter(tester, login: const Text('login'));
 
-      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Seu espaço hoje'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('dashboard-first-use-card')),
         findsOneWidget,
@@ -1070,7 +1070,7 @@ void main() {
 
       await pumpRouter(tester, login: const Text('login'));
 
-      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Seu espaço hoje'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
         findsOneWidget,

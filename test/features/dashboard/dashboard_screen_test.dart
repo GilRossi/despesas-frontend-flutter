@@ -105,9 +105,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Seu espaço hoje'), findsOneWidget);
+    expect(
+      find.text('Gil, aqui está o que merece sua atenção hoje.'),
+      findsOneWidget,
+    );
     expect(find.text('Resumo principal'), findsOneWidget);
     expect(find.text('Precisa da sua ação'), findsOneWidget);
     expect(find.text('Atividade recente'), findsOneWidget);
+    expect(find.text('Veja o que merece sua atenção agora'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('dashboard-hero-new-expense-button')),
       findsOneWidget,
@@ -131,6 +137,8 @@ void main() {
     expect(find.text('Mês de referência'), findsOneWidget);
     expect(find.text('Responsáveis'), findsOneWidget);
     expect(find.text('Convidados'), findsOneWidget);
+    expect(find.text('22,86%'), findsOneWidget);
+    expect(find.text("R\$ 540,00 · 62,79%"), findsOneWidget);
     expect(
       find.byKey(const ValueKey('dashboard-member-quick-actions-card')),
       findsNothing,
@@ -238,6 +246,93 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'normaliza percentual dinâmico do card do assistente para pt-BR',
+    (tester) async {
+      final repository = FakeDashboardRepository(
+        summary: fakeDashboardSummary(
+          role: 'OWNER',
+          assistantCard: const DashboardAssistantCard(
+            title: 'Assistente financeiro',
+            message:
+                'A categoria Moradia representa 100.00% do total do período.',
+            primaryActionKey: 'OPEN_ASSISTANT',
+            route: '/assistant',
+          ),
+        ),
+      );
+      final sessionController = buildSessionController(role: 'OWNER');
+
+      await pumpDashboard(
+        tester,
+        repository: repository,
+        sessionController: sessionController,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('dashboard-open-assistant-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'A categoria Moradia representa 100,00% do total do período.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'A categoria Moradia representa 100.00% do total do período.',
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'normaliza valor monetário dinâmico do card do assistente para pt-BR',
+    (tester) async {
+      final repository = FakeDashboardRepository(
+        summary: fakeDashboardSummary(
+          role: 'OWNER',
+          assistantCard: const DashboardAssistantCard(
+            title: 'Assistente financeiro',
+            message: 'Moradia subiu 400.00 em relação ao mês anterior.',
+            primaryActionKey: 'OPEN_ASSISTANT',
+            route: '/assistant',
+          ),
+        ),
+      );
+      final sessionController = buildSessionController(role: 'OWNER');
+
+      await pumpDashboard(
+        tester,
+        repository: repository,
+        sessionController: sessionController,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('dashboard-open-assistant-button')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Moradia subiu 400,00 em relação ao mês anterior.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Moradia subiu 400.00 em relação ao mês anterior.'),
+        findsNothing,
+      );
+    },
+  );
 
   testWidgets('primeiro uso mostra onboarding curto orientado ao manual', (
     tester,
@@ -420,7 +515,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Carregando seu dashboard...'), findsOneWidget);
+    expect(find.text('Carregando sua visão geral.'), findsOneWidget);
 
     completer.complete(fakeDashboardSummary(role: 'OWNER'));
     await tester.pumpAndSettle();
@@ -440,7 +535,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Não foi possível carregar seu painel agora.'),
+      find.text('Não foi possível carregar sua visão geral.'),
       findsOneWidget,
     );
     expect(find.text('Tentar novamente'), findsOneWidget);
