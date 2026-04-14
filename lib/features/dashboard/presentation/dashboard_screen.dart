@@ -72,10 +72,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return AuthenticatedShellScaffold(
       sessionController: widget.sessionController,
       currentLocation: '/',
-      title: 'Dashboard',
+      title: 'Seu espaço hoje',
       subtitle: firstName == null
-          ? 'O que merece sua atenção hoje'
-          : '$firstName, aqui está o que merece sua atenção hoje',
+          ? 'Aqui está o que merece sua atenção hoje.'
+          : '$firstName, aqui está o que merece sua atenção hoje.',
       body: FutureBuilder<DashboardSummary>(
         future: _future,
         builder: (context, snapshot) {
@@ -274,7 +274,7 @@ class _DashboardLoadingState extends StatelessWidget {
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 12),
-          Text('Carregando seu dashboard...'),
+          Text('Carregando sua visão geral.'),
         ],
       ),
     );
@@ -294,7 +294,7 @@ class _DashboardErrorState extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, size: 32, color: Colors.redAccent),
           const SizedBox(height: 8),
-          const Text('Não foi possível carregar seu painel agora.'),
+          const Text('Não foi possível carregar sua visão geral.'),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
@@ -322,7 +322,7 @@ class _DashboardHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final roleLabel = dashboard.isOwner ? 'Visão do espaço' : 'Visão pessoal';
+    final roleLabel = dashboard.isOwner ? 'Resumo do espaço' : 'Resumo pessoal';
 
     return Container(
       width: double.infinity,
@@ -353,7 +353,7 @@ class _DashboardHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Comece pelo caminho certo, sem complicação',
+                  'Veja o que merece sua atenção agora',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -361,7 +361,7 @@ class _DashboardHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'A tela inicial precisa orientar de verdade: lance uma despesa, abra o assistente ou retome o tour guiado sempre que quiser rever os primeiros passos.',
+                  'Lance uma despesa, acompanhe o que está em aberto e retome o tour quando precisar.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.86),
                   ),
@@ -371,9 +371,9 @@ class _DashboardHero extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: const [
-                    _HeroBadge(label: 'Avulsa sem vencimento'),
-                    _HeroBadge(label: 'Conta com vencimento'),
-                    _HeroBadge(label: 'Conta fixa e histórico separados'),
+                    _HeroBadge(label: 'Lançamento manual'),
+                    _HeroBadge(label: 'Ajuda opcional'),
+                    _HeroBadge(label: 'Tour guiado'),
                   ],
                 ),
               ],
@@ -452,7 +452,7 @@ class _SummaryMainCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Resumo principal',
-            subtitle: 'Panorama rápido do mês atual',
+            subtitle: 'Panorama rápido do mês atual.',
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -511,7 +511,7 @@ class _ActionNeededCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Precisa da sua ação',
-            subtitle: 'O que vale priorizar agora',
+            subtitle: 'O que vale priorizar agora.',
           ),
           const SizedBox(height: 16),
           _CompactStatRow(
@@ -565,7 +565,7 @@ class _RecentActivityCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Atividade recente',
-            subtitle: 'O que acabou de acontecer no seu Espaço',
+            subtitle: 'O que acabou de acontecer no seu espaço.',
           ),
           const SizedBox(height: 16),
           if (recentActivity.items.isEmpty)
@@ -629,7 +629,7 @@ class _AssistantCard extends StatelessWidget {
                       'Use quando quiser tirar uma dúvida ou escolher o próximo passo. O sistema continua funcionando mesmo sem o assistente.',
                 ),
                 const SizedBox(height: 12),
-                Text(assistantCard.message),
+                Text(_normalizeAssistantMessage(assistantCard.message)),
               ],
             ),
           ),
@@ -664,7 +664,7 @@ class _MonthOverviewCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Panorama do mês',
-            subtitle: 'Leitura executiva do período atual',
+            subtitle: 'Resumo rápido do período atual.',
           ),
           const SizedBox(height: 16),
           if (monthOverview == null)
@@ -692,7 +692,9 @@ class _MonthOverviewCard extends StatelessWidget {
                   label: 'Comparação',
                   value: monthOverview!.monthComparison == null
                       ? 'Sem base'
-                      : '${monthOverview!.monthComparison!.deltaPercentage.toStringAsFixed(2)}%',
+                      : _formatPercentage(
+                          monthOverview!.monthComparison!.deltaPercentage,
+                        ),
                 ),
               ],
             ),
@@ -744,7 +746,7 @@ class _CategorySpendingCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Gastos por categoria',
-            subtitle: 'Onde o mês está pesando mais',
+            subtitle: 'Veja onde o mês está pesando mais.',
           ),
           const SizedBox(height: 16),
           if (categorySpending == null || categorySpending!.items.isEmpty)
@@ -789,8 +791,8 @@ class _HouseholdSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionTitle(
-            title: 'Resumo do Espaço',
-            subtitle: 'Visão rápida da estrutura do seu espaço',
+            title: 'Resumo do espaço',
+            subtitle: 'Visão rápida da estrutura do seu espaço.',
           ),
           const SizedBox(height: 16),
           if (householdSummary == null)
@@ -859,7 +861,7 @@ class _QuickActionsCard extends StatelessWidget {
         children: [
           const _SectionTitle(
             title: 'Atalhos rápidos',
-            subtitle: 'Entre direto no próximo passo',
+            subtitle: 'Entre direto no próximo passo.',
           ),
           const SizedBox(height: 16),
           if (quickActions == null || quickActions!.items.isEmpty)
@@ -1043,7 +1045,7 @@ class _ProgressTile extends StatelessWidget {
         Row(
           children: [
             Expanded(child: Text(label)),
-            Text('$value · ${percentage.toStringAsFixed(2)}%'),
+            Text('$value · ${_formatPercentage(percentage)}'),
           ],
         ),
         const SizedBox(height: 8),
@@ -1083,4 +1085,19 @@ String _formatDateTime(DateTime date) {
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
   return '$day/$month às $hour:$minute';
+}
+
+String _formatPercentage(double value) {
+  return '${value.toStringAsFixed(2).replaceAll('.', ',')}%';
+}
+
+String _normalizeAssistantMessage(String message) {
+  final withPercentages = message.replaceAllMapped(
+    RegExp(r'(\d+)\.(\d+)%'),
+    (match) => '${match.group(1)},${match.group(2)}%',
+  );
+  return withPercentages.replaceAllMapped(
+    RegExp(r'\b(\d+)\.(\d{2})\b'),
+    (match) => '${match.group(1)},${match.group(2)}',
+  );
 }

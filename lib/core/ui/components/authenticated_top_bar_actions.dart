@@ -12,7 +12,7 @@ List<Widget> buildAuthenticatedTopBarActions({
       <_TopBarMenuEntry>[
             const _TopBarMenuEntry(
               route: '/',
-              label: 'Dashboard',
+              label: 'Início',
               icon: Icons.dashboard_outlined,
             ),
             const _TopBarMenuEntry(
