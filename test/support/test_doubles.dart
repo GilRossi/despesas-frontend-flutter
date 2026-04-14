@@ -48,8 +48,11 @@ import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dar
 import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_input.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/admin_password_reset_result.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/create_household_owner_input.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_health.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_household.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_overview.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_space.dart';
 import 'package:despesas_frontend/features/reports/domain/report_category_total.dart';
 import 'package:despesas_frontend/features/reports/domain/report_increase_alert.dart';
 import 'package:despesas_frontend/features/reports/domain/report_insights.dart';
@@ -753,7 +756,8 @@ class FakeFixedBillsRepository implements FixedBillsRepository {
   ExpenseSummary? launchResult;
   Exception? launchError;
   FutureOr<void> Function(CreateFixedBillInput input)? onCreate;
-  FutureOr<void> Function(int fixedBillId, CreateFixedBillInput input)? onUpdate;
+  FutureOr<void> Function(int fixedBillId, CreateFixedBillInput input)?
+  onUpdate;
   FutureOr<void> Function(int fixedBillId)? onDelete;
   FutureOr<void> Function(int fixedBillId)? onLaunch;
   int listCalls = 0;
@@ -915,6 +919,12 @@ class FakeHistoryImportsRepository implements HistoryImportsRepository {
 
 class FakePlatformAdminRepository implements PlatformAdminRepository {
   FakePlatformAdminRepository({
+    this.overview,
+    this.overviewError,
+    this.health,
+    this.healthError,
+    this.spaces,
+    this.spacesError,
     this.result,
     this.error,
     this.onCreate,
@@ -923,6 +933,12 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
     this.onReset,
   });
 
+  PlatformAdminOverview? overview;
+  Exception? overviewError;
+  PlatformAdminHealth? health;
+  Exception? healthError;
+  List<PlatformAdminSpace>? spaces;
+  Exception? spacesError;
   PlatformAdminHousehold? result;
   Exception? error;
   void Function(CreateHouseholdOwnerInput input)? onCreate;
@@ -931,8 +947,109 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
   void Function(AdminPasswordResetInput input)? onReset;
   int createCalls = 0;
   int resetCalls = 0;
+  int overviewCalls = 0;
+  int healthCalls = 0;
+  int spacesCalls = 0;
   CreateHouseholdOwnerInput? lastInput;
   AdminPasswordResetInput? lastResetInput;
+
+  @override
+  Future<PlatformAdminOverview> fetchOverview() async {
+    overviewCalls += 1;
+    if (overviewError != null) {
+      throw overviewError!;
+    }
+    return overview ??
+        const PlatformAdminOverview(
+          totalSpaces: 4,
+          activeSpaces: 4,
+          totalUsers: 6,
+          totalPlatformAdmins: 1,
+          modules: [
+            PlatformAdminModuleUsage(
+              key: 'FINANCIAL',
+              enabledSpaces: 4,
+              disabledSpaces: 0,
+              mandatory: true,
+            ),
+            PlatformAdminModuleUsage(
+              key: 'DRIVER',
+              enabledSpaces: 0,
+              disabledSpaces: 4,
+              mandatory: false,
+            ),
+          ],
+          actuator: PlatformAdminActuatorExposure(
+            healthExposed: true,
+            infoExposed: true,
+            metricsExposed: false,
+          ),
+        );
+  }
+
+  @override
+  Future<PlatformAdminHealth> fetchHealth() async {
+    healthCalls += 1;
+    if (healthError != null) {
+      throw healthError!;
+    }
+    return health ??
+        PlatformAdminHealth(
+          applicationStatus: 'UP',
+          checkedAt: DateTime.utc(2026, 4, 14, 21, 38),
+          actuator: const PlatformAdminActuatorExposure(
+            healthExposed: true,
+            infoExposed: true,
+            metricsExposed: false,
+          ),
+          jvm: const PlatformAdminJvmSnapshot(
+            availableProcessors: 4,
+            uptimeMs: 1100573,
+            heapUsedBytes: 554439688,
+            heapCommittedBytes: 788529152,
+            heapMaxBytes: 15015608320,
+          ),
+          system: const PlatformAdminSystemSnapshot(
+            systemLoadAverage: 0.046875,
+          ),
+          info: const {},
+        );
+  }
+
+  @override
+  Future<List<PlatformAdminSpace>> fetchSpaces() async {
+    spacesCalls += 1;
+    if (spacesError != null) {
+      throw spacesError!;
+    }
+    return spaces ??
+        const [
+          PlatformAdminSpace(
+            spaceId: 4,
+            spaceName: 'Teste',
+            createdAt: null,
+            updatedAt: null,
+            activeMembersCount: 2,
+            owner: PlatformAdminSpaceOwner(
+              userId: 6,
+              name: 'Teste Owner',
+              email: 'teste@teste.com',
+            ),
+            modules: [
+              PlatformAdminSpaceModule(
+                key: 'FINANCIAL',
+                enabled: true,
+                mandatory: true,
+              ),
+              PlatformAdminSpaceModule(
+                key: 'DRIVER',
+                enabled: false,
+                mandatory: false,
+              ),
+            ],
+          ),
+        ];
+  }
 
   @override
   Future<PlatformAdminHousehold> createHouseholdWithOwner(

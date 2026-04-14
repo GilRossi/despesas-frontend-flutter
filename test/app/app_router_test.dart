@@ -1295,7 +1295,7 @@ void main() {
 
       await pumpRouter(tester, login: const Text('login'));
 
-      expect(find.text('Provisionamento administrativo'), findsOneWidget);
+      expect(find.text('Admin da plataforma'), findsOneWidget);
     });
 
     testWidgets(
