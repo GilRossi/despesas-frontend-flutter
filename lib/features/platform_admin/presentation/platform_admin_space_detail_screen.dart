@@ -172,13 +172,23 @@ class _PlatformAdminSpaceDetailScreenState
   }
 
   List<String> _buildEnabledModuleKeys(PlatformAdminSpace space) {
-    return [
-      for (final module in space.modules)
-        if (module.mandatory)
-          module.key
-        else if (module.key == 'DRIVER')
-          if (_driverEnabled) module.key else if (module.enabled) module.key,
-    ];
+    final enabledModuleKeys = <String>[];
+    for (final module in space.modules) {
+      if (module.mandatory) {
+        enabledModuleKeys.add(module.key);
+        continue;
+      }
+      if (module.key == 'DRIVER') {
+        if (_driverEnabled) {
+          enabledModuleKeys.add(module.key);
+        }
+        continue;
+      }
+      if (module.enabled) {
+        enabledModuleKeys.add(module.key);
+      }
+    }
+    return enabledModuleKeys;
   }
 
   @override
