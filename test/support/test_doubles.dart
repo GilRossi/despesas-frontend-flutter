@@ -1027,6 +1027,24 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
             systemLoadAverage: 0.046875,
           ),
           info: const {},
+          alerts: const [
+            PlatformAdminOperationalAlert(
+              code: 'ACTUATOR_METRICS_NOT_EXPOSED',
+              severity: 'WARNING',
+              source: 'ACTUATOR',
+              title: 'Actuator metrics fechado',
+              message:
+                  'As métricas do Actuator ainda não estão expostas por HTTP nesta fase.',
+            ),
+            PlatformAdminOperationalAlert(
+              code: 'ACTUATOR_INFO_EMPTY',
+              severity: 'INFO',
+              source: 'ACTUATOR',
+              title: 'Actuator info vazio',
+              message:
+                  'O endpoint de info está exposto, mas sem dados extras publicados agora.',
+            ),
+          ],
         );
   }
 

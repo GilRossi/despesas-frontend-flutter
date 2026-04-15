@@ -1,5 +1,7 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/features/auth/presentation/change_password_screen.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_health.dart';
+import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_overview.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_space.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
 import 'package:flutter/material.dart';
@@ -95,6 +97,10 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.byKey(const ValueKey('platform-admin-alerts-section')),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey('platform-admin-health-section')),
       findsOneWidget,
     );
@@ -103,6 +109,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Visão geral'), findsOneWidget);
+    expect(find.text('Alertas operacionais'), findsOneWidget);
     expect(find.text('Saúde do sistema'), findsOneWidget);
     expect(find.text('Espaços'), findsWidgets);
     expect(find.text('Teste'), findsOneWidget);
@@ -111,10 +118,66 @@ void main() {
     expect(find.text('Motorista desligado'), findsOneWidget);
     expect(find.text('Abrir detalhe'), findsOneWidget);
     expect(find.text('UP'), findsAtLeastNWidgets(1));
-    expect(find.text('Métricas HTTP ainda não expostas.'), findsOneWidget);
+    expect(find.text('Actuator metrics fechado'), findsWidgets);
+    expect(
+      find.text(
+        'As métricas do Actuator ainda não estão expostas por HTTP nesta fase.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Uso do heap'), findsOneWidget);
+    expect(
+      find.text(
+        'Métricas HTTP ainda não expostas. O admin sinaliza esse limite como alerta operacional.',
+      ),
+      findsOneWidget,
+    );
     expect(repository.overviewCalls, 1);
     expect(repository.healthCalls, 1);
     expect(repository.spacesCalls, 1);
+  });
+
+  testWidgets('shows neutral state when there are no operational alerts', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsPlatformAdmin();
+    final repository = FakePlatformAdminRepository(
+      health: PlatformAdminHealth(
+        applicationStatus: 'UP',
+        checkedAt: DateTime.utc(2026, 4, 15, 12, 10),
+        actuator: const PlatformAdminActuatorExposure(
+          healthExposed: true,
+          infoExposed: true,
+          metricsExposed: true,
+        ),
+        jvm: const PlatformAdminJvmSnapshot(
+          availableProcessors: 4,
+          uptimeMs: 120000,
+          heapUsedBytes: 300,
+          heapCommittedBytes: 600,
+          heapMaxBytes: 1000,
+        ),
+        system: const PlatformAdminSystemSnapshot(systemLoadAverage: null),
+        info: const {'build': '1.0.0'},
+        alerts: const [],
+      ),
+    );
+
+    await pumpAdminScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+    );
+
+    expect(find.text('Nenhum alerta operacional agora.'), findsOneWidget);
+    expect(
+      find.text(
+        'As fontes atuais não apontam atenção imediata nesta leitura.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Fonte atual não entrega esse dado'), findsOneWidget);
   });
 
   testWidgets('shows empty state when there are no spaces', (tester) async {
