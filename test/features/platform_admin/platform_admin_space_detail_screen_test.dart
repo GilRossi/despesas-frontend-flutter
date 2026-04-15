@@ -151,6 +151,63 @@ void main() {
     expect(find.text('Ligado'), findsOneWidget);
   });
 
+  testWidgets('permite desligar o DRIVER e salvar os modulos do Espaco', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsPlatformAdmin();
+    final repository = FakePlatformAdminRepository(
+      spaceDetail: PlatformAdminSpace(
+        spaceId: 4,
+        spaceName: 'Teste',
+        createdAt: DateTime.utc(2026, 4, 1, 20, 23),
+        updatedAt: DateTime.utc(2026, 4, 10, 20, 23),
+        activeMembersCount: 2,
+        owner: const PlatformAdminSpaceOwner(
+          userId: 6,
+          name: 'Teste Owner',
+          email: 'teste@teste.com',
+        ),
+        modules: const [
+          PlatformAdminSpaceModule(
+            key: 'FINANCIAL',
+            enabled: true,
+            mandatory: true,
+          ),
+          PlatformAdminSpaceModule(
+            key: 'DRIVER',
+            enabled: true,
+            mandatory: false,
+          ),
+        ],
+      ),
+    );
+
+    await pumpDetail(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+    );
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('platform-admin-space-detail-module-switch-DRIVER'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('platform-admin-space-detail-save-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(repository.updateModulesCalls, 1);
+    expect(repository.lastUpdatedSpaceId, 4);
+    expect(repository.lastEnabledModuleKeys, ['FINANCIAL']);
+    expect(find.text('Módulos do Espaço atualizados.'), findsOneWidget);
+    expect(find.text('Desligado'), findsOneWidget);
+  });
+
   testWidgets('mostra erro inicial e permite tentar novamente', (tester) async {
     configureLargeViewport(tester);
     final sessionController = await loginAsPlatformAdmin();
