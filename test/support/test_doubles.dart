@@ -925,12 +925,16 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
     this.healthError,
     this.spaces,
     this.spacesError,
+    this.spaceDetail,
+    this.spaceDetailError,
     this.result,
     this.error,
     this.onCreate,
     this.resetResult,
     this.resetError,
     this.onReset,
+    this.updateModulesError,
+    this.onUpdateModules,
   });
 
   PlatformAdminOverview? overview;
@@ -939,19 +943,29 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
   Exception? healthError;
   List<PlatformAdminSpace>? spaces;
   Exception? spacesError;
+  PlatformAdminSpace? spaceDetail;
+  Exception? spaceDetailError;
   PlatformAdminHousehold? result;
   Exception? error;
   void Function(CreateHouseholdOwnerInput input)? onCreate;
   AdminPasswordResetResult? resetResult;
   Exception? resetError;
   void Function(AdminPasswordResetInput input)? onReset;
+  Exception? updateModulesError;
+  FutureOr<void> Function(int spaceId, List<String> enabledModuleKeys)?
+  onUpdateModules;
   int createCalls = 0;
   int resetCalls = 0;
   int overviewCalls = 0;
   int healthCalls = 0;
   int spacesCalls = 0;
+  int spaceDetailCalls = 0;
+  int updateModulesCalls = 0;
   CreateHouseholdOwnerInput? lastInput;
   AdminPasswordResetInput? lastResetInput;
+  int? lastRequestedSpaceId;
+  int? lastUpdatedSpaceId;
+  List<String>? lastEnabledModuleKeys;
 
   @override
   Future<PlatformAdminOverview> fetchOverview() async {
@@ -1049,6 +1063,87 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
             ],
           ),
         ];
+  }
+
+  @override
+  Future<PlatformAdminSpace> fetchSpace(int spaceId) async {
+    spaceDetailCalls += 1;
+    lastRequestedSpaceId = spaceId;
+    if (spaceDetailError != null) {
+      throw spaceDetailError!;
+    }
+    return spaceDetail ??
+        (spaces ??
+                const [
+                  PlatformAdminSpace(
+                    spaceId: 4,
+                    spaceName: 'Teste',
+                    createdAt: null,
+                    updatedAt: null,
+                    activeMembersCount: 2,
+                    owner: PlatformAdminSpaceOwner(
+                      userId: 6,
+                      name: 'Teste Owner',
+                      email: 'teste@teste.com',
+                    ),
+                    modules: [
+                      PlatformAdminSpaceModule(
+                        key: 'FINANCIAL',
+                        enabled: true,
+                        mandatory: true,
+                      ),
+                      PlatformAdminSpaceModule(
+                        key: 'DRIVER',
+                        enabled: false,
+                        mandatory: false,
+                      ),
+                    ],
+                  ),
+                ])
+            .firstWhere((item) => item.spaceId == spaceId);
+  }
+
+  @override
+  Future<PlatformAdminSpace> updateSpaceModules({
+    required int spaceId,
+    required List<String> enabledModuleKeys,
+  }) async {
+    updateModulesCalls += 1;
+    lastUpdatedSpaceId = spaceId;
+    lastEnabledModuleKeys = enabledModuleKeys;
+    if (updateModulesError != null) {
+      throw updateModulesError!;
+    }
+    await onUpdateModules?.call(spaceId, enabledModuleKeys);
+
+    final current = await fetchSpace(spaceId);
+    final updated = PlatformAdminSpace(
+      spaceId: current.spaceId,
+      spaceName: current.spaceName,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+      activeMembersCount: current.activeMembersCount,
+      owner: current.owner,
+      modules: current.modules
+          .map(
+            (module) => PlatformAdminSpaceModule(
+              key: module.key,
+              enabled: module.mandatory
+                  ? true
+                  : enabledModuleKeys.contains(module.key),
+              mandatory: module.mandatory,
+            ),
+          )
+          .toList(),
+    );
+    spaceDetail = updated;
+    if (spaces != null) {
+      spaces = [
+        for (final space in spaces!)
+          if (space.spaceId == spaceId) updated else space,
+      ];
+    }
+    return updated;
   }
 
   @override

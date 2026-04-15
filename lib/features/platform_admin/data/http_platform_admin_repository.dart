@@ -65,6 +65,42 @@ class HttpPlatformAdminRepository implements PlatformAdminRepository {
   }
 
   @override
+  Future<PlatformAdminSpace> fetchSpace(int spaceId) async {
+    final response = await _authorizedRequestExecutor.run(
+      (headers) => _authorizedRequestExecutor.apiClient.get(
+        '/api/v1/admin/spaces/$spaceId',
+        headers: headers,
+      ),
+    );
+
+    final data = _parseDataMap(
+      response,
+      fallbackMessage: 'Resposta inválida do detalhe do Espaço.',
+    );
+    return PlatformAdminSpace.fromJson(data);
+  }
+
+  @override
+  Future<PlatformAdminSpace> updateSpaceModules({
+    required int spaceId,
+    required List<String> enabledModuleKeys,
+  }) async {
+    final response = await _authorizedRequestExecutor.run(
+      (headers) => _authorizedRequestExecutor.apiClient.putJson(
+        '/api/v1/admin/spaces/$spaceId/modules',
+        headers: headers,
+        body: {'enabledModules': enabledModuleKeys},
+      ),
+    );
+
+    final data = _parseDataMap(
+      response,
+      fallbackMessage: 'Resposta inválida da atualização de módulos.',
+    );
+    return PlatformAdminSpace.fromJson(data);
+  }
+
+  @override
   Future<PlatformAdminHousehold> createHouseholdWithOwner(
     CreateHouseholdOwnerInput input,
   ) async {

@@ -191,6 +191,101 @@ void main() {
     expect(result.single.modules.last.key, 'DRIVER');
   });
 
+  test('fetchSpace consome o detalhe de um Espaco do admin platform', () async {
+    late http.Request capturedRequest;
+    final client = MockClient((request) async {
+      capturedRequest = request;
+      return http.Response(
+        jsonEncode({
+          'data': {
+            'spaceId': 4,
+            'spaceName': 'Teste',
+            'createdAt': '2026-04-01T20:23:38.252123Z',
+            'updatedAt': '2026-04-10T20:23:38.252123Z',
+            'activeMembersCount': 2,
+            'owner': {
+              'userId': 6,
+              'name': 'Teste Owner',
+              'email': 'teste@teste.com',
+            },
+            'modules': [
+              {'key': 'FINANCIAL', 'enabled': true, 'mandatory': true},
+              {'key': 'DRIVER', 'enabled': false, 'mandatory': false},
+            ],
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final sessionController = await buildSessionController();
+    final repository = buildRepository(
+      client: client,
+      sessionController: sessionController,
+    );
+
+    final result = await repository.fetchSpace(4);
+
+    expect(
+      capturedRequest.url.toString(),
+      'https://app.rossicompany.com.br/api/v1/admin/spaces/4',
+    );
+    expect(result.spaceId, 4);
+    expect(result.updatedAt, DateTime.parse('2026-04-10T20:23:38.252123Z'));
+  });
+
+  test(
+    'updateSpaceModules envia o payload real de modulos do Espaco',
+    () async {
+      late http.Request capturedRequest;
+      final client = MockClient((request) async {
+        capturedRequest = request;
+        return http.Response(
+          jsonEncode({
+            'data': {
+              'spaceId': 4,
+              'spaceName': 'Teste',
+              'createdAt': '2026-04-01T20:23:38.252123Z',
+              'updatedAt': '2026-04-10T20:23:38.252123Z',
+              'activeMembersCount': 2,
+              'owner': {
+                'userId': 6,
+                'name': 'Teste Owner',
+                'email': 'teste@teste.com',
+              },
+              'modules': [
+                {'key': 'FINANCIAL', 'enabled': true, 'mandatory': true},
+                {'key': 'DRIVER', 'enabled': true, 'mandatory': false},
+              ],
+            },
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final sessionController = await buildSessionController();
+      final repository = buildRepository(
+        client: client,
+        sessionController: sessionController,
+      );
+
+      final result = await repository.updateSpaceModules(
+        spaceId: 4,
+        enabledModuleKeys: const ['FINANCIAL', 'DRIVER'],
+      );
+
+      expect(
+        capturedRequest.url.toString(),
+        'https://app.rossicompany.com.br/api/v1/admin/spaces/4/modules',
+      );
+      expect(capturedRequest.method, 'PUT');
+      expect(jsonDecode(capturedRequest.body), {
+        'enabledModules': ['FINANCIAL', 'DRIVER'],
+      });
+      expect(result.modules.last.enabled, isTrue);
+    },
+  );
+
   test('fetchSpaces propaga erro quando o contrato vem invalido', () async {
     final client = MockClient(
       (request) async => http.Response(

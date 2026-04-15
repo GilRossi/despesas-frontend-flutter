@@ -22,6 +22,7 @@ import 'package:despesas_frontend/features/incomes/domain/incomes_repository.dar
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
 import 'package:despesas_frontend/features/platform_admin/domain/platform_admin_repository.dart';
 import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_screen.dart';
+import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_space_detail_screen.dart';
 import 'package:despesas_frontend/features/reports/domain/reports_repository.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:despesas_frontend/features/review_operations/domain/review_operations_repository.dart';
@@ -112,6 +113,30 @@ GoRouter createAppRouter({
               return DashboardScreen(
                 dashboardRepository: dashboardRepository,
                 sessionController: sessionController,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/spaces/:spaceId',
+            builder: (context, state) {
+              final userRole = sessionController.currentUser?.role;
+              final isPlatformAdmin = userRole == 'PLATFORM_ADMIN';
+              final spaceId = int.tryParse(
+                state.pathParameters['spaceId'] ?? '',
+              );
+
+              if (!isPlatformAdmin || spaceId == null) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Não foi possível abrir este Espaço.'),
+                  ),
+                );
+              }
+
+              return PlatformAdminSpaceDetailScreen(
+                spaceId: spaceId,
+                sessionController: sessionController,
+                platformAdminRepository: platformAdminRepository,
               );
             },
           ),
