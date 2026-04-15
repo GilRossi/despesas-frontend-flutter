@@ -13,6 +13,13 @@ abstract interface class PlatformAdminRepository {
 
   Future<List<PlatformAdminSpace>> fetchSpaces();
 
+  Future<PlatformAdminSpace> fetchSpace(int spaceId);
+
+  Future<PlatformAdminSpace> updateSpaceModules({
+    required int spaceId,
+    required List<String> enabledModuleKeys,
+  });
+
   Future<PlatformAdminHousehold> createHouseholdWithOwner(
     CreateHouseholdOwnerInput input,
   );

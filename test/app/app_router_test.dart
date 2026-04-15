@@ -13,6 +13,7 @@ import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_f
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bills_list_screen.dart';
 import 'package:despesas_frontend/features/history_imports/presentation/history_import_form_screen.dart';
 import 'package:despesas_frontend/features/incomes/presentation/income_form_screen.dart';
+import 'package:despesas_frontend/features/platform_admin/presentation/platform_admin_space_detail_screen.dart';
 import 'package:despesas_frontend/features/reports/presentation/reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1296,6 +1297,28 @@ void main() {
       await pumpRouter(tester, login: const Text('login'));
 
       expect(find.text('Admin da plataforma'), findsOneWidget);
+    });
+
+    testWidgets('platform admin can open /spaces/:spaceId detail route', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        role: 'PLATFORM_ADMIN',
+        householdId: null,
+        onboarding: const AuthOnboarding(completed: false),
+      );
+
+      await sessionController.login(
+        email: 'admin@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(tester, login: const Text('login'));
+      router.go('/spaces/4');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PlatformAdminSpaceDetailScreen), findsOneWidget);
+      expect(find.text('Detalhe do Espaço'), findsOneWidget);
     });
 
     testWidgets(

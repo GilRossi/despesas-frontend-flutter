@@ -53,6 +53,22 @@ class DespesasApiClient {
     );
   }
 
+  Future<http.Response> putJson(
+    String path, {
+    Map<String, String>? headers,
+    Map<String, Object?>? body,
+  }) {
+    return _httpClient.put(
+      _buildUri(path, null),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...?headers,
+      },
+      body: jsonEncode(body ?? const {}),
+    );
+  }
+
   Future<http.Response> delete(String path, {Map<String, String>? headers}) {
     return _httpClient.delete(
       _buildUri(path, null),

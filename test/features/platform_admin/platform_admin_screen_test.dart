@@ -109,6 +109,7 @@ void main() {
     expect(find.text('Ativo'), findsOneWidget);
     expect(find.text('Financeiro obrigatório'), findsOneWidget);
     expect(find.text('Motorista desligado'), findsOneWidget);
+    expect(find.text('Abrir detalhe'), findsOneWidget);
     expect(find.text('UP'), findsAtLeastNWidgets(1));
     expect(find.text('Métricas HTTP ainda não expostas.'), findsOneWidget);
     expect(repository.overviewCalls, 1);

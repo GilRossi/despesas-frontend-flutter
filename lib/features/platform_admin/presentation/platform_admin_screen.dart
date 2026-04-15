@@ -678,6 +678,19 @@ class _SpacesSection extends StatelessWidget {
               children: [
                 for (var index = 0; index < spaces.length; index++) ...[
                   _SpaceCard(space: spaces[index]),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      key: ValueKey(
+                        'platform-admin-open-space-${spaces[index].spaceId}-button',
+                      ),
+                      onPressed: () =>
+                          context.go('/spaces/${spaces[index].spaceId}'),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Abrir detalhe'),
+                    ),
+                  ),
                   if (index < spaces.length - 1) const SizedBox(height: 12),
                 ],
               ],
