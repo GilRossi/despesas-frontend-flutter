@@ -8,6 +8,7 @@ class PlatformAdminHealth {
     required this.jvm,
     required this.system,
     required this.info,
+    required this.alerts,
   });
 
   final String applicationStatus;
@@ -16,6 +17,7 @@ class PlatformAdminHealth {
   final PlatformAdminJvmSnapshot jvm;
   final PlatformAdminSystemSnapshot system;
   final Map<String, dynamic> info;
+  final List<PlatformAdminOperationalAlert> alerts;
 
   factory PlatformAdminHealth.fromJson(Map<String, dynamic> json) {
     return PlatformAdminHealth(
@@ -31,6 +33,36 @@ class PlatformAdminHealth {
         json['system'] as Map<String, dynamic>? ?? const {},
       ),
       info: (json['info'] as Map<String, dynamic>?) ?? const {},
+      alerts: (json['alerts'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(PlatformAdminOperationalAlert.fromJson)
+          .toList(),
+    );
+  }
+}
+
+class PlatformAdminOperationalAlert {
+  const PlatformAdminOperationalAlert({
+    required this.code,
+    required this.severity,
+    required this.source,
+    required this.title,
+    required this.message,
+  });
+
+  final String code;
+  final String severity;
+  final String source;
+  final String title;
+  final String message;
+
+  factory PlatformAdminOperationalAlert.fromJson(Map<String, dynamic> json) {
+    return PlatformAdminOperationalAlert(
+      code: json['code'] as String? ?? '',
+      severity: json['severity'] as String? ?? '',
+      source: json['source'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      message: json['message'] as String? ?? '',
     );
   }
 }

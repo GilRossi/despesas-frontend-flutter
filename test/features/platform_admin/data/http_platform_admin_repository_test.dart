@@ -122,6 +122,24 @@ void main() {
             },
             'system': {'systemLoadAverage': 0.046875},
             'info': {},
+            'alerts': [
+              {
+                'code': 'ACTUATOR_METRICS_NOT_EXPOSED',
+                'severity': 'WARNING',
+                'source': 'ACTUATOR',
+                'title': 'Actuator metrics fechado',
+                'message':
+                    'As métricas do Actuator ainda não estão expostas por HTTP nesta fase.',
+              },
+              {
+                'code': 'ACTUATOR_INFO_EMPTY',
+                'severity': 'INFO',
+                'source': 'ACTUATOR',
+                'title': 'Actuator info vazio',
+                'message':
+                    'O endpoint de info está exposto, mas sem dados extras publicados agora.',
+              },
+            ],
           },
         }),
         200,
@@ -143,6 +161,8 @@ void main() {
     expect(result.applicationStatus, 'UP');
     expect(result.jvm.availableProcessors, 4);
     expect(result.system.systemLoadAverage, 0.046875);
+    expect(result.alerts, hasLength(2));
+    expect(result.alerts.first.code, 'ACTUATOR_METRICS_NOT_EXPOSED');
   });
 
   test('fetchSpaces consome a lista de Espacos do admin platform', () async {

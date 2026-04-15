@@ -324,6 +324,8 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                           const SizedBox(height: 16),
                         ],
                         if (_health != null) ...[
+                          _OperationalAlertsSection(health: _health!),
+                          const SizedBox(height: 16),
                           _HealthSection(health: _health!),
                           const SizedBox(height: 16),
                         ],
@@ -538,7 +540,7 @@ class _HealthSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Status atual do backend, do runtime e das exposições públicas do Actuator.',
+            'Leitura atual da aplicação e das fontes técnicas reaproveitadas nesta fase.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -555,7 +557,7 @@ class _HealthSection extends StatelessWidget {
                   _MetricCard(
                     label: 'Status geral',
                     value: health.applicationStatus,
-                    helper: _formatDateTime(health.checkedAt),
+                    helper: 'Atualizado em ${_formatDateTime(health.checkedAt)}',
                     width: cardWidth,
                   ),
                   _MetricCard(
@@ -578,7 +580,9 @@ class _HealthSection extends StatelessWidget {
                             health.system.systemLoadAverage!,
                             fractionDigits: 2,
                           ),
-                    helper: 'Leitura atual do host',
+                    helper: health.system.systemLoadAverage == null
+                        ? 'Fonte atual não entrega esse dado'
+                        : 'Leitura atual do host',
                     width: cardWidth,
                   ),
                   _MetricCard(
@@ -588,9 +592,19 @@ class _HealthSection extends StatelessWidget {
                     width: cardWidth,
                   ),
                   _MetricCard(
-                    label: 'Heap reservado',
-                    value: _formatBytes(health.jvm.heapCommittedBytes),
-                    helper: 'Reservado pela JVM',
+                    label: 'Limite do heap',
+                    value: health.jvm.heapMaxBytes > 0
+                        ? _formatBytes(health.jvm.heapMaxBytes)
+                        : 'Indisponível',
+                    helper: health.jvm.heapMaxBytes > 0
+                        ? 'Capacidade máxima informada pela JVM'
+                        : 'Fonte atual não entrega esse limite',
+                    width: cardWidth,
+                  ),
+                  _MetricCard(
+                    label: 'Uso do heap',
+                    value: _formatHeapUsageRatio(health.jvm),
+                    helper: 'Percentual sobre o limite atual',
                     width: cardWidth,
                   ),
                 ],
@@ -626,17 +640,63 @@ class _HealthSection extends StatelessWidget {
           Text(
             health.actuator.metricsExposed
                 ? 'Métricas HTTP já expostas nesta fase.'
-                : 'Métricas HTTP ainda não expostas.',
+                : 'Métricas HTTP ainda não expostas. O admin sinaliza esse limite como alerta operacional.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
           if (health.info.isEmpty)
             const _InlineMessageCard(
               title: 'Info do runtime',
-              message: 'Sem informações extras publicadas agora.',
+              message:
+                  'A fonte de info está acessível, mas ainda sem dados extras publicados agora.',
             )
           else
             _InfoMapCard(info: health.info),
+        ],
+      ),
+    );
+  }
+}
+
+class _OperationalAlertsSection extends StatelessWidget {
+  const _OperationalAlertsSection({required this.health});
+
+  final PlatformAdminHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      key: const ValueKey('platform-admin-alerts-section'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Alertas operacionais',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Atenções geradas a partir de fontes reais do Actuator, do runtime e da configuração atual da plataforma.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          if (health.alerts.isEmpty)
+            const _InlineMessageCard(
+              title: 'Nenhum alerta operacional agora.',
+              message:
+                  'As fontes atuais não apontam atenção imediata nesta leitura.',
+            )
+          else
+            Column(
+              children: [
+                for (final alert in health.alerts) ...[
+                  _OperationalAlertCard(alert: alert),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ),
         ],
       ),
     );
@@ -1176,6 +1236,87 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
+class _OperationalAlertCard extends StatelessWidget {
+  const _OperationalAlertCard({required this.alert});
+
+  final PlatformAdminOperationalAlert alert;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _alertSeverityColors(alert.severity);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _AlertSeverityChip(
+                  label: _alertSeverityLabel(alert.severity),
+                  backgroundColor: colors.background,
+                  foregroundColor: colors.foreground,
+                ),
+                Text(
+                  _alertSourceLabel(alert.source),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: const Color(0xFF65727B),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              alert.title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(alert.message),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AlertSeverityChip extends StatelessWidget {
+  const _AlertSeverityChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: foregroundColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _InfoMapCard extends StatelessWidget {
   const _InfoMapCard({required this.info});
 
@@ -1344,4 +1485,47 @@ String _formatUptime(int uptimeMs) {
     return '${hours}h ${minutes}min';
   }
   return '${math.max(1, minutes)} min';
+}
+
+String _formatHeapUsageRatio(PlatformAdminJvmSnapshot jvm) {
+  if (jvm.heapMaxBytes <= 0) {
+    return 'Indisponível';
+  }
+  final ratio = jvm.heapUsedBytes / jvm.heapMaxBytes;
+  return '${_formatDecimal(ratio * 100, fractionDigits: 1)}%';
+}
+
+String _alertSeverityLabel(String severity) {
+  return switch (severity) {
+    'CRITICAL' => 'Crítico',
+    'WARNING' => 'Atenção',
+    _ => 'Informativo',
+  };
+}
+
+String _alertSourceLabel(String source) {
+  return switch (source) {
+    'APPLICATION' => 'Aplicação',
+    'ACTUATOR' => 'Actuator',
+    'RUNTIME' => 'Runtime',
+    'SPACES' => 'Espaços',
+    _ => source,
+  };
+}
+
+({Color background, Color foreground}) _alertSeverityColors(String severity) {
+  return switch (severity) {
+    'CRITICAL' => (
+      background: const Color(0xFFFDEBEB),
+      foreground: const Color(0xFFAA2E2E),
+    ),
+    'WARNING' => (
+      background: const Color(0xFFFFF4DE),
+      foreground: const Color(0xFF9A6100),
+    ),
+    _ => (
+      background: const Color(0xFFE8F0FE),
+      foreground: const Color(0xFF1D4ED8),
+    ),
+  };
 }
