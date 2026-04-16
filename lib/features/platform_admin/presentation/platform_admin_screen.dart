@@ -326,6 +326,8 @@ class _PlatformAdminScreenState extends State<PlatformAdminScreen> {
                         if (_health != null) ...[
                           _OperationalAlertsSection(health: _health!),
                           const SizedBox(height: 16),
+                          _DeploymentRuntimeSection(health: _health!),
+                          const SizedBox(height: 16),
                           _HealthSection(health: _health!),
                           const SizedBox(height: 16),
                         ],
@@ -527,6 +529,8 @@ class _HealthSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final supplementalInfo = _supplementalInfo(health.info);
+
     return SectionCard(
       key: const ValueKey('platform-admin-health-section'),
       child: Column(
@@ -644,14 +648,111 @@ class _HealthSection extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-          if (health.info.isEmpty)
+          if (supplementalInfo.isEmpty)
             const _InlineMessageCard(
               title: 'Info do runtime',
               message:
-                  'A fonte de info está acessível, mas ainda sem dados extras publicados agora.',
+                  'Sem dados extras além de build e runtime nesta fase.',
             )
           else
-            _InfoMapCard(info: health.info),
+            _InfoMapCard(info: supplementalInfo),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeploymentRuntimeSection extends StatelessWidget {
+  const _DeploymentRuntimeSection({required this.health});
+
+  final PlatformAdminHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      key: const ValueKey('platform-admin-runtime-section'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Deploy e runtime',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Camada leve para identificar a versão em execução e o estado básico de disponibilidade da aplicação.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = math.max(
+                200.0,
+                math.min(250.0, (constraints.maxWidth - 16) / 2),
+              );
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  _MetricCard(
+                    label: 'Aplicação',
+                    value: health.deployment.applicationName.isEmpty
+                        ? 'Indisponível'
+                        : health.deployment.applicationName,
+                    helper: health.deployment.artifact == null ||
+                            health.deployment.artifact!.isEmpty
+                        ? 'Artefato não informado nesta fase'
+                        : 'Artefato ${health.deployment.artifact}',
+                    width: cardWidth,
+                  ),
+                  _MetricCard(
+                    label: 'Versão do app',
+                    value: health.deployment.version == null ||
+                            health.deployment.version!.isEmpty
+                        ? 'Indisponível'
+                        : health.deployment.version!,
+                    helper: health.deployment.version == null ||
+                            health.deployment.version!.isEmpty
+                        ? 'Fonte atual não entrega essa versão'
+                        : 'Identificação atual do build',
+                    width: cardWidth,
+                  ),
+                  _MetricCard(
+                    label: 'Build em',
+                    value: _formatDateTime(health.deployment.builtAt),
+                    helper: health.deployment.builtAt == null
+                        ? 'Fonte atual não entrega esse dado'
+                        : 'Instante do build disponível',
+                    width: cardWidth,
+                  ),
+                  _MetricCard(
+                    label: 'Liveness',
+                    value: _availabilityStateLabel(health.runtime.livenessState),
+                    helper: 'Condição básica do processo',
+                    width: cardWidth,
+                  ),
+                  _MetricCard(
+                    label: 'Readiness',
+                    value: _availabilityStateLabel(
+                      health.runtime.readinessState,
+                    ),
+                    helper: 'Estado atual para receber tráfego',
+                    width: cardWidth,
+                  ),
+                  _MetricCard(
+                    label: 'Processo iniciado em',
+                    value: _formatDateTime(health.runtime.startedAt),
+                    helper: health.runtime.startedAt == null
+                        ? 'Fonte atual não entrega esse dado'
+                        : 'Base do uptime informado acima',
+                    width: cardWidth,
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -1493,6 +1594,22 @@ String _formatHeapUsageRatio(PlatformAdminJvmSnapshot jvm) {
   }
   final ratio = jvm.heapUsedBytes / jvm.heapMaxBytes;
   return '${_formatDecimal(ratio * 100, fractionDigits: 1)}%';
+}
+
+String _availabilityStateLabel(String state) {
+  return switch (state) {
+    'CORRECT' => 'Correto',
+    'BROKEN' => 'Quebrado',
+    'ACCEPTING_TRAFFIC' => 'Aceitando tráfego',
+    'REFUSING_TRAFFIC' => 'Recusando tráfego',
+    _ => state.isEmpty ? 'Indisponível' : state,
+  };
+}
+
+Map<String, dynamic> _supplementalInfo(Map<String, dynamic> info) {
+  final extraInfo = Map<String, dynamic>.from(info);
+  extraInfo.remove('build');
+  return extraInfo;
 }
 
 String _alertSeverityLabel(String severity) {
