@@ -1,0 +1,4 @@
+<resources>
+    <string name="driver_accessibility_service_label">Driver Module Accessibility</string>
+    <string name="driver_accessibility_service_description">Base nativa do Driver Module para captura assistiva futura.</string>
+</resources>

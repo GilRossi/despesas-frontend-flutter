@@ -4,6 +4,19 @@
         android:label="despesas_frontend"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <service
+            android:name=".driver.DriverAccessibilityService"
+            android:description="@string/driver_accessibility_service_description"
+            android:exported="false"
+            android:label="@string/driver_accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/driver_accessibility_service_config"/>
+        </service>
         <activity
             android:name=".MainActivity"
             android:exported="true"
