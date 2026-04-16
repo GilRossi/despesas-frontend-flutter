@@ -4,6 +4,9 @@ import 'package:despesas_frontend/features/auth/presentation/change_password_scr
 import 'package:despesas_frontend/features/auth/presentation/reset_password_screen.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_repository.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
+import 'package:despesas_frontend/features/driver_module/presentation/driver_module_screen.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_detail_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
@@ -41,6 +44,8 @@ GoRouter createAppRouter({
   required HistoryImportsRepository historyImportsRepository,
   required HouseholdMembersRepository householdMembersRepository,
   required IncomesRepository incomesRepository,
+  required DriverModuleRepository driverModuleRepository,
+  required DriverNativeBridge driverNativeBridge,
   required PlatformAdminRepository platformAdminRepository,
   required ReportsRepository reportsRepository,
   required ReviewOperationsRepository reviewOperationsRepository,
@@ -139,6 +144,14 @@ GoRouter createAppRouter({
                 platformAdminRepository: platformAdminRepository,
               );
             },
+          ),
+          GoRoute(
+            path: '/driver',
+            builder: (context, state) => DriverModuleScreen(
+              sessionController: sessionController,
+              driverModuleRepository: driverModuleRepository,
+              driverNativeBridge: driverNativeBridge,
+            ),
           ),
           GoRoute(
             path: '/assistant',

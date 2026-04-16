@@ -20,6 +20,9 @@ import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/domain/save_expense_input.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_summary.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_bootstrap.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_repository.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_ai_usage.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_reply.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
@@ -1211,6 +1214,40 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
   }
 }
 
+class FakeDriverModuleRepository implements DriverModuleRepository {
+  FakeDriverModuleRepository({this.bootstrap, this.bootstrapError});
+
+  DriverModuleBootstrap? bootstrap;
+  Exception? bootstrapError;
+  int bootstrapCalls = 0;
+
+  @override
+  Future<DriverModuleBootstrap> fetchBootstrap() async {
+    bootstrapCalls += 1;
+    if (bootstrapError != null) {
+      throw bootstrapError!;
+    }
+    return bootstrap ?? fakeDriverModuleBootstrap();
+  }
+}
+
+class FakeDriverNativeBridge implements DriverNativeBridge {
+  FakeDriverNativeBridge({this.status, this.error});
+
+  DriverNativeFoundationStatus? status;
+  Exception? error;
+  int foundationStatusCalls = 0;
+
+  @override
+  Future<DriverNativeFoundationStatus> getFoundationStatus() async {
+    foundationStatusCalls += 1;
+    if (error != null) {
+      throw error!;
+    }
+    return status ?? fakeDriverNativeFoundationStatus();
+  }
+}
+
 class FakeSpaceReferencesRepository implements SpaceReferencesRepository {
   FakeSpaceReferencesRepository({
     this.references,
@@ -1315,6 +1352,59 @@ MobileSession fakeSession({
       role: role,
       onboarding: onboarding,
     ),
+  );
+}
+
+DriverModuleBootstrap fakeDriverModuleBootstrap({
+  int spaceId = 10,
+  String targetCity = 'Praia Grande',
+  String targetState = 'SP',
+  String targetCountry = 'BR',
+  List<DriverModuleProvider>? providers,
+}) {
+  return DriverModuleBootstrap(
+    moduleKey: 'DRIVER',
+    spaceId: spaceId,
+    targetCity: targetCity,
+    targetState: targetState,
+    targetCountry: targetCountry,
+    providers:
+        providers ??
+        const [
+          DriverModuleProvider(
+            key: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            category: 'RIDE_HAILING',
+          ),
+          DriverModuleProvider(
+            key: 'APP99_DRIVER',
+            label: '99 Motorista',
+            category: 'RIDE_HAILING',
+          ),
+          DriverModuleProvider(
+            key: 'RAPPI_DELIVERER',
+            label: 'Rappi Entregador',
+            category: 'DELIVERY',
+          ),
+        ],
+  );
+}
+
+DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
+  String packageName = 'com.example.despesas_frontend',
+  String methodChannel = 'com.gilrossi.despesas/driver_module',
+  bool methodChannelReady = true,
+  bool accessibilityServiceDeclared = true,
+  bool accessibilityServiceEnabled = false,
+  bool androidAutoPrepared = false,
+}) {
+  return DriverNativeFoundationStatus(
+    packageName: packageName,
+    methodChannel: methodChannel,
+    methodChannelReady: methodChannelReady,
+    accessibilityServiceDeclared: accessibilityServiceDeclared,
+    accessibilityServiceEnabled: accessibilityServiceEnabled,
+    androidAutoPrepared: androidAutoPrepared,
   );
 }
 

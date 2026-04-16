@@ -5,6 +5,8 @@ import 'package:despesas_frontend/app/splash_screen.dart';
 import 'package:despesas_frontend/core/config/app_environment.dart';
 import 'package:despesas_frontend/features/auth/presentation/login_screen.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_repository.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
 import 'package:despesas_frontend/features/expenses/domain/expenses_repository.dart';
 import 'package:despesas_frontend/features/fixed_bills/domain/fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_repository.dart';
@@ -30,6 +32,8 @@ class DespesasApp extends StatefulWidget {
     required this.historyImportsRepository,
     required this.householdMembersRepository,
     required this.incomesRepository,
+    required this.driverModuleRepository,
+    required this.driverNativeBridge,
     required this.platformAdminRepository,
     required this.reportsRepository,
     required this.reviewOperationsRepository,
@@ -46,6 +50,8 @@ class DespesasApp extends StatefulWidget {
   final HistoryImportsRepository historyImportsRepository;
   final HouseholdMembersRepository householdMembersRepository;
   final IncomesRepository incomesRepository;
+  final DriverModuleRepository driverModuleRepository;
+  final DriverNativeBridge driverNativeBridge;
   final PlatformAdminRepository platformAdminRepository;
   final ReportsRepository reportsRepository;
   final ReviewOperationsRepository reviewOperationsRepository;
@@ -77,6 +83,8 @@ class _DespesasAppState extends State<DespesasApp> {
       historyImportsRepository: widget.historyImportsRepository,
       householdMembersRepository: widget.householdMembersRepository,
       incomesRepository: widget.incomesRepository,
+      driverModuleRepository: widget.driverModuleRepository,
+      driverNativeBridge: widget.driverNativeBridge,
       platformAdminRepository: widget.platformAdminRepository,
       reportsRepository: widget.reportsRepository,
       reviewOperationsRepository: widget.reviewOperationsRepository,

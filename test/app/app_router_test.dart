@@ -8,6 +8,7 @@ import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/expenses/domain/paged_result.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_form_screen.dart';
 import 'package:despesas_frontend/features/expenses/presentation/expense_payment_screen.dart';
+import 'package:despesas_frontend/features/driver_module/presentation/driver_module_screen.dart';
 import 'package:despesas_frontend/features/financial_assistant/domain/financial_assistant_starter_intent.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bill_form_screen.dart';
 import 'package:despesas_frontend/features/fixed_bills/presentation/fixed_bills_list_screen.dart';
@@ -45,6 +46,8 @@ void main() {
       FakeHistoryImportsRepository? historyImportsRepository,
       FakeHouseholdMembersRepository? householdMembersRepository,
       FakeIncomesRepository? incomesRepository,
+      FakeDriverModuleRepository? driverModuleRepository,
+      FakeDriverNativeBridge? driverNativeBridge,
       FakeReportsRepository? reportsRepository,
       FakeReviewOperationsRepository? reviewOperationsRepository,
       FakeSpaceReferencesRepository? spaceReferencesRepository,
@@ -63,6 +66,9 @@ void main() {
         householdMembersRepository:
             householdMembersRepository ?? FakeHouseholdMembersRepository(),
         incomesRepository: incomesRepository ?? FakeIncomesRepository(),
+        driverModuleRepository:
+            driverModuleRepository ?? FakeDriverModuleRepository(),
+        driverNativeBridge: driverNativeBridge ?? FakeDriverNativeBridge(),
         platformAdminRepository: FakePlatformAdminRepository(),
         reportsRepository: reportsRepository ?? FakeReportsRepository(),
         reviewOperationsRepository:
@@ -210,6 +216,34 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Referências do seu espaço'), findsOneWidget);
+    });
+
+    testWidgets('authenticated users can open /driver foundation route', (
+      tester,
+    ) async {
+      authRepository.loginResult = fakeSession(
+        onboarding: AuthOnboarding(
+          completed: true,
+          completedAt: DateTime.utc(2026, 3, 28, 12),
+        ),
+      );
+
+      await sessionController.login(
+        email: 'user@example.com',
+        password: 'password',
+      );
+
+      final router = await pumpRouter(
+        tester,
+        login: const Text('login'),
+        driverModuleRepository: FakeDriverModuleRepository(),
+        driverNativeBridge: FakeDriverNativeBridge(),
+      );
+      router.go('/driver');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DriverModuleScreen), findsOneWidget);
+      expect(find.text('Base do módulo'), findsOneWidget);
     });
 
     testWidgets('authenticated users can open /fixed-bills/new', (

@@ -5,10 +5,12 @@ import 'package:despesas_frontend/core/network/authorized_request_executor.dart'
 import 'package:despesas_frontend/core/network/despesas_api_client.dart';
 import 'package:despesas_frontend/features/auth/data/http_auth_repository.dart';
 import 'package:despesas_frontend/features/auth/data/secure_session_store.dart';
+import 'package:despesas_frontend/features/dashboard/data/http_dashboard_repository.dart';
+import 'package:despesas_frontend/features/driver_module/data/http_driver_module_repository.dart';
+import 'package:despesas_frontend/features/driver_module/data/method_channel_driver_native_bridge.dart';
 import 'package:despesas_frontend/features/expenses/data/http_expenses_repository.dart';
 import 'package:despesas_frontend/features/fixed_bills/data/http_fixed_bills_repository.dart';
 import 'package:despesas_frontend/features/financial_assistant/data/http_financial_assistant_repository.dart';
-import 'package:despesas_frontend/features/dashboard/data/http_dashboard_repository.dart';
 import 'package:despesas_frontend/features/history_imports/data/http_history_imports_repository.dart';
 import 'package:despesas_frontend/features/household_members/data/http_household_members_repository.dart';
 import 'package:despesas_frontend/features/incomes/data/http_incomes_repository.dart';
@@ -60,6 +62,10 @@ void main() {
     authorizedRequestExecutor,
   );
   final incomesRepository = HttpIncomesRepository(authorizedRequestExecutor);
+  final driverModuleRepository = HttpDriverModuleRepository(
+    authorizedRequestExecutor,
+  );
+  final driverNativeBridge = MethodChannelDriverNativeBridge();
   final platformAdminRepository = HttpPlatformAdminRepository(
     authorizedRequestExecutor,
   );
@@ -81,6 +87,8 @@ void main() {
       historyImportsRepository: historyImportsRepository,
       householdMembersRepository: householdMembersRepository,
       incomesRepository: incomesRepository,
+      driverModuleRepository: driverModuleRepository,
+      driverNativeBridge: driverNativeBridge,
       platformAdminRepository: platformAdminRepository,
       reportsRepository: reportsRepository,
       reviewOperationsRepository: reviewOperationsRepository,
