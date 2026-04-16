@@ -5,6 +5,8 @@ class PlatformAdminHealth {
     required this.applicationStatus,
     required this.checkedAt,
     required this.actuator,
+    required this.deployment,
+    required this.runtime,
     required this.jvm,
     required this.system,
     required this.info,
@@ -14,6 +16,8 @@ class PlatformAdminHealth {
   final String applicationStatus;
   final DateTime? checkedAt;
   final PlatformAdminActuatorExposure actuator;
+  final PlatformAdminDeploymentSnapshot deployment;
+  final PlatformAdminRuntimeSnapshot runtime;
   final PlatformAdminJvmSnapshot jvm;
   final PlatformAdminSystemSnapshot system;
   final Map<String, dynamic> info;
@@ -26,6 +30,12 @@ class PlatformAdminHealth {
       actuator: PlatformAdminActuatorExposure.fromJson(
         json['actuator'] as Map<String, dynamic>? ?? const {},
       ),
+      deployment: PlatformAdminDeploymentSnapshot.fromJson(
+        json['deployment'] as Map<String, dynamic>? ?? const {},
+      ),
+      runtime: PlatformAdminRuntimeSnapshot.fromJson(
+        json['runtime'] as Map<String, dynamic>? ?? const {},
+      ),
       jvm: PlatformAdminJvmSnapshot.fromJson(
         json['jvm'] as Map<String, dynamic>? ?? const {},
       ),
@@ -37,6 +47,49 @@ class PlatformAdminHealth {
           .whereType<Map<String, dynamic>>()
           .map(PlatformAdminOperationalAlert.fromJson)
           .toList(),
+    );
+  }
+}
+
+class PlatformAdminDeploymentSnapshot {
+  const PlatformAdminDeploymentSnapshot({
+    required this.applicationName,
+    required this.artifact,
+    required this.version,
+    required this.builtAt,
+  });
+
+  final String applicationName;
+  final String? artifact;
+  final String? version;
+  final DateTime? builtAt;
+
+  factory PlatformAdminDeploymentSnapshot.fromJson(Map<String, dynamic> json) {
+    return PlatformAdminDeploymentSnapshot(
+      applicationName: json['applicationName'] as String? ?? '',
+      artifact: json['artifact'] as String?,
+      version: json['version'] as String?,
+      builtAt: _toDateTime(json['builtAt']),
+    );
+  }
+}
+
+class PlatformAdminRuntimeSnapshot {
+  const PlatformAdminRuntimeSnapshot({
+    required this.livenessState,
+    required this.readinessState,
+    required this.startedAt,
+  });
+
+  final String livenessState;
+  final String readinessState;
+  final DateTime? startedAt;
+
+  factory PlatformAdminRuntimeSnapshot.fromJson(Map<String, dynamic> json) {
+    return PlatformAdminRuntimeSnapshot(
+      livenessState: json['livenessState'] as String? ?? '',
+      readinessState: json['readinessState'] as String? ?? '',
+      startedAt: _toDateTime(json['startedAt']),
     );
   }
 }

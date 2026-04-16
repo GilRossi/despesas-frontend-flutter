@@ -1016,6 +1016,17 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
             infoExposed: true,
             metricsExposed: false,
           ),
+          deployment: PlatformAdminDeploymentSnapshot(
+            applicationName: 'despesas',
+            artifact: 'despesas',
+            version: '0.0.1-SNAPSHOT',
+            builtAt: DateTime.utc(2026, 4, 14, 21, 30),
+          ),
+          runtime: PlatformAdminRuntimeSnapshot(
+            livenessState: 'CORRECT',
+            readinessState: 'ACCEPTING_TRAFFIC',
+            startedAt: DateTime.utc(2026, 4, 14, 21, 20),
+          ),
           jvm: const PlatformAdminJvmSnapshot(
             availableProcessors: 4,
             uptimeMs: 1100573,
@@ -1026,7 +1037,13 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
           system: const PlatformAdminSystemSnapshot(
             systemLoadAverage: 0.046875,
           ),
-          info: const {},
+          info: const {
+            'build': {
+              'artifact': 'despesas',
+              'name': 'despesas',
+              'version': '0.0.1-SNAPSHOT',
+            },
+          },
           alerts: const [
             PlatformAdminOperationalAlert(
               code: 'ACTUATOR_METRICS_NOT_EXPOSED',
@@ -1035,14 +1052,6 @@ class FakePlatformAdminRepository implements PlatformAdminRepository {
               title: 'Actuator metrics fechado',
               message:
                   'As métricas do Actuator ainda não estão expostas por HTTP nesta fase.',
-            ),
-            PlatformAdminOperationalAlert(
-              code: 'ACTUATOR_INFO_EMPTY',
-              severity: 'INFO',
-              source: 'ACTUATOR',
-              title: 'Actuator info vazio',
-              message:
-                  'O endpoint de info está exposto, mas sem dados extras publicados agora.',
             ),
           ],
         );

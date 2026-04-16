@@ -113,6 +113,17 @@ void main() {
               'infoExposed': true,
               'metricsExposed': false,
             },
+            'deployment': {
+              'applicationName': 'despesas',
+              'artifact': 'despesas',
+              'version': '0.0.1-SNAPSHOT',
+              'builtAt': '2026-04-16T11:00:00Z',
+            },
+            'runtime': {
+              'livenessState': 'CORRECT',
+              'readinessState': 'ACCEPTING_TRAFFIC',
+              'startedAt': '2026-04-16T10:50:00Z',
+            },
             'jvm': {
               'availableProcessors': 4,
               'uptimeMs': 1100573,
@@ -159,6 +170,9 @@ void main() {
       'https://app.rossicompany.com.br/api/v1/admin/platform/health',
     );
     expect(result.applicationStatus, 'UP');
+    expect(result.deployment.applicationName, 'despesas');
+    expect(result.deployment.version, '0.0.1-SNAPSHOT');
+    expect(result.runtime.readinessState, 'ACCEPTING_TRAFFIC');
     expect(result.jvm.availableProcessors, 4);
     expect(result.system.systemLoadAverage, 0.046875);
     expect(result.alerts, hasLength(2));

@@ -105,11 +105,16 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.byKey(const ValueKey('platform-admin-runtime-section')),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey('platform-admin-spaces-section')),
       findsOneWidget,
     );
     expect(find.text('Visão geral'), findsOneWidget);
     expect(find.text('Alertas operacionais'), findsOneWidget);
+    expect(find.text('Deploy e runtime'), findsOneWidget);
     expect(find.text('Saúde do sistema'), findsOneWidget);
     expect(find.text('Espaços'), findsWidgets);
     expect(find.text('Teste'), findsOneWidget);
@@ -119,6 +124,8 @@ void main() {
     expect(find.text('Abrir detalhe'), findsOneWidget);
     expect(find.text('UP'), findsAtLeastNWidgets(1));
     expect(find.text('Actuator metrics fechado'), findsWidgets);
+    expect(find.text('0.0.1-SNAPSHOT'), findsOneWidget);
+    expect(find.text('Aceitando tráfego'), findsOneWidget);
     expect(
       find.text(
         'As métricas do Actuator ainda não estão expostas por HTTP nesta fase.',
@@ -151,6 +158,17 @@ void main() {
           infoExposed: true,
           metricsExposed: true,
         ),
+        deployment: PlatformAdminDeploymentSnapshot(
+          applicationName: 'despesas',
+          artifact: 'despesas',
+          version: null,
+          builtAt: null,
+        ),
+        runtime: PlatformAdminRuntimeSnapshot(
+          livenessState: 'CORRECT',
+          readinessState: 'ACCEPTING_TRAFFIC',
+          startedAt: DateTime.utc(2026, 4, 15, 12, 8),
+        ),
         jvm: const PlatformAdminJvmSnapshot(
           availableProcessors: 4,
           uptimeMs: 120000,
@@ -177,7 +195,9 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Fonte atual não entrega esse dado'), findsOneWidget);
+    expect(find.text('Versão do app'), findsOneWidget);
+    expect(find.text('Indisponível'), findsWidgets);
+    expect(find.text('Fonte atual não entrega esse dado'), findsNWidgets(2));
   });
 
   testWidgets('shows empty state when there are no spaces', (tester) async {
