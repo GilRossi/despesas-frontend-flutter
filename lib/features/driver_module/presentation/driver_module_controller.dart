@@ -31,6 +31,20 @@ class DriverModuleState {
   final String? message;
 
   bool get canProceed => kind == DriverModuleStateKind.ready;
+
+  DriverModuleState copyWith({
+    DriverModuleStateKind? kind,
+    DriverModuleBootstrap? bootstrap,
+    DriverNativeFoundationStatus? nativeStatus,
+    String? message,
+  }) {
+    return DriverModuleState(
+      kind: kind ?? this.kind,
+      bootstrap: bootstrap ?? this.bootstrap,
+      nativeStatus: nativeStatus ?? this.nativeStatus,
+      message: message,
+    );
+  }
 }
 
 class DriverModuleCapabilityCopy {
@@ -59,6 +73,7 @@ class DriverModuleController extends ChangeNotifier {
   final DriverNativeBridge _driverNativeBridge;
 
   DriverModuleState _state = const DriverModuleState.loading();
+  bool _awaitingAccessibilityReturn = false;
   DriverModuleState get state => _state;
 
   Future<void> load() async {
@@ -82,7 +97,7 @@ class DriverModuleController extends ChangeNotifier {
     try {
       final bootstrap = await _driverModuleRepository.fetchBootstrap();
       final nativeStatus = await _driverNativeBridge.getFoundationStatus();
-      _setState(_buildState(bootstrap, nativeStatus));
+      _setState(_buildState(bootstrap, nativeStatus, message: null));
     } on ApiException catch (error) {
       if (error.statusCode == 403) {
         _setState(
@@ -109,7 +124,7 @@ class DriverModuleController extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshNativeStatus() async {
+  Future<void> refreshNativeStatus({String? message}) async {
     final bootstrap = _state.bootstrap;
     if (bootstrap == null) {
       return;
@@ -117,7 +132,7 @@ class DriverModuleController extends ChangeNotifier {
 
     try {
       final nativeStatus = await _driverNativeBridge.getFoundationStatus();
-      _setState(_buildState(bootstrap, nativeStatus));
+      _setState(_buildState(bootstrap, nativeStatus, message: message));
     } catch (_) {
       _setState(
         DriverModuleState(
@@ -129,8 +144,52 @@ class DriverModuleController extends ChangeNotifier {
     }
   }
 
-  Future<bool> openAccessibilitySettings() {
-    return _driverNativeBridge.openAccessibilitySettings();
+  Future<void> handleAppResumed() async {
+    if (!_awaitingAccessibilityReturn) {
+      await refreshNativeStatus();
+      return;
+    }
+
+    _awaitingAccessibilityReturn = false;
+    final bootstrap = _state.bootstrap;
+    if (bootstrap == null) {
+      return;
+    }
+
+    try {
+      final nativeStatus = await _driverNativeBridge.getFoundationStatus();
+      _setState(
+        _buildState(
+          bootstrap,
+          nativeStatus,
+          message: nativeStatus.moduleReady
+              ? 'AccessibilityService habilitado no retorno. O módulo já pode seguir.'
+              : 'O app voltou da acessibilidade, mas o Driver Module ainda não foi habilitado no sistema.',
+        ),
+      );
+    } catch (_) {
+      _setState(
+        DriverModuleState(
+          kind: DriverModuleStateKind.failure,
+          bootstrap: bootstrap,
+          message: 'Não foi possível reavaliar o readiness após o retorno ao app.',
+        ),
+      );
+    }
+  }
+
+  Future<bool> openAccessibilitySettings() async {
+    final opened = await _driverNativeBridge.openAccessibilitySettings();
+    if (opened) {
+      _awaitingAccessibilityReturn = true;
+      _setState(
+        _state.copyWith(
+          message:
+              'Abra o Driver Module na acessibilidade, habilite o serviço e volte para o app.',
+        ),
+      );
+    }
+    return opened;
   }
 
   List<DriverModuleCapabilityCopy> describeMissingCapabilities() {
@@ -141,18 +200,23 @@ class DriverModuleController extends ChangeNotifier {
   DriverModuleState _buildState(
     DriverModuleBootstrap bootstrap,
     DriverNativeFoundationStatus nativeStatus,
+    {String? message}
   ) {
     if (nativeStatus.moduleReady) {
       return DriverModuleState(
         kind: DriverModuleStateKind.ready,
         bootstrap: bootstrap,
         nativeStatus: nativeStatus,
+        message: message ?? 'Readiness nativo fechado. O módulo já pode seguir.',
       );
     }
     return DriverModuleState(
       kind: DriverModuleStateKind.nativeReadinessBlocked,
       bootstrap: bootstrap,
       nativeStatus: nativeStatus,
+      message:
+          message ??
+          'Ainda falta habilitar o serviço principal para liberar a próxima fase do módulo.',
     );
   }
 

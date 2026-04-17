@@ -110,4 +110,38 @@ void main() {
 
     expect(opened, isTrue);
   });
+
+  test('retorno da acessibilidade reavalia o readiness automaticamente', () async {
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: false,
+        moduleReady: false,
+        missingCapabilities: const ['ACCESSIBILITY_SERVICE_DISABLED'],
+      ),
+    );
+    final controller = DriverModuleController(
+      sessionController: sessionController,
+      driverModuleRepository: repository,
+      driverNativeBridge: nativeBridge,
+    );
+
+    await controller.load();
+    await controller.openAccessibilitySettings();
+    nativeBridge.status = fakeDriverNativeFoundationStatus(
+      accessibilityServiceEnabled: true,
+      moduleReady: true,
+      missingCapabilities: const [],
+    );
+
+    await controller.handleAppResumed();
+
+    expect(controller.state.kind, DriverModuleStateKind.ready);
+    expect(
+      controller.state.message,
+      'AccessibilityService habilitado no retorno. O módulo já pode seguir.',
+    );
+    expect(nativeBridge.foundationStatusCalls, 2);
+  });
 }

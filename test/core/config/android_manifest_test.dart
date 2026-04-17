@@ -12,5 +12,8 @@ void main() {
       contains('android.permission.BIND_ACCESSIBILITY_SERVICE'),
     );
     expect(content, contains('DriverAccessibilityService'));
+    expect(content, contains('com.ubercab.driver'));
+    expect(content, contains('com.app99.driver'));
+    expect(content, contains('br.com.ifood.driver.app'));
   });
 }

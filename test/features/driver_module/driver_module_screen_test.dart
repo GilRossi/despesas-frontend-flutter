@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
 import 'package:despesas_frontend/features/driver_module/presentation/driver_module_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,10 +69,15 @@ void main() {
     expect(find.text('Base do módulo'), findsOneWidget);
     expect(find.text('Bridge Android'), findsOneWidget);
     expect(find.text('Readiness do módulo'), findsOneWidget);
+    expect(find.text('Leitura operacional mínima'), findsOneWidget);
     expect(find.text('Espaço atual: 10'), findsOneWidget);
     expect(find.text('Praia Grande, SP, BR'), findsOneWidget);
     expect(find.text('AccessibilityService desabilitado'), findsOneWidget);
     expect(find.text('Abrir acessibilidade'), findsOneWidget);
+    expect(
+      find.text('Nenhum app-alvo aprovado foi encontrado neste device.'),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('driver-module-native-section')),
       findsOneWidget,
@@ -156,6 +162,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(nativeBridge.openAccessibilitySettingsCalls, 1);
+    expect(
+      find.text(
+        'Abra o Driver Module na acessibilidade, habilite o serviço e volte para o app.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('mostra estado apto quando o readiness nativo fecha', (tester) async {
@@ -180,5 +192,46 @@ void main() {
     expect(find.text('Driver Module apto'), findsOneWidget);
     expect(find.text('Base pronta para a próxima fase técnica.'), findsOneWidget);
     expect(find.text('Abrir acessibilidade'), findsNothing);
+  });
+
+  testWidgets('lista apps-alvo instalados quando o Android reporta pacotes encontrados', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        targetApps: const [
+          DriverTargetAppStatus(
+            key: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            installed: true,
+            detectedPackageName: 'com.ubercab.driver',
+          ),
+          DriverTargetAppStatus(
+            key: 'IFOOD_DRIVER',
+            label: 'iFood Entregador',
+            installed: false,
+          ),
+        ],
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    expect(
+      find.text('Uber Driver: instalado (com.ubercab.driver)'),
+      findsOneWidget,
+    );
+    expect(find.text('iFood Entregador: não instalado'), findsOneWidget);
   });
 }

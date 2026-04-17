@@ -46,7 +46,7 @@ class _DriverModuleScreenState extends State<DriverModuleScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _controller.refreshNativeStatus();
+      _controller.handleAppResumed();
     }
   }
 
@@ -105,6 +105,7 @@ class _DriverModuleScreenState extends State<DriverModuleScreen>
       case DriverModuleStateKind.ready:
         return _DriverModuleReadinessState(
           controller: _controller,
+          message: state.message,
           bootstrap: state.bootstrap!,
           nativeStatus: state.nativeStatus!,
           ready: state.kind == DriverModuleStateKind.ready,
@@ -116,12 +117,14 @@ class _DriverModuleScreenState extends State<DriverModuleScreen>
 class _DriverModuleReadinessState extends StatelessWidget {
   const _DriverModuleReadinessState({
     required this.controller,
+    required this.message,
     required this.bootstrap,
     required this.nativeStatus,
     required this.ready,
   });
 
   final DriverModuleController controller;
+  final String? message;
   final DriverModuleBootstrap bootstrap;
   final DriverNativeFoundationStatus nativeStatus;
   final bool ready;
@@ -129,6 +132,12 @@ class _DriverModuleReadinessState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blockers = controller.describeMissingCapabilities();
+    final installedApps = nativeStatus.targetApps
+        .where((target) => target.installed)
+        .toList();
+    final missingApps = nativeStatus.targetApps
+        .where((target) => !target.installed)
+        .toList();
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -144,6 +153,18 @@ class _DriverModuleReadinessState extends StatelessWidget {
               ? 'Base pronta para a próxima fase técnica.'
               : 'A base do módulo já conhece o Espaço e o Android. Falta fechar as capabilities obrigatórias para seguir.',
         ),
+        if (message != null) ...[
+          const SizedBox(height: 12),
+          Card(
+            color: ready
+                ? Theme.of(context).colorScheme.primaryContainer
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(message!),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         _SectionCard(
           key: const ValueKey('driver-module-readiness-section'),
@@ -161,7 +182,23 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Bridge nativa disponível',
               value: nativeStatus.nativeBridgeAvailable ? 'Sim' : 'Não',
             ),
+            _StatusRow(
+              label: 'Apps-alvo encontrados',
+              value:
+                  '${installedApps.length} de ${nativeStatus.targetApps.length}',
+            ),
             const SizedBox(height: 12),
+            Text(
+              ready
+                  ? 'Onboarding técnico concluído.'
+                  : 'Onboarding técnico',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '1. Abra a acessibilidade. 2. Habilite o Driver Module. 3. Volte para o app para reavaliar o readiness automaticamente.',
+            ),
+            const SizedBox(height: 16),
             if (blockers.isEmpty)
               const Text('Nenhum bloqueio nativo pendente.')
             else
@@ -217,6 +254,40 @@ class _DriverModuleReadinessState extends StatelessWidget {
                 ),
               ],
             ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          key: const ValueKey('driver-module-operational-targets-section'),
+          title: 'Leitura operacional mínima',
+          children: [
+            if (installedApps.isEmpty)
+              const Text(
+                'Nenhum app-alvo aprovado foi encontrado neste device.',
+              )
+            else
+              ...installedApps.map(
+                (target) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '${target.label}: instalado${target.detectedPackageName == null ? '' : ' (${target.detectedPackageName})'}',
+                  ),
+                ),
+              ),
+            if (missingApps.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Ainda não encontrados',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              ...missingApps.map(
+                (target) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('${target.label}: não instalado'),
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 16),

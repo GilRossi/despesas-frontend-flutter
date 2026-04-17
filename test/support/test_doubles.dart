@@ -1415,6 +1415,43 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   bool canOpenAccessibilitySettings = true,
   bool moduleReady = false,
   List<String> missingCapabilities = const ['ACCESSIBILITY_SERVICE_DISABLED'],
+  List<DriverTargetAppStatus> targetApps = const [
+    DriverTargetAppStatus(
+      key: 'UBER_DRIVER',
+      label: 'Uber Driver',
+      installed: false,
+    ),
+    DriverTargetAppStatus(
+      key: 'APP99_DRIVER',
+      label: '99 Motorista',
+      installed: false,
+    ),
+    DriverTargetAppStatus(
+      key: 'INDRIVE_DRIVER',
+      label: 'inDrive',
+      installed: false,
+    ),
+    DriverTargetAppStatus(
+      key: 'MOBIZAP_DRIVER',
+      label: 'MobizapSP Motorista',
+      installed: false,
+    ),
+    DriverTargetAppStatus(
+      key: 'IFOOD_DRIVER',
+      label: 'iFood Entregador',
+      installed: false,
+    ),
+    DriverTargetAppStatus(
+      key: 'LALAMOVE_DRIVER',
+      label: 'Lalamove Driver',
+      installed: false,
+    ),
+    DriverTargetAppStatus(
+      key: 'RAPPI_DRIVER',
+      label: 'Rappi Entregador',
+      installed: false,
+    ),
+  ],
   bool androidAutoPrepared = false,
 }) {
   return DriverNativeFoundationStatus(
@@ -1427,6 +1464,7 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     canOpenAccessibilitySettings: canOpenAccessibilitySettings,
     moduleReady: moduleReady,
     missingCapabilities: missingCapabilities,
+    targetApps: targetApps,
     androidAutoPrepared: androidAutoPrepared,
   );
 }

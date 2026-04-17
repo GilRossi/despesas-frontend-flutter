@@ -55,5 +55,12 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <package android:name="com.ubercab.driver"/>
+        <package android:name="com.app99.driver"/>
+        <package android:name="sinet.startup.inDriver"/>
+        <package android:name="br.com.csxinovacao.motorista.mobizapsp"/>
+        <package android:name="br.com.ifood.driver.app"/>
+        <package android:name="com.lalamove.global.driver.sea"/>
+        <package android:name="com.rappi.storekeeper"/>
     </queries>
 </manifest>
