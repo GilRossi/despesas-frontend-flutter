@@ -87,7 +87,10 @@ class DriverModuleMethodChannelHandler(
         val accessibilityServiceDeclared = isAccessibilityServiceDeclared()
         val accessibilityServiceEnabled = isAccessibilityServiceEnabled()
         val canOpenAccessibilitySettings = canOpenAccessibilitySettings()
-        val targetApps = buildTargetApps()
+        val targetApps = buildTargetApps(
+            accessibilityServiceDeclared = accessibilityServiceDeclared,
+            accessibilityServiceEnabled = accessibilityServiceEnabled,
+        )
         val missingCapabilities = buildMissingCapabilities(
             accessibilityServiceDeclared = accessibilityServiceDeclared,
             accessibilityServiceEnabled = accessibilityServiceEnabled,
@@ -182,16 +185,60 @@ class DriverModuleMethodChannelHandler(
         return true
     }
 
-    private fun buildTargetApps(): List<DriverTargetAppSnapshot> {
+    private fun buildTargetApps(
+        accessibilityServiceDeclared: Boolean,
+        accessibilityServiceEnabled: Boolean,
+    ): List<DriverTargetAppSnapshot> {
         return TARGET_APPS.map { target ->
             val detectedPackageName = target.packageCandidates.firstOrNull(::isPackageInstalled)
+            val packageName = detectedPackageName ?: target.packageCandidates.first()
+            val enabledInSystem = detectedPackageName?.let(::isApplicationEnabled) ?: false
+            val launchIntentAvailable = detectedPackageName?.let(::hasLaunchIntent) ?: false
+            val missingCapabilities = buildTargetAppMissingCapabilities(
+                installed = detectedPackageName != null,
+                enabledInSystem = enabledInSystem,
+                launchIntentAvailable = launchIntentAvailable,
+                accessibilityServiceDeclared = accessibilityServiceDeclared,
+                accessibilityServiceEnabled = accessibilityServiceEnabled,
+            )
             DriverTargetAppSnapshot(
                 key = target.key,
                 label = target.label,
+                packageName = packageName,
                 installed = detectedPackageName != null,
+                enabledInSystem = enabledInSystem,
+                launchIntentAvailable = launchIntentAvailable,
+                appReady = missingCapabilities.isEmpty(),
+                missingCapabilities = missingCapabilities,
                 detectedPackageName = detectedPackageName,
             )
         }
+    }
+
+    private fun buildTargetAppMissingCapabilities(
+        installed: Boolean,
+        enabledInSystem: Boolean,
+        launchIntentAvailable: Boolean,
+        accessibilityServiceDeclared: Boolean,
+        accessibilityServiceEnabled: Boolean,
+    ): List<String> {
+        val missing = mutableListOf<String>()
+        if (!installed) {
+            missing += "PACKAGE_NOT_INSTALLED"
+        }
+        if (installed && !enabledInSystem) {
+            missing += "APP_DISABLED"
+        }
+        if (installed && !launchIntentAvailable) {
+            missing += "LAUNCH_INTENT_UNAVAILABLE"
+        }
+        if (!accessibilityServiceDeclared) {
+            missing += "ACCESSIBILITY_SERVICE_NOT_DECLARED"
+        }
+        if (!accessibilityServiceEnabled) {
+            missing += "ACCESSIBILITY_SERVICE_DISABLED"
+        }
+        return missing
     }
 
     private fun isPackageInstalled(packageName: String): Boolean {
@@ -209,5 +256,25 @@ class DriverModuleMethodChannelHandler(
         } catch (_: PackageManager.NameNotFoundException) {
             false
         }
+    }
+
+    private fun isApplicationEnabled(packageName: String): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getApplicationInfo(
+                    packageName,
+                    PackageManager.ApplicationInfoFlags.of(0),
+                ).enabled
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getApplicationInfo(packageName, 0).enabled
+            }
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    private fun hasLaunchIntent(packageName: String): Boolean {
+        return context.packageManager.getLaunchIntentForPackage(packageName) != null
     }
 }

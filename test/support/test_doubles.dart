@@ -1415,45 +1415,86 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   bool canOpenAccessibilitySettings = true,
   bool moduleReady = false,
   List<String> missingCapabilities = const ['ACCESSIBILITY_SERVICE_DISABLED'],
-  List<DriverTargetAppStatus> targetApps = const [
-    DriverTargetAppStatus(
-      key: 'UBER_DRIVER',
-      label: 'Uber Driver',
-      installed: false,
-    ),
-    DriverTargetAppStatus(
-      key: 'APP99_DRIVER',
-      label: '99 Motorista',
-      installed: false,
-    ),
-    DriverTargetAppStatus(
-      key: 'INDRIVE_DRIVER',
-      label: 'inDrive',
-      installed: false,
-    ),
-    DriverTargetAppStatus(
-      key: 'MOBIZAP_DRIVER',
-      label: 'MobizapSP Motorista',
-      installed: false,
-    ),
-    DriverTargetAppStatus(
-      key: 'IFOOD_DRIVER',
-      label: 'iFood Entregador',
-      installed: false,
-    ),
-    DriverTargetAppStatus(
-      key: 'LALAMOVE_DRIVER',
-      label: 'Lalamove Driver',
-      installed: false,
-    ),
-    DriverTargetAppStatus(
-      key: 'RAPPI_DRIVER',
-      label: 'Rappi Entregador',
-      installed: false,
-    ),
-  ],
+  List<DriverTargetAppStatus>? targetApps,
   bool androidAutoPrepared = false,
 }) {
+  final resolvedTargetApps =
+      targetApps ??
+      [
+        DriverTargetAppStatus(
+          key: 'UBER_DRIVER',
+          label: 'Uber Driver',
+          packageName: 'com.ubercab.driver',
+          installed: moduleReady,
+          enabledInSystem: moduleReady,
+          launchIntentAvailable: moduleReady,
+          appReady: moduleReady,
+          missingCapabilities: moduleReady
+              ? const []
+              : const ['PACKAGE_NOT_INSTALLED'],
+          detectedPackageName: moduleReady ? 'com.ubercab.driver' : null,
+        ),
+        const DriverTargetAppStatus(
+          key: 'APP99_DRIVER',
+          label: '99 Motorista',
+          packageName: 'com.app99.driver',
+          installed: false,
+          enabledInSystem: false,
+          launchIntentAvailable: false,
+          appReady: false,
+          missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
+        ),
+        const DriverTargetAppStatus(
+          key: 'INDRIVE_DRIVER',
+          label: 'inDrive',
+          packageName: 'sinet.startup.inDriver',
+          installed: false,
+          enabledInSystem: false,
+          launchIntentAvailable: false,
+          appReady: false,
+          missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
+        ),
+        const DriverTargetAppStatus(
+          key: 'MOBIZAP_DRIVER',
+          label: 'MobizapSP Motorista',
+          packageName: 'br.com.csxinovacao.motorista.mobizapsp',
+          installed: false,
+          enabledInSystem: false,
+          launchIntentAvailable: false,
+          appReady: false,
+          missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
+        ),
+        const DriverTargetAppStatus(
+          key: 'IFOOD_DRIVER',
+          label: 'iFood Entregador',
+          packageName: 'br.com.ifood.driver.app',
+          installed: false,
+          enabledInSystem: false,
+          launchIntentAvailable: false,
+          appReady: false,
+          missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
+        ),
+        const DriverTargetAppStatus(
+          key: 'LALAMOVE_DRIVER',
+          label: 'Lalamove Driver',
+          packageName: 'com.lalamove.global.driver.sea',
+          installed: false,
+          enabledInSystem: false,
+          launchIntentAvailable: false,
+          appReady: false,
+          missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
+        ),
+        const DriverTargetAppStatus(
+          key: 'RAPPI_DRIVER',
+          label: 'Rappi Entregador',
+          packageName: 'com.rappi.storekeeper',
+          installed: false,
+          enabledInSystem: false,
+          launchIntentAvailable: false,
+          appReady: false,
+          missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
+        ),
+      ];
   return DriverNativeFoundationStatus(
     packageName: packageName,
     methodChannel: methodChannel,
@@ -1464,7 +1505,7 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     canOpenAccessibilitySettings: canOpenAccessibilitySettings,
     moduleReady: moduleReady,
     missingCapabilities: missingCapabilities,
-    targetApps: targetApps,
+    targetApps: resolvedTargetApps,
     androidAutoPrepared: androidAutoPrepared,
   );
 }
