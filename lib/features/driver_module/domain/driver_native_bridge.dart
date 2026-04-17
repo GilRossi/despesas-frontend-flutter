@@ -39,6 +39,38 @@ class DriverTargetAppStatus {
   }
 }
 
+class DriverProviderContextStatus {
+  const DriverProviderContextStatus({
+    required this.providerKey,
+    required this.label,
+    required this.packageName,
+    required this.eventType,
+    required this.capturedAt,
+    required this.texts,
+  });
+
+  final String providerKey;
+  final String label;
+  final String packageName;
+  final String eventType;
+  final String capturedAt;
+  final List<String> texts;
+
+  factory DriverProviderContextStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverProviderContextStatus(
+      providerKey: json['providerKey'] as String? ?? '',
+      label: json['label'] as String? ?? '',
+      packageName: json['packageName'] as String? ?? '',
+      eventType: json['eventType'] as String? ?? '',
+      capturedAt: json['capturedAt'] as String? ?? '',
+      texts:
+          (json['texts'] as List<Object?>? ?? const [])
+              .whereType<String>()
+              .toList(),
+    );
+  }
+}
+
 class DriverNativeFoundationStatus {
   const DriverNativeFoundationStatus({
     required this.packageName,
@@ -51,6 +83,7 @@ class DriverNativeFoundationStatus {
     required this.moduleReady,
     required this.missingCapabilities,
     required this.targetApps,
+    required this.providerContexts,
     required this.androidAutoPrepared,
   });
 
@@ -64,6 +97,7 @@ class DriverNativeFoundationStatus {
   final bool moduleReady;
   final List<String> missingCapabilities;
   final List<DriverTargetAppStatus> targetApps;
+  final List<DriverProviderContextStatus> providerContexts;
   final bool androidAutoPrepared;
 
   bool get hasReadyTargetApps => targetApps.any((target) => target.appReady);
@@ -73,6 +107,17 @@ class DriverNativeFoundationStatus {
 
   int get installedTargetAppsCount =>
       targetApps.where((target) => target.installed).length;
+
+  bool get hasCapturedProviderContexts => providerContexts.isNotEmpty;
+
+  DriverProviderContextStatus? contextForProvider(String providerKey) {
+    for (final context in providerContexts) {
+      if (context.providerKey == providerKey) {
+        return context;
+      }
+    }
+    return null;
+  }
 
   factory DriverNativeFoundationStatus.fromJson(Map<Object?, Object?> json) {
     return DriverNativeFoundationStatus(
@@ -95,6 +140,11 @@ class DriverNativeFoundationStatus {
           (json['targetApps'] as List<Object?>? ?? const [])
               .whereType<Map<Object?, Object?>>()
               .map(DriverTargetAppStatus.fromJson)
+              .toList(),
+      providerContexts:
+          (json['providerContexts'] as List<Object?>? ?? const [])
+              .whereType<Map<Object?, Object?>>()
+              .map(DriverProviderContextStatus.fromJson)
               .toList(),
       androidAutoPrepared: json['androidAutoPrepared'] as bool? ?? false,
     );

@@ -1416,6 +1416,7 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   bool moduleReady = false,
   List<String> missingCapabilities = const ['ACCESSIBILITY_SERVICE_DISABLED'],
   List<DriverTargetAppStatus>? targetApps,
+  List<DriverProviderContextStatus>? providerContexts,
   bool androidAutoPrepared = false,
 }) {
   final resolvedTargetApps =
@@ -1506,6 +1507,7 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     moduleReady: moduleReady,
     missingCapabilities: missingCapabilities,
     targetApps: resolvedTargetApps,
+    providerContexts: providerContexts ?? const [],
     androidAutoPrepared: androidAutoPrepared,
   );
 }

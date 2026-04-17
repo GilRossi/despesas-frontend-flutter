@@ -50,6 +50,16 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> scrollToKey(WidgetTester tester, Key key) async {
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.byKey(key),
+      300,
+      scrollable: scrollable,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('renderiza a fundacao do Driver Module com bootstrap e bridge nativa', (
     tester,
   ) async {
@@ -68,8 +78,12 @@ void main() {
     expect(find.text('Driver Module'), findsOneWidget);
     expect(find.text('Readiness do módulo'), findsOneWidget);
     expect(find.text('Inventário operacional por app'), findsOneWidget);
-    expect(find.text('Serviço central desabilitado'), findsOneWidget);
     expect(find.text('Abrir acessibilidade'), findsOneWidget);
+    await scrollToKey(
+      tester,
+      const ValueKey('driver-module-provider-context-section'),
+    );
+    expect(find.text('Contexto local monitorado'), findsOneWidget);
     expect(find.text('Uber Driver · Ausente'), findsOneWidget);
     expect(find.text('Package: com.ubercab.driver'), findsOneWidget);
     expect(
@@ -282,5 +296,82 @@ void main() {
     expect(find.text('Driver Module apto'), findsOneWidget);
     expect(find.text('Uber Driver · Apto'), findsOneWidget);
     expect(find.text('Nenhuma capability pendente para este app.'), findsOneWidget);
+  });
+
+  testWidgets('mostra contexto local capturado para Uber Driver e 99 Motorista', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository(
+      bootstrap: fakeDriverModuleBootstrap(),
+    );
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        targetApps: const [
+          DriverTargetAppStatus(
+            key: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            installed: true,
+            enabledInSystem: true,
+            launchIntentAvailable: true,
+            appReady: true,
+            missingCapabilities: [],
+            detectedPackageName: 'com.ubercab.driver',
+          ),
+          DriverTargetAppStatus(
+            key: 'APP99_DRIVER',
+            label: '99 Motorista',
+            packageName: 'com.app99.driver',
+            installed: true,
+            enabledInSystem: true,
+            launchIntentAvailable: true,
+            appReady: true,
+            missingCapabilities: [],
+            detectedPackageName: 'com.app99.driver',
+          ),
+        ],
+        providerContexts: const [
+          DriverProviderContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_STATE_CHANGED',
+            capturedAt: '2026-04-17T18:10:00Z',
+            texts: ['Você está online', 'Promoções'],
+          ),
+          DriverProviderContextStatus(
+            providerKey: 'APP99_DRIVER',
+            label: '99 Motorista',
+            packageName: 'com.app99.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-17T18:11:00Z',
+            texts: ['Aceite corridas', 'Dinâmico'],
+          ),
+        ],
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    await scrollToKey(
+      tester,
+      const ValueKey('driver-module-provider-context-section'),
+    );
+
+    expect(find.text('Contexto local monitorado'), findsOneWidget);
+    expect(find.text('Uber Driver · Contexto capturado'), findsOneWidget);
+    expect(find.text('99 Motorista · Contexto capturado'), findsOneWidget);
+    expect(find.textContaining('Você está online'), findsOneWidget);
+    expect(find.textContaining('Aceite corridas'), findsOneWidget);
   });
 }
