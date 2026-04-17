@@ -243,7 +243,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(DriverModuleScreen), findsOneWidget);
-      expect(find.text('Base do módulo'), findsOneWidget);
+      expect(find.text('Readiness do módulo'), findsOneWidget);
     });
 
     testWidgets('authenticated users can open /fixed-bills/new', (

@@ -29,6 +29,20 @@ void main() {
             'canOpenAccessibilitySettings': true,
             'moduleReady': false,
             'missingCapabilities': ['ACCESSIBILITY_SERVICE_DISABLED'],
+            'targetApps': [
+              {
+                'key': 'UBER_DRIVER',
+                'label': 'Uber Driver',
+                'installed': true,
+                'detectedPackageName': 'com.ubercab.driver',
+              },
+              {
+                'key': 'APP99_DRIVER',
+                'label': '99 Motorista',
+                'installed': false,
+                'detectedPackageName': null,
+              },
+            ],
             'androidAutoPrepared': false,
           };
         });
@@ -45,6 +59,10 @@ void main() {
     expect(result.canOpenAccessibilitySettings, isTrue);
     expect(result.moduleReady, isFalse);
     expect(result.missingCapabilities, ['ACCESSIBILITY_SERVICE_DISABLED']);
+    expect(result.targetApps, hasLength(2));
+    expect(result.targetApps.first.label, 'Uber Driver');
+    expect(result.targetApps.first.installed, isTrue);
+    expect(result.targetApps.first.detectedPackageName, 'com.ubercab.driver');
     expect(result.androidAutoPrepared, isFalse);
   });
 

@@ -13,10 +13,53 @@ import io.flutter.plugin.common.MethodChannel
 class DriverModuleMethodChannelHandler(
     private val context: Context,
 ) : MethodChannel.MethodCallHandler {
+    data class DriverTargetApp(
+        val key: String,
+        val label: String,
+        val packageCandidates: List<String>,
+    )
+
     companion object {
         const val CHANNEL_NAME = "com.gilrossi.despesas/driver_module"
         private const val METHOD_GET_FOUNDATION_STATUS = "getFoundationStatus"
         private const val METHOD_OPEN_ACCESSIBILITY_SETTINGS = "openAccessibilitySettings"
+        private val TARGET_APPS = listOf(
+            DriverTargetApp(
+                key = "UBER_DRIVER",
+                label = "Uber Driver",
+                packageCandidates = listOf("com.ubercab.driver"),
+            ),
+            DriverTargetApp(
+                key = "APP99_DRIVER",
+                label = "99 Motorista",
+                packageCandidates = listOf("com.app99.driver"),
+            ),
+            DriverTargetApp(
+                key = "INDRIVE_DRIVER",
+                label = "inDrive",
+                packageCandidates = listOf("sinet.startup.inDriver"),
+            ),
+            DriverTargetApp(
+                key = "MOBIZAP_DRIVER",
+                label = "MobizapSP Motorista",
+                packageCandidates = listOf("br.com.csxinovacao.motorista.mobizapsp"),
+            ),
+            DriverTargetApp(
+                key = "IFOOD_DRIVER",
+                label = "iFood Entregador",
+                packageCandidates = listOf("br.com.ifood.driver.app"),
+            ),
+            DriverTargetApp(
+                key = "LALAMOVE_DRIVER",
+                label = "Lalamove Driver",
+                packageCandidates = listOf("com.lalamove.global.driver.sea"),
+            ),
+            DriverTargetApp(
+                key = "RAPPI_DRIVER",
+                label = "Rappi Entregador",
+                packageCandidates = listOf("com.rappi.storekeeper"),
+            ),
+        )
     }
 
     fun register(flutterEngine: FlutterEngine) {
@@ -44,6 +87,7 @@ class DriverModuleMethodChannelHandler(
         val accessibilityServiceDeclared = isAccessibilityServiceDeclared()
         val accessibilityServiceEnabled = isAccessibilityServiceEnabled()
         val canOpenAccessibilitySettings = canOpenAccessibilitySettings()
+        val targetApps = buildTargetApps()
         val missingCapabilities = buildMissingCapabilities(
             accessibilityServiceDeclared = accessibilityServiceDeclared,
             accessibilityServiceEnabled = accessibilityServiceEnabled,
@@ -59,6 +103,7 @@ class DriverModuleMethodChannelHandler(
             canOpenAccessibilitySettings = canOpenAccessibilitySettings,
             moduleReady = missingCapabilities.isEmpty(),
             missingCapabilities = missingCapabilities,
+            targetApps = targetApps,
             androidAutoPrepared = false,
         )
     }
@@ -135,5 +180,34 @@ class DriverModuleMethodChannelHandler(
         }
         context.startActivity(intent)
         return true
+    }
+
+    private fun buildTargetApps(): List<DriverTargetAppSnapshot> {
+        return TARGET_APPS.map { target ->
+            val detectedPackageName = target.packageCandidates.firstOrNull(::isPackageInstalled)
+            DriverTargetAppSnapshot(
+                key = target.key,
+                label = target.label,
+                installed = detectedPackageName != null,
+                detectedPackageName = detectedPackageName,
+            )
+        }
+    }
+
+    private fun isPackageInstalled(packageName: String): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.PackageInfoFlags.of(0),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(packageName, 0)
+            }
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
     }
 }
