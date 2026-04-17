@@ -66,21 +66,17 @@ void main() {
     );
 
     expect(find.text('Driver Module'), findsOneWidget);
-    expect(find.text('Base do módulo'), findsOneWidget);
-    expect(find.text('Bridge Android'), findsOneWidget);
     expect(find.text('Readiness do módulo'), findsOneWidget);
-    expect(find.text('Leitura operacional mínima'), findsOneWidget);
-    expect(find.text('Espaço atual: 10'), findsOneWidget);
-    expect(find.text('Praia Grande, SP, BR'), findsOneWidget);
-    expect(find.text('AccessibilityService desabilitado'), findsOneWidget);
+    expect(find.text('Inventário operacional por app'), findsOneWidget);
+    expect(find.text('Serviço central desabilitado'), findsOneWidget);
     expect(find.text('Abrir acessibilidade'), findsOneWidget);
+    expect(find.text('Uber Driver · Ausente'), findsOneWidget);
+    expect(find.text('Package: com.ubercab.driver'), findsOneWidget);
     expect(
-      find.text('Nenhum app-alvo aprovado foi encontrado neste device.'),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('driver-module-native-section')),
-      findsOneWidget,
+      find.text(
+        'App não instalado: O package aprovado ainda não foi encontrado neste device.',
+      ),
+      findsWidgets,
     );
     expect(repository.bootstrapCalls, 1);
     expect(nativeBridge.foundationStatusCalls, 1);
@@ -139,7 +135,7 @@ void main() {
     await tester.tap(find.text('Tentar novamente'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Base do módulo'), findsOneWidget);
+    expect(find.text('Readiness do módulo'), findsOneWidget);
     expect(repository.bootstrapCalls, 2);
   });
 
@@ -194,7 +190,7 @@ void main() {
     expect(find.text('Abrir acessibilidade'), findsNothing);
   });
 
-  testWidgets('lista apps-alvo instalados quando o Android reporta pacotes encontrados', (
+  testWidgets('mostra inventario pendente quando app esta presente mas ainda nao apto', (
     tester,
   ) async {
     configureLargeViewport(tester);
@@ -209,13 +205,23 @@ void main() {
           DriverTargetAppStatus(
             key: 'UBER_DRIVER',
             label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
             installed: true,
+            enabledInSystem: true,
+            launchIntentAvailable: false,
+            appReady: false,
+            missingCapabilities: ['LAUNCH_INTENT_UNAVAILABLE'],
             detectedPackageName: 'com.ubercab.driver',
           ),
           DriverTargetAppStatus(
             key: 'IFOOD_DRIVER',
             label: 'iFood Entregador',
+            packageName: 'br.com.ifood.driver.app',
             installed: false,
+            enabledInSystem: false,
+            launchIntentAvailable: false,
+            appReady: false,
+            missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
           ),
         ],
       ),
@@ -228,10 +234,53 @@ void main() {
       nativeBridge: nativeBridge,
     );
 
+    expect(find.text('Driver Module em inventário'), findsOneWidget);
+    expect(find.text('Uber Driver · Pendente'), findsOneWidget);
     expect(
-      find.text('Uber Driver: instalado (com.ubercab.driver)'),
+      find.text(
+        'Launch intent indisponível: O Android não encontrou uma activity principal para abrir este app.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('iFood Entregador: não instalado'), findsOneWidget);
+    expect(find.text('iFood Entregador · Ausente'), findsOneWidget);
+  });
+
+  testWidgets('mostra app apto quando o Android reporta capability matrix completa', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        targetApps: const [
+          DriverTargetAppStatus(
+            key: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            installed: true,
+            enabledInSystem: true,
+            launchIntentAvailable: true,
+            appReady: true,
+            missingCapabilities: [],
+            detectedPackageName: 'com.ubercab.driver',
+          ),
+        ],
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    expect(find.text('Driver Module apto'), findsOneWidget);
+    expect(find.text('Uber Driver · Apto'), findsOneWidget);
+    expect(find.text('Nenhuma capability pendente para este app.'), findsOneWidget);
   });
 }

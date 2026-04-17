@@ -10,6 +10,7 @@ enum DriverModuleStateKind {
   sessionUnavailable,
   backendBlocked,
   nativeReadinessBlocked,
+  appInventoryBlocked,
   ready,
   failure,
 }
@@ -162,9 +163,11 @@ class DriverModuleController extends ChangeNotifier {
         _buildState(
           bootstrap,
           nativeStatus,
-          message: nativeStatus.moduleReady
+          message: !nativeStatus.moduleReady
+              ? 'O app voltou da acessibilidade, mas o Driver Module ainda não foi habilitado no sistema.'
+              : nativeStatus.hasReadyTargetApps
               ? 'AccessibilityService habilitado no retorno. O módulo já pode seguir.'
-              : 'O app voltou da acessibilidade, mas o Driver Module ainda não foi habilitado no sistema.',
+              : 'O serviço central foi habilitado no retorno, mas ainda falta pelo menos um app-alvo apto.',
         ),
       );
     } catch (_) {
@@ -202,22 +205,49 @@ class DriverModuleController extends ChangeNotifier {
     DriverNativeFoundationStatus nativeStatus,
     {String? message}
   ) {
-    if (nativeStatus.moduleReady) {
+    if (!nativeStatus.moduleReady) {
       return DriverModuleState(
-        kind: DriverModuleStateKind.ready,
+        kind: DriverModuleStateKind.nativeReadinessBlocked,
         bootstrap: bootstrap,
         nativeStatus: nativeStatus,
-        message: message ?? 'Readiness nativo fechado. O módulo já pode seguir.',
+        message:
+            message ??
+            'Ainda falta habilitar o serviço principal para liberar a próxima fase do módulo.',
+      );
+    }
+    if (!nativeStatus.hasReadyTargetApps) {
+      return DriverModuleState(
+        kind: DriverModuleStateKind.appInventoryBlocked,
+        bootstrap: bootstrap,
+        nativeStatus: nativeStatus,
+        message:
+            message ??
+            'O serviço central está pronto, mas nenhum app-alvo está apto para a próxima fase.',
       );
     }
     return DriverModuleState(
-      kind: DriverModuleStateKind.nativeReadinessBlocked,
+      kind: DriverModuleStateKind.ready,
       bootstrap: bootstrap,
       nativeStatus: nativeStatus,
-      message:
-          message ??
-          'Ainda falta habilitar o serviço principal para liberar a próxima fase do módulo.',
+      message: message ?? 'Readiness nativo fechado. O módulo já pode seguir.',
     );
+  }
+
+  String inventorySummaryLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null) {
+      return 'Indisponível';
+    }
+    if (!nativeStatus.hasReadyTargetApps) {
+      return 'Pendente';
+    }
+    return 'Pronto';
+  }
+
+  List<DriverModuleCapabilityCopy> describeAppMissingCapabilities(
+    DriverTargetAppStatus target,
+  ) {
+    return target.missingCapabilities.map(_mapCapability).toList();
   }
 
   DriverModuleCapabilityCopy _mapCapability(String key) {
@@ -232,9 +262,9 @@ class DriverModuleController extends ChangeNotifier {
       case 'ACCESSIBILITY_SERVICE_DISABLED':
         return const DriverModuleCapabilityCopy(
           key: 'ACCESSIBILITY_SERVICE_DISABLED',
-          title: 'AccessibilityService desabilitado',
+          title: 'Serviço central desabilitado',
           description:
-              'Ative o serviço nas configurações de acessibilidade para liberar a próxima fase do módulo.',
+              'Ative o Driver Module na acessibilidade para liberar a próxima fase técnica.',
         );
       case 'ACCESSIBILITY_SETTINGS_UNAVAILABLE':
         return const DriverModuleCapabilityCopy(
@@ -242,6 +272,27 @@ class DriverModuleController extends ChangeNotifier {
           title: 'Configurações de acessibilidade indisponíveis',
           description:
               'O app não conseguiu abrir a tela de acessibilidade deste dispositivo.',
+        );
+      case 'PACKAGE_NOT_INSTALLED':
+        return const DriverModuleCapabilityCopy(
+          key: 'PACKAGE_NOT_INSTALLED',
+          title: 'App não instalado',
+          description:
+              'O package aprovado ainda não foi encontrado neste device.',
+        );
+      case 'APP_DISABLED':
+        return const DriverModuleCapabilityCopy(
+          key: 'APP_DISABLED',
+          title: 'App desabilitado no sistema',
+          description:
+              'O package existe, mas está desabilitado no Android e ainda não pode seguir.',
+        );
+      case 'LAUNCH_INTENT_UNAVAILABLE':
+        return const DriverModuleCapabilityCopy(
+          key: 'LAUNCH_INTENT_UNAVAILABLE',
+          title: 'Launch intent indisponível',
+          description:
+              'O Android não encontrou uma activity principal para abrir este app.',
         );
       default:
         return DriverModuleCapabilityCopy(

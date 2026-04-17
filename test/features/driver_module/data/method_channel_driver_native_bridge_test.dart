@@ -33,13 +33,23 @@ void main() {
               {
                 'key': 'UBER_DRIVER',
                 'label': 'Uber Driver',
+                'packageName': 'com.ubercab.driver',
                 'installed': true,
+                'enabledInSystem': true,
+                'launchIntentAvailable': true,
+                'appReady': true,
+                'missingCapabilities': [],
                 'detectedPackageName': 'com.ubercab.driver',
               },
               {
                 'key': 'APP99_DRIVER',
                 'label': '99 Motorista',
+                'packageName': 'com.app99.driver',
                 'installed': false,
+                'enabledInSystem': false,
+                'launchIntentAvailable': false,
+                'appReady': false,
+                'missingCapabilities': ['PACKAGE_NOT_INSTALLED'],
                 'detectedPackageName': null,
               },
             ],
@@ -61,8 +71,13 @@ void main() {
     expect(result.missingCapabilities, ['ACCESSIBILITY_SERVICE_DISABLED']);
     expect(result.targetApps, hasLength(2));
     expect(result.targetApps.first.label, 'Uber Driver');
+    expect(result.targetApps.first.packageName, 'com.ubercab.driver');
     expect(result.targetApps.first.installed, isTrue);
+    expect(result.targetApps.first.enabledInSystem, isTrue);
+    expect(result.targetApps.first.launchIntentAvailable, isTrue);
+    expect(result.targetApps.first.appReady, isTrue);
     expect(result.targetApps.first.detectedPackageName, 'com.ubercab.driver');
+    expect(result.targetApps.last.missingCapabilities, ['PACKAGE_NOT_INSTALLED']);
     expect(result.androidAutoPrepared, isFalse);
   });
 

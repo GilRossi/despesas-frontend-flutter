@@ -1,5 +1,6 @@
 import 'package:despesas_frontend/app/session_controller.dart';
 import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
 import 'package:despesas_frontend/features/driver_module/presentation/driver_module_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,7 +51,7 @@ void main() {
     );
     expect(
       controller.describeMissingCapabilities().single.title,
-      'AccessibilityService desabilitado',
+      'Serviço central desabilitado',
     );
   });
 
@@ -74,6 +75,50 @@ void main() {
 
     expect(controller.state.kind, DriverModuleStateKind.ready);
     expect(controller.state.canProceed, isTrue);
+  });
+
+  test('load marca inventario bloqueado quando nenhum app-alvo esta apto', () async {
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        targetApps: const [
+          DriverTargetAppStatus(
+            key: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            installed: true,
+            enabledInSystem: true,
+            launchIntentAvailable: false,
+            appReady: false,
+            missingCapabilities: ['LAUNCH_INTENT_UNAVAILABLE'],
+            detectedPackageName: 'com.ubercab.driver',
+          ),
+        ],
+      ),
+    );
+    final controller = DriverModuleController(
+      sessionController: sessionController,
+      driverModuleRepository: repository,
+      driverNativeBridge: nativeBridge,
+    );
+
+    await controller.load();
+
+    expect(controller.state.kind, DriverModuleStateKind.appInventoryBlocked);
+    expect(controller.inventorySummaryLabel(), 'Pendente');
+    expect(
+      controller
+          .describeAppMissingCapabilities(
+            controller.state.nativeStatus!.targetApps.first,
+          )
+          .single
+          .title,
+      'Launch intent indisponível',
+    );
   });
 
   test('load respeita bloqueio backend e nao consulta bridge nativa', () async {
@@ -133,6 +178,19 @@ void main() {
       accessibilityServiceEnabled: true,
       moduleReady: true,
       missingCapabilities: const [],
+      targetApps: const [
+        DriverTargetAppStatus(
+          key: 'UBER_DRIVER',
+          label: 'Uber Driver',
+          packageName: 'com.ubercab.driver',
+          installed: true,
+          enabledInSystem: true,
+          launchIntentAvailable: true,
+          appReady: true,
+          missingCapabilities: [],
+          detectedPackageName: 'com.ubercab.driver',
+        ),
+      ],
     );
 
     await controller.handleAppResumed();

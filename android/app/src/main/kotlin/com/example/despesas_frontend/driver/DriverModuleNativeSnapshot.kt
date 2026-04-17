@@ -3,14 +3,24 @@ package com.example.despesas_frontend.driver
 data class DriverTargetAppSnapshot(
     val key: String,
     val label: String,
+    val packageName: String,
     val installed: Boolean,
+    val enabledInSystem: Boolean,
+    val launchIntentAvailable: Boolean,
+    val appReady: Boolean,
+    val missingCapabilities: List<String>,
     val detectedPackageName: String?,
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
             "key" to key,
             "label" to label,
+            "packageName" to packageName,
             "installed" to installed,
+            "enabledInSystem" to enabledInSystem,
+            "launchIntentAvailable" to launchIntentAvailable,
+            "appReady" to appReady,
+            "missingCapabilities" to missingCapabilities,
             "detectedPackageName" to detectedPackageName,
         )
     }
