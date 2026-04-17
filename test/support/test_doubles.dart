@@ -1232,11 +1232,17 @@ class FakeDriverModuleRepository implements DriverModuleRepository {
 }
 
 class FakeDriverNativeBridge implements DriverNativeBridge {
-  FakeDriverNativeBridge({this.status, this.error});
+  FakeDriverNativeBridge({
+    this.status,
+    this.error,
+    this.openAccessibilitySettingsResult = true,
+  });
 
   DriverNativeFoundationStatus? status;
   Exception? error;
   int foundationStatusCalls = 0;
+  int openAccessibilitySettingsCalls = 0;
+  bool openAccessibilitySettingsResult;
 
   @override
   Future<DriverNativeFoundationStatus> getFoundationStatus() async {
@@ -1245,6 +1251,15 @@ class FakeDriverNativeBridge implements DriverNativeBridge {
       throw error!;
     }
     return status ?? fakeDriverNativeFoundationStatus();
+  }
+
+  @override
+  Future<bool> openAccessibilitySettings() async {
+    openAccessibilitySettingsCalls += 1;
+    if (error != null) {
+      throw error!;
+    }
+    return openAccessibilitySettingsResult;
   }
 }
 
@@ -1393,17 +1408,25 @@ DriverModuleBootstrap fakeDriverModuleBootstrap({
 DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   String packageName = 'com.example.despesas_frontend',
   String methodChannel = 'com.gilrossi.despesas/driver_module',
+  bool nativeBridgeAvailable = true,
   bool methodChannelReady = true,
   bool accessibilityServiceDeclared = true,
   bool accessibilityServiceEnabled = false,
+  bool canOpenAccessibilitySettings = true,
+  bool moduleReady = false,
+  List<String> missingCapabilities = const ['ACCESSIBILITY_SERVICE_DISABLED'],
   bool androidAutoPrepared = false,
 }) {
   return DriverNativeFoundationStatus(
     packageName: packageName,
     methodChannel: methodChannel,
+    nativeBridgeAvailable: nativeBridgeAvailable,
     methodChannelReady: methodChannelReady,
     accessibilityServiceDeclared: accessibilityServiceDeclared,
     accessibilityServiceEnabled: accessibilityServiceEnabled,
+    canOpenAccessibilitySettings: canOpenAccessibilitySettings,
+    moduleReady: moduleReady,
+    missingCapabilities: missingCapabilities,
     androidAutoPrepared: androidAutoPrepared,
   );
 }

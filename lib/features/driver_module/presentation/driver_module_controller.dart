@@ -1,0 +1,195 @@
+import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/network/api_exception.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_bootstrap.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_repository.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
+import 'package:flutter/foundation.dart';
+
+enum DriverModuleStateKind {
+  loading,
+  sessionUnavailable,
+  backendBlocked,
+  nativeReadinessBlocked,
+  ready,
+  failure,
+}
+
+class DriverModuleState {
+  const DriverModuleState({
+    required this.kind,
+    this.bootstrap,
+    this.nativeStatus,
+    this.message,
+  });
+
+  const DriverModuleState.loading()
+    : this(kind: DriverModuleStateKind.loading);
+
+  final DriverModuleStateKind kind;
+  final DriverModuleBootstrap? bootstrap;
+  final DriverNativeFoundationStatus? nativeStatus;
+  final String? message;
+
+  bool get canProceed => kind == DriverModuleStateKind.ready;
+}
+
+class DriverModuleCapabilityCopy {
+  const DriverModuleCapabilityCopy({
+    required this.key,
+    required this.title,
+    required this.description,
+  });
+
+  final String key;
+  final String title;
+  final String description;
+}
+
+class DriverModuleController extends ChangeNotifier {
+  DriverModuleController({
+    required SessionController sessionController,
+    required DriverModuleRepository driverModuleRepository,
+    required DriverNativeBridge driverNativeBridge,
+  }) : _sessionController = sessionController,
+       _driverModuleRepository = driverModuleRepository,
+       _driverNativeBridge = driverNativeBridge;
+
+  final SessionController _sessionController;
+  final DriverModuleRepository _driverModuleRepository;
+  final DriverNativeBridge _driverNativeBridge;
+
+  DriverModuleState _state = const DriverModuleState.loading();
+  DriverModuleState get state => _state;
+
+  Future<void> load() async {
+    final user = _sessionController.currentUser;
+    final isPlatformAdmin = user?.role == 'PLATFORM_ADMIN';
+    final hasSpace = user?.householdId != null;
+
+    if (!hasSpace || isPlatformAdmin) {
+      _setState(
+        const DriverModuleState(
+          kind: DriverModuleStateKind.sessionUnavailable,
+          message:
+              'Esta camada do módulo só pode ser usada por um usuário com Espaço ativo.',
+        ),
+      );
+      return;
+    }
+
+    _setState(const DriverModuleState.loading());
+
+    try {
+      final bootstrap = await _driverModuleRepository.fetchBootstrap();
+      final nativeStatus = await _driverNativeBridge.getFoundationStatus();
+      _setState(_buildState(bootstrap, nativeStatus));
+    } on ApiException catch (error) {
+      if (error.statusCode == 403) {
+        _setState(
+          const DriverModuleState(
+            kind: DriverModuleStateKind.backendBlocked,
+            message: 'O módulo Motorista não está habilitado neste Espaço.',
+          ),
+        );
+        return;
+      }
+      _setState(
+        DriverModuleState(
+          kind: DriverModuleStateKind.failure,
+          message: error.message,
+        ),
+      );
+    } catch (_) {
+      _setState(
+        const DriverModuleState(
+          kind: DriverModuleStateKind.failure,
+          message: 'Não foi possível carregar o Driver Module.',
+        ),
+      );
+    }
+  }
+
+  Future<void> refreshNativeStatus() async {
+    final bootstrap = _state.bootstrap;
+    if (bootstrap == null) {
+      return;
+    }
+
+    try {
+      final nativeStatus = await _driverNativeBridge.getFoundationStatus();
+      _setState(_buildState(bootstrap, nativeStatus));
+    } catch (_) {
+      _setState(
+        DriverModuleState(
+          kind: DriverModuleStateKind.failure,
+          bootstrap: bootstrap,
+          message: 'Não foi possível atualizar o readiness do Driver Module.',
+        ),
+      );
+    }
+  }
+
+  Future<bool> openAccessibilitySettings() {
+    return _driverNativeBridge.openAccessibilitySettings();
+  }
+
+  List<DriverModuleCapabilityCopy> describeMissingCapabilities() {
+    final keys = _state.nativeStatus?.missingCapabilities ?? const <String>[];
+    return keys.map(_mapCapability).toList();
+  }
+
+  DriverModuleState _buildState(
+    DriverModuleBootstrap bootstrap,
+    DriverNativeFoundationStatus nativeStatus,
+  ) {
+    if (nativeStatus.moduleReady) {
+      return DriverModuleState(
+        kind: DriverModuleStateKind.ready,
+        bootstrap: bootstrap,
+        nativeStatus: nativeStatus,
+      );
+    }
+    return DriverModuleState(
+      kind: DriverModuleStateKind.nativeReadinessBlocked,
+      bootstrap: bootstrap,
+      nativeStatus: nativeStatus,
+    );
+  }
+
+  DriverModuleCapabilityCopy _mapCapability(String key) {
+    switch (key) {
+      case 'ACCESSIBILITY_SERVICE_NOT_DECLARED':
+        return const DriverModuleCapabilityCopy(
+          key: 'ACCESSIBILITY_SERVICE_NOT_DECLARED',
+          title: 'AccessibilityService não declarado',
+          description:
+              'O app não encontrou a declaração nativa do serviço de acessibilidade.',
+        );
+      case 'ACCESSIBILITY_SERVICE_DISABLED':
+        return const DriverModuleCapabilityCopy(
+          key: 'ACCESSIBILITY_SERVICE_DISABLED',
+          title: 'AccessibilityService desabilitado',
+          description:
+              'Ative o serviço nas configurações de acessibilidade para liberar a próxima fase do módulo.',
+        );
+      case 'ACCESSIBILITY_SETTINGS_UNAVAILABLE':
+        return const DriverModuleCapabilityCopy(
+          key: 'ACCESSIBILITY_SETTINGS_UNAVAILABLE',
+          title: 'Configurações de acessibilidade indisponíveis',
+          description:
+              'O app não conseguiu abrir a tela de acessibilidade deste dispositivo.',
+        );
+      default:
+        return DriverModuleCapabilityCopy(
+          key: key,
+          title: key,
+          description: 'Há uma capability pendente para seguir.',
+        );
+    }
+  }
+
+  void _setState(DriverModuleState nextState) {
+    _state = nextState;
+    notifyListeners();
+  }
+}

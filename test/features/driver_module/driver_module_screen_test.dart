@@ -67,10 +67,11 @@ void main() {
     expect(find.text('Driver Module'), findsOneWidget);
     expect(find.text('Base do módulo'), findsOneWidget);
     expect(find.text('Bridge Android'), findsOneWidget);
+    expect(find.text('Readiness do módulo'), findsOneWidget);
     expect(find.text('Espaço atual: 10'), findsOneWidget);
     expect(find.text('Praia Grande, SP, BR'), findsOneWidget);
-    expect(find.text('Uber Driver'), findsOneWidget);
-    expect(find.text('99 Motorista'), findsOneWidget);
+    expect(find.text('AccessibilityService desabilitado'), findsOneWidget);
+    expect(find.text('Abrir acessibilidade'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('driver-module-native-section')),
       findsOneWidget,
@@ -134,5 +135,50 @@ void main() {
 
     expect(find.text('Base do módulo'), findsOneWidget);
     expect(repository.bootstrapCalls, 2);
+  });
+
+  testWidgets('permite abrir a tela de acessibilidade quando o readiness esta pendente', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge();
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    await tester.tap(find.text('Abrir acessibilidade'));
+    await tester.pumpAndSettle();
+
+    expect(nativeBridge.openAccessibilitySettingsCalls, 1);
+  });
+
+  testWidgets('mostra estado apto quando o readiness nativo fecha', (tester) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    expect(find.text('Driver Module apto'), findsOneWidget);
+    expect(find.text('Base pronta para a próxima fase técnica.'), findsOneWidget);
+    expect(find.text('Abrir acessibilidade'), findsNothing);
   });
 }
