@@ -53,6 +53,16 @@ void main() {
                 'detectedPackageName': null,
               },
             ],
+            'providerContexts': [
+              {
+                'providerKey': 'UBER_DRIVER',
+                'label': 'Uber Driver',
+                'packageName': 'com.ubercab.driver',
+                'eventType': 'TYPE_WINDOW_STATE_CHANGED',
+                'capturedAt': '2026-04-17T18:10:00Z',
+                'texts': ['Você está online', 'Promoções'],
+              },
+            ],
             'androidAutoPrepared': false,
           };
         });
@@ -78,6 +88,9 @@ void main() {
     expect(result.targetApps.first.appReady, isTrue);
     expect(result.targetApps.first.detectedPackageName, 'com.ubercab.driver');
     expect(result.targetApps.last.missingCapabilities, ['PACKAGE_NOT_INSTALLED']);
+    expect(result.providerContexts, hasLength(1));
+    expect(result.providerContexts.single.providerKey, 'UBER_DRIVER');
+    expect(result.providerContexts.single.texts, ['Você está online', 'Promoções']);
     expect(result.androidAutoPrepared, isFalse);
   });
 

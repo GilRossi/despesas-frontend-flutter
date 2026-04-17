@@ -16,4 +16,17 @@ void main() {
     expect(content, contains('com.app99.driver'));
     expect(content, contains('br.com.ifood.driver.app'));
   });
+
+  test('driver accessibility config retrieves interactive windows', () async {
+    final config = File(
+      'android/app/src/main/res/xml/driver_accessibility_service_config.xml',
+    );
+    final content = await config.readAsString();
+    expect(
+      content,
+      contains('typeWindowStateChanged|typeWindowContentChanged'),
+    );
+    expect(content, contains('flagRetrieveInteractiveWindows'));
+    expect(content, contains('android:canRetrieveWindowContent="true"'));
+  });
 }

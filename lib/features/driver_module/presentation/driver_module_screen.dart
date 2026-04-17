@@ -188,6 +188,10 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Apps aptos para a próxima fase',
               value: '$readyApps de ${nativeStatus.targetApps.length}',
             ),
+            _StatusRow(
+              label: 'Contexto local',
+              value: controller.contextSummaryLabel(),
+            ),
             const SizedBox(height: 12),
             Text(
               ready ? 'Onboarding técnico concluído.' : 'Onboarding técnico',
@@ -271,6 +275,35 @@ class _DriverModuleReadinessState extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          key: const ValueKey('driver-module-provider-context-section'),
+          title: 'Contexto local monitorado',
+          children: [
+            for (final provider in bootstrap.providers.where(
+              (provider) =>
+                  provider.key == 'UBER_DRIVER' ||
+                  provider.key == 'APP99_DRIVER',
+            )) ...[
+              _ProviderContextCard(
+                providerLabel: provider.label,
+                targetApp: nativeStatus.targetApps.where(
+                  (target) => target.key == provider.key,
+                ).firstOrNull,
+                providerContext: nativeStatus.contextForProvider(provider.key),
+              ),
+              if (provider !=
+                  bootstrap.providers
+                      .where(
+                        (candidate) =>
+                            candidate.key == 'UBER_DRIVER' ||
+                            candidate.key == 'APP99_DRIVER',
+                      )
+                      .last)
+                const SizedBox(height: 12),
+            ],
           ],
         ),
         const SizedBox(height: 16),
@@ -440,6 +473,94 @@ class _TargetAppCard extends StatelessWidget {
       return 'Apto';
     }
     return 'Pendente';
+  }
+}
+
+class _ProviderContextCard extends StatelessWidget {
+  const _ProviderContextCard({
+    required this.providerLabel,
+    required this.targetApp,
+    required this.providerContext,
+  });
+
+  final String providerLabel;
+  final DriverTargetAppStatus? targetApp;
+  final DriverProviderContextStatus? providerContext;
+
+  @override
+  Widget build(BuildContext context) {
+    final contextCaptured = providerContext != null;
+    final installed = targetApp?.installed ?? false;
+    final appReady = targetApp?.appReady ?? false;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$providerLabel · ${contextCaptured ? 'Contexto capturado' : 'Contexto pendente'}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 12),
+            _StatusRow(
+              label: 'Package monitorado',
+              value: targetApp?.packageName ?? 'Indisponível',
+            ),
+            _StatusRow(label: 'App instalado', value: installed ? 'Sim' : 'Não'),
+            _StatusRow(label: 'App apto', value: appReady ? 'Sim' : 'Não'),
+            if (contextCaptured) ...[
+              _StatusRow(
+                label: 'Última captura',
+                value: _formatCapturedAt(providerContext!.capturedAt),
+              ),
+              _StatusRow(
+                label: 'Evento',
+                value: _formatEventType(providerContext!.eventType),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Textos visíveis',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              for (final text in providerContext!.texts.take(6))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text('• $text'),
+                ),
+            ] else ...[
+              const SizedBox(height: 12),
+              const Text(
+                'Abra o app no device, mantenha a tela visível por alguns segundos e volte para o Driver Module para atualizar o diagnóstico.',
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatCapturedAt(String value) {
+    final parsed = DateTime.tryParse(value)?.toLocal();
+    if (parsed == null) {
+      return value;
+    }
+    String twoDigits(int part) => part.toString().padLeft(2, '0');
+    return '${twoDigits(parsed.day)}/${twoDigits(parsed.month)}/${parsed.year} ${twoDigits(parsed.hour)}:${twoDigits(parsed.minute)}';
+  }
+
+  String _formatEventType(String value) {
+    switch (value) {
+      case 'TYPE_WINDOW_STATE_CHANGED':
+        return 'Mudança de janela';
+      case 'TYPE_WINDOW_CONTENT_CHANGED':
+        return 'Mudança de conteúdo';
+      default:
+        return value;
+    }
   }
 }
 

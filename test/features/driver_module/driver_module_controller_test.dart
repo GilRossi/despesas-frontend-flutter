@@ -75,6 +75,43 @@ void main() {
 
     expect(controller.state.kind, DriverModuleStateKind.ready);
     expect(controller.state.canProceed, isTrue);
+    expect(controller.contextSummaryLabel(), 'Pendente');
+  });
+
+  test('load marca contexto como capturado quando Uber ou 99 ja foram lidos', () async {
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        providerContexts: const [
+          DriverProviderContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_STATE_CHANGED',
+            capturedAt: '2026-04-17T18:10:00Z',
+            texts: ['Você está online', 'Promoções'],
+          ),
+        ],
+      ),
+    );
+    final controller = DriverModuleController(
+      sessionController: sessionController,
+      driverModuleRepository: repository,
+      driverNativeBridge: nativeBridge,
+    );
+
+    await controller.load();
+
+    expect(controller.state.kind, DriverModuleStateKind.ready);
+    expect(controller.contextSummaryLabel(), 'Capturado');
+    expect(
+      controller.state.nativeStatus?.contextForProvider('UBER_DRIVER')?.texts.first,
+      'Você está online',
+    );
   });
 
   test('load marca inventario bloqueado quando nenhum app-alvo esta apto', () async {

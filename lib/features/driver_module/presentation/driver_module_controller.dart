@@ -244,6 +244,17 @@ class DriverModuleController extends ChangeNotifier {
     return 'Pronto';
   }
 
+  String contextSummaryLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null) {
+      return 'Indisponível';
+    }
+    if (!nativeStatus.hasCapturedProviderContexts) {
+      return 'Pendente';
+    }
+    return 'Capturado';
+  }
+
   List<DriverModuleCapabilityCopy> describeAppMissingCapabilities(
     DriverTargetAppStatus target,
   ) {

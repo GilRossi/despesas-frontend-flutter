@@ -107,6 +107,11 @@ class DriverModuleMethodChannelHandler(
             moduleReady = missingCapabilities.isEmpty(),
             missingCapabilities = missingCapabilities,
             targetApps = targetApps,
+            providerContexts = if (accessibilityServiceEnabled) {
+                DriverAccessibilityContextStore.snapshots()
+            } else {
+                emptyList()
+            },
             androidAutoPrepared = false,
         )
     }
