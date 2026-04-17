@@ -1,8 +1,8 @@
 import 'package:despesas_frontend/app/session_controller.dart';
-import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/driver_module/domain/driver_module_bootstrap.dart';
 import 'package:despesas_frontend/features/driver_module/domain/driver_module_repository.dart';
 import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
+import 'package:despesas_frontend/features/driver_module/presentation/driver_module_controller.dart';
 import 'package:flutter/material.dart';
 
 class DriverModuleScreen extends StatefulWidget {
@@ -21,117 +21,205 @@ class DriverModuleScreen extends StatefulWidget {
   State<DriverModuleScreen> createState() => _DriverModuleScreenState();
 }
 
-class _DriverModuleScreenState extends State<DriverModuleScreen> {
-  bool _loading = true;
-  String? _errorMessage;
-  bool _moduleUnavailable = false;
-  DriverModuleBootstrap? _bootstrap;
-  DriverNativeFoundationStatus? _nativeStatus;
+class _DriverModuleScreenState extends State<DriverModuleScreen>
+    with WidgetsBindingObserver {
+  late final DriverModuleController _controller;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addObserver(this);
+    _controller = DriverModuleController(
+      sessionController: widget.sessionController,
+      driverModuleRepository: widget.driverModuleRepository,
+      driverNativeBridge: widget.driverNativeBridge,
+    )..load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-      _moduleUnavailable = false;
-    });
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    super.dispose();
+  }
 
-    try {
-      final bootstrap = await widget.driverModuleRepository.fetchBootstrap();
-      final nativeStatus = await widget.driverNativeBridge.getFoundationStatus();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _bootstrap = bootstrap;
-        _nativeStatus = nativeStatus;
-        _loading = false;
-      });
-    } on ApiException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loading = false;
-        _moduleUnavailable = error.statusCode == 403;
-        _errorMessage = error.statusCode == 403 ? null : error.message;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loading = false;
-        _errorMessage = 'Não foi possível carregar o Driver Module.';
-      });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _controller.refreshNativeStatus();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = widget.sessionController.currentUser;
-    final isPlatformAdmin = user?.role == 'PLATFORM_ADMIN';
-    final hasSpace = user?.householdId != null;
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Driver Module')),
-      body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : !hasSpace || isPlatformAdmin
-            ? _MessageState(
-                title: 'Driver Module indisponível',
-                message:
-                    'Esta base do módulo só pode ser usada por um usuário com Espaço ativo.',
-                onRetry: _load,
-              )
-            : _moduleUnavailable
-            ? _MessageState(
-                title: 'Driver Module indisponível',
-                message:
-                    'O módulo Motorista não está habilitado neste Espaço.',
-                onRetry: _load,
-              )
-            : _errorMessage != null
-            ? _MessageState(
-                title: 'Falha ao carregar',
-                message:
-                    _errorMessage ?? 'Não foi possível carregar o Driver Module.',
-                onRetry: _load,
-              )
-            : _DriverModuleSuccessState(
-                bootstrap: _bootstrap!,
-                nativeStatus: _nativeStatus!,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final state = _controller.state;
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Driver Module'),
+            actions: [
+              IconButton(
+                key: const ValueKey('driver-module-refresh-button'),
+                onPressed: _controller.load,
+                tooltip: 'Atualizar status',
+                icon: const Icon(Icons.refresh),
               ),
-      ),
+            ],
+          ),
+          body: SafeArea(child: _buildBody(context, state)),
+        );
+      },
     );
+  }
+
+  Widget _buildBody(BuildContext context, DriverModuleState state) {
+    switch (state.kind) {
+      case DriverModuleStateKind.loading:
+        return const Center(child: CircularProgressIndicator());
+      case DriverModuleStateKind.sessionUnavailable:
+        return _MessageState(
+          title: 'Driver Module indisponível',
+          message:
+              state.message ??
+              'Esta camada do módulo só pode ser usada por um usuário com Espaço ativo.',
+          onRetry: _controller.load,
+        );
+      case DriverModuleStateKind.backendBlocked:
+        return _MessageState(
+          title: 'Driver Module indisponível',
+          message:
+              state.message ??
+              'O módulo Motorista não está habilitado neste Espaço.',
+          onRetry: _controller.load,
+        );
+      case DriverModuleStateKind.failure:
+        return _MessageState(
+          title: 'Falha ao carregar',
+          message:
+              state.message ?? 'Não foi possível carregar o Driver Module.',
+          onRetry: _controller.load,
+        );
+      case DriverModuleStateKind.nativeReadinessBlocked:
+      case DriverModuleStateKind.ready:
+        return _DriverModuleReadinessState(
+          controller: _controller,
+          bootstrap: state.bootstrap!,
+          nativeStatus: state.nativeStatus!,
+          ready: state.kind == DriverModuleStateKind.ready,
+        );
+    }
   }
 }
 
-class _DriverModuleSuccessState extends StatelessWidget {
-  const _DriverModuleSuccessState({
+class _DriverModuleReadinessState extends StatelessWidget {
+  const _DriverModuleReadinessState({
+    required this.controller,
     required this.bootstrap,
     required this.nativeStatus,
+    required this.ready,
   });
 
+  final DriverModuleController controller;
   final DriverModuleBootstrap bootstrap;
   final DriverNativeFoundationStatus nativeStatus;
+  final bool ready;
 
   @override
   Widget build(BuildContext context) {
+    final blockers = controller.describeMissingCapabilities();
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text(
-          'Fundação inicial do módulo híbrido Flutter + Android.',
-          style: TextStyle(fontSize: 16),
+        Text(
+          ready
+              ? 'Driver Module apto'
+              : 'Driver Module em readiness',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          ready
+              ? 'Base pronta para a próxima fase técnica.'
+              : 'A base do módulo já conhece o Espaço e o Android. Falta fechar as capabilities obrigatórias para seguir.',
         ),
         const SizedBox(height: 24),
+        _SectionCard(
+          key: const ValueKey('driver-module-readiness-section'),
+          title: 'Readiness do módulo',
+          children: [
+            _StatusRow(
+              label: 'Estado agregado',
+              value: ready ? 'Apto' : 'Pendente',
+            ),
+            _StatusRow(
+              label: 'Readiness nativo',
+              value: nativeStatus.moduleReady ? 'Apto' : 'Pendente',
+            ),
+            _StatusRow(
+              label: 'Bridge nativa disponível',
+              value: nativeStatus.nativeBridgeAvailable ? 'Sim' : 'Não',
+            ),
+            const SizedBox(height: 12),
+            if (blockers.isEmpty)
+              const Text('Nenhum bloqueio nativo pendente.')
+            else
+              ...blockers.map(
+                (blocker) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        blocker.title,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(blocker.description),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                if (!ready && nativeStatus.canOpenAccessibilitySettings)
+                  FilledButton(
+                    key: const ValueKey(
+                      'driver-module-open-accessibility-settings-button',
+                    ),
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final opened =
+                          await controller.openAccessibilitySettings();
+                      if (!context.mounted) {
+                        return;
+                      }
+                      if (!opened) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Não foi possível abrir a tela de acessibilidade.',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Abrir acessibilidade'),
+                  ),
+                OutlinedButton(
+                  key: const ValueKey('driver-module-refresh-native-button'),
+                  onPressed: controller.refreshNativeStatus,
+                  child: const Text('Atualizar status'),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         _SectionCard(
           key: const ValueKey('driver-module-bootstrap-section'),
           title: 'Base do módulo',
@@ -168,6 +256,10 @@ class _DriverModuleSuccessState extends StatelessWidget {
               value: nativeStatus.accessibilityServiceEnabled ? 'Sim' : 'Não',
             ),
             _StatusRow(
+              label: 'Configurações de acessibilidade disponíveis',
+              value: nativeStatus.canOpenAccessibilitySettings ? 'Sim' : 'Não',
+            ),
+            _StatusRow(
               label: 'Android Auto preparado',
               value: nativeStatus.androidAutoPrepared ? 'Sim' : 'Não',
             ),
@@ -180,7 +272,7 @@ class _DriverModuleSuccessState extends StatelessWidget {
           title: 'Próxima rodada',
           children: [
             Text(
-              'A próxima etapa pode adicionar o primeiro fluxo técnico do módulo sem reabrir a governança por Espaço.',
+              'A próxima etapa já pode consumir este readiness para iniciar o primeiro fluxo técnico do módulo sem retrabalho estrutural.',
             ),
           ],
         ),

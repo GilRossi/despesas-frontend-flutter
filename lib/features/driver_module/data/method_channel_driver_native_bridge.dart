@@ -16,4 +16,10 @@ class MethodChannelDriverNativeBridge implements DriverNativeBridge {
     );
     return DriverNativeFoundationStatus.fromJson(response ?? const {});
   }
+
+  @override
+  Future<bool> openAccessibilitySettings() async {
+    return await _channel.invokeMethod<bool>('openAccessibilitySettings') ??
+        false;
+  }
 }
