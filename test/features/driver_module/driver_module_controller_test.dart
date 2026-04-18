@@ -45,118 +45,254 @@ void main() {
 
     expect(controller.state.kind, DriverModuleStateKind.nativeReadinessBlocked);
     expect(controller.state.bootstrap?.spaceId, 10);
-    expect(
-      controller.state.nativeStatus?.missingCapabilities,
-      ['ACCESSIBILITY_SERVICE_DISABLED'],
-    );
+    expect(controller.state.nativeStatus?.missingCapabilities, [
+      'ACCESSIBILITY_SERVICE_DISABLED',
+    ]);
     expect(
       controller.describeMissingCapabilities().single.title,
       'Serviço central desabilitado',
     );
   });
 
-  test('load marca o modulo como pronto quando o readiness nativo fecha', () async {
-    final sessionController = await loginAsDriverOwner();
-    final repository = FakeDriverModuleRepository();
-    final nativeBridge = FakeDriverNativeBridge(
-      status: fakeDriverNativeFoundationStatus(
-        accessibilityServiceEnabled: true,
-        moduleReady: true,
-        missingCapabilities: const [],
-      ),
-    );
-    final controller = DriverModuleController(
-      sessionController: sessionController,
-      driverModuleRepository: repository,
-      driverNativeBridge: nativeBridge,
-    );
+  test(
+    'load marca o modulo como pronto quando o readiness nativo fecha',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
 
-    await controller.load();
+      await controller.load();
 
-    expect(controller.state.kind, DriverModuleStateKind.ready);
-    expect(controller.state.canProceed, isTrue);
-    expect(controller.contextSummaryLabel(), 'Pendente');
-  });
+      expect(controller.state.kind, DriverModuleStateKind.ready);
+      expect(controller.state.canProceed, isTrue);
+      expect(controller.contextSummaryLabel(), 'Pendente');
+      expect(controller.signalLabel(), 'Vermelho');
+    },
+  );
 
-  test('load marca contexto como capturado quando Uber ou 99 ja foram lidos', () async {
-    final sessionController = await loginAsDriverOwner();
-    final repository = FakeDriverModuleRepository();
-    final nativeBridge = FakeDriverNativeBridge(
-      status: fakeDriverNativeFoundationStatus(
-        accessibilityServiceEnabled: true,
-        moduleReady: true,
-        missingCapabilities: const [],
-        providerContexts: const [
-          DriverProviderContextStatus(
+  test(
+    'load marca contexto como capturado quando Uber ou 99 ja foram lidos',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'GREEN',
+            label: 'Verde',
+            reason: 'FOCUSED_CONTEXT_READY',
+          ),
+          currentContext: const DriverCurrentContextStatus(
             providerKey: 'UBER_DRIVER',
             label: 'Uber Driver',
             packageName: 'com.ubercab.driver',
             eventType: 'TYPE_WINDOW_STATE_CHANGED',
             capturedAt: '2026-04-17T18:10:00Z',
             texts: ['Você está online', 'Promoções'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-17T18:10:15Z',
           ),
-        ],
-      ),
-    );
-    final controller = DriverModuleController(
-      sessionController: sessionController,
-      driverModuleRepository: repository,
-      driverNativeBridge: nativeBridge,
-    );
+          providerContexts: const [
+            DriverProviderContextStatus(
+              providerKey: 'UBER_DRIVER',
+              label: 'Uber Driver',
+              packageName: 'com.ubercab.driver',
+              eventType: 'TYPE_WINDOW_STATE_CHANGED',
+              capturedAt: '2026-04-17T18:10:00Z',
+              texts: ['Você está online', 'Promoções'],
+            ),
+          ],
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
 
-    await controller.load();
+      await controller.load();
 
-    expect(controller.state.kind, DriverModuleStateKind.ready);
-    expect(controller.contextSummaryLabel(), 'Capturado');
-    expect(
-      controller.state.nativeStatus?.contextForProvider('UBER_DRIVER')?.texts.first,
-      'Você está online',
-    );
-  });
+      expect(controller.state.kind, DriverModuleStateKind.ready);
+      expect(controller.contextSummaryLabel(), 'Capturado');
+      expect(controller.signalLabel(), 'Verde');
+      expect(controller.contextValidityLabel(), 'Válido');
+      expect(controller.currentProviderLabel(), 'Uber Driver');
+      expect(
+        controller.state.nativeStatus
+            ?.contextForProvider('UBER_DRIVER')
+            ?.texts
+            .first,
+        'Você está online',
+      );
+    },
+  );
 
-  test('load marca inventario bloqueado quando nenhum app-alvo esta apto', () async {
-    final sessionController = await loginAsDriverOwner();
-    final repository = FakeDriverModuleRepository();
-    final nativeBridge = FakeDriverNativeBridge(
-      status: fakeDriverNativeFoundationStatus(
-        accessibilityServiceEnabled: true,
-        moduleReady: true,
-        missingCapabilities: const [],
-        targetApps: const [
-          DriverTargetAppStatus(
-            key: 'UBER_DRIVER',
+  test(
+    'requestAcceptCommand atualiza o estado agregado com o comando centralizado',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'RECENT_CONTEXT_OUT_OF_FOCUS',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
             label: 'Uber Driver',
             packageName: 'com.ubercab.driver',
-            installed: true,
-            enabledInSystem: true,
-            launchIntentAvailable: false,
-            appReady: false,
-            missingCapabilities: ['LAUNCH_INTENT_UNAVAILABLE'],
-            detectedPackageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_STATE_CHANGED',
+            capturedAt: '2026-04-17T18:10:00Z',
+            texts: ['Você está online'],
+            inFocus: false,
+            validity: 'STALE',
+            validUntil: '2026-04-17T18:10:15Z',
+            invalidationReason: 'PROVIDER_OUT_OF_FOCUS',
           ),
-        ],
-      ),
-    );
-    final controller = DriverModuleController(
-      sessionController: sessionController,
-      driverModuleRepository: repository,
-      driverNativeBridge: nativeBridge,
-    );
+          acceptCommand: const DriverAcceptCommandStatus(state: 'IDLE'),
+          targetApps: const [
+            DriverTargetAppStatus(
+              key: 'UBER_DRIVER',
+              label: 'Uber Driver',
+              packageName: 'com.ubercab.driver',
+              installed: true,
+              enabledInSystem: true,
+              launchIntentAvailable: true,
+              appReady: true,
+              missingCapabilities: [],
+              detectedPackageName: 'com.ubercab.driver',
+            ),
+          ],
+        ),
+        acceptCommandResult: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'RECENT_CONTEXT_OUT_OF_FOCUS',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_STATE_CHANGED',
+            capturedAt: '2026-04-17T18:10:00Z',
+            texts: ['Você está online'],
+            inFocus: false,
+            validity: 'STALE',
+            validUntil: '2026-04-17T18:10:15Z',
+            invalidationReason: 'PROVIDER_OUT_OF_FOCUS',
+          ),
+          acceptCommand: const DriverAcceptCommandStatus(
+            state: 'PENDING_EXECUTOR',
+            source: 'FLUTTER_HANDSET',
+            targetProviderKey: 'UBER_DRIVER',
+            targetPackageName: 'com.ubercab.driver',
+            requestedAt: '2026-04-17T18:10:12Z',
+            lastUpdatedAt: '2026-04-17T18:10:12Z',
+          ),
+          targetApps: const [
+            DriverTargetAppStatus(
+              key: 'UBER_DRIVER',
+              label: 'Uber Driver',
+              packageName: 'com.ubercab.driver',
+              installed: true,
+              enabledInSystem: true,
+              launchIntentAvailable: true,
+              appReady: true,
+              missingCapabilities: [],
+              detectedPackageName: 'com.ubercab.driver',
+            ),
+          ],
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
 
-    await controller.load();
+      await controller.load();
+      await controller.requestAcceptCommand();
 
-    expect(controller.state.kind, DriverModuleStateKind.appInventoryBlocked);
-    expect(controller.inventorySummaryLabel(), 'Pendente');
-    expect(
-      controller
-          .describeAppMissingCapabilities(
-            controller.state.nativeStatus!.targetApps.first,
-          )
-          .single
-          .title,
-      'Launch intent indisponível',
-    );
-  });
+      expect(nativeBridge.requestAcceptCommandCalls, 1);
+      expect(controller.state.kind, DriverModuleStateKind.ready);
+      expect(controller.acceptCommandLabel(), 'Pendente no executor');
+      expect(
+        controller.state.message,
+        'Comando registrado no núcleo nativo. O executor real continua restrito ao AccessibilityService.',
+      );
+    },
+  );
+
+  test(
+    'load marca inventario bloqueado quando nenhum app-alvo esta apto',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          targetApps: const [
+            DriverTargetAppStatus(
+              key: 'UBER_DRIVER',
+              label: 'Uber Driver',
+              packageName: 'com.ubercab.driver',
+              installed: true,
+              enabledInSystem: true,
+              launchIntentAvailable: false,
+              appReady: false,
+              missingCapabilities: ['LAUNCH_INTENT_UNAVAILABLE'],
+              detectedPackageName: 'com.ubercab.driver',
+            ),
+          ],
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+
+      expect(controller.state.kind, DriverModuleStateKind.appInventoryBlocked);
+      expect(controller.inventorySummaryLabel(), 'Pendente');
+      expect(
+        controller
+            .describeAppMissingCapabilities(
+              controller.state.nativeStatus!.targetApps.first,
+            )
+            .single
+            .title,
+        'Launch intent indisponível',
+      );
+    },
+  );
 
   test('load respeita bloqueio backend e nao consulta bridge nativa', () async {
     final sessionController = await loginAsDriverOwner();
@@ -193,50 +329,53 @@ void main() {
     expect(opened, isTrue);
   });
 
-  test('retorno da acessibilidade reavalia o readiness automaticamente', () async {
-    final sessionController = await loginAsDriverOwner();
-    final repository = FakeDriverModuleRepository();
-    final nativeBridge = FakeDriverNativeBridge(
-      status: fakeDriverNativeFoundationStatus(
-        accessibilityServiceEnabled: false,
-        moduleReady: false,
-        missingCapabilities: const ['ACCESSIBILITY_SERVICE_DISABLED'],
-      ),
-    );
-    final controller = DriverModuleController(
-      sessionController: sessionController,
-      driverModuleRepository: repository,
-      driverNativeBridge: nativeBridge,
-    );
-
-    await controller.load();
-    await controller.openAccessibilitySettings();
-    nativeBridge.status = fakeDriverNativeFoundationStatus(
-      accessibilityServiceEnabled: true,
-      moduleReady: true,
-      missingCapabilities: const [],
-      targetApps: const [
-        DriverTargetAppStatus(
-          key: 'UBER_DRIVER',
-          label: 'Uber Driver',
-          packageName: 'com.ubercab.driver',
-          installed: true,
-          enabledInSystem: true,
-          launchIntentAvailable: true,
-          appReady: true,
-          missingCapabilities: [],
-          detectedPackageName: 'com.ubercab.driver',
+  test(
+    'retorno da acessibilidade reavalia o readiness automaticamente',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: false,
+          moduleReady: false,
+          missingCapabilities: const ['ACCESSIBILITY_SERVICE_DISABLED'],
         ),
-      ],
-    );
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
 
-    await controller.handleAppResumed();
+      await controller.load();
+      await controller.openAccessibilitySettings();
+      nativeBridge.status = fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        targetApps: const [
+          DriverTargetAppStatus(
+            key: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            installed: true,
+            enabledInSystem: true,
+            launchIntentAvailable: true,
+            appReady: true,
+            missingCapabilities: [],
+            detectedPackageName: 'com.ubercab.driver',
+          ),
+        ],
+      );
 
-    expect(controller.state.kind, DriverModuleStateKind.ready);
-    expect(
-      controller.state.message,
-      'AccessibilityService habilitado no retorno. O módulo já pode seguir.',
-    );
-    expect(nativeBridge.foundationStatusCalls, 2);
-  });
+      await controller.handleAppResumed();
+
+      expect(controller.state.kind, DriverModuleStateKind.ready);
+      expect(
+        controller.state.message,
+        'AccessibilityService habilitado no retorno. O módulo já pode seguir.',
+      );
+      expect(nativeBridge.foundationStatusCalls, 2);
+    },
+  );
 }

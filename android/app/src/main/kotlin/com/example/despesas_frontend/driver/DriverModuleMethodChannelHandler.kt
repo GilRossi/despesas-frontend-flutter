@@ -23,6 +23,7 @@ class DriverModuleMethodChannelHandler(
         const val CHANNEL_NAME = "com.gilrossi.despesas/driver_module"
         private const val METHOD_GET_FOUNDATION_STATUS = "getFoundationStatus"
         private const val METHOD_OPEN_ACCESSIBILITY_SETTINGS = "openAccessibilitySettings"
+        private const val METHOD_REQUEST_ACCEPT_COMMAND = "requestAcceptCommand"
         private val TARGET_APPS = listOf(
             DriverTargetApp(
                 key = "UBER_DRIVER",
@@ -79,6 +80,11 @@ class DriverModuleMethodChannelHandler(
                 result.success(openAccessibilitySettings())
                 return
             }
+            METHOD_REQUEST_ACCEPT_COMMAND -> {
+                val source = call.argument<String>("source") ?: "FLUTTER_HANDSET"
+                result.success(requestAcceptCommand(source).toMap())
+                return
+            }
         }
         result.notImplemented()
     }
@@ -96,7 +102,7 @@ class DriverModuleMethodChannelHandler(
             accessibilityServiceEnabled = accessibilityServiceEnabled,
             canOpenAccessibilitySettings = canOpenAccessibilitySettings,
         )
-        return DriverModuleNativeSnapshot(
+        DriverStateManager.updateFoundation(
             packageName = context.packageName,
             methodChannel = CHANNEL_NAME,
             nativeBridgeAvailable = true,
@@ -104,16 +110,16 @@ class DriverModuleMethodChannelHandler(
             accessibilityServiceDeclared = accessibilityServiceDeclared,
             accessibilityServiceEnabled = accessibilityServiceEnabled,
             canOpenAccessibilitySettings = canOpenAccessibilitySettings,
-            moduleReady = missingCapabilities.isEmpty(),
             missingCapabilities = missingCapabilities,
             targetApps = targetApps,
-            providerContexts = if (accessibilityServiceEnabled) {
-                DriverAccessibilityContextStore.snapshots()
-            } else {
-                emptyList()
-            },
-            androidAutoPrepared = false,
+            androidAutoPrepared = true,
         )
+        return DriverStateManager.snapshot()
+    }
+
+    private fun requestAcceptCommand(source: String): DriverModuleNativeSnapshot {
+        buildSnapshot()
+        return DriverStateManager.requestAcceptCommand(source)
     }
 
     private fun buildMissingCapabilities(

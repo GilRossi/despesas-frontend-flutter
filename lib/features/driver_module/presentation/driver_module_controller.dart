@@ -23,8 +23,7 @@ class DriverModuleState {
     this.message,
   });
 
-  const DriverModuleState.loading()
-    : this(kind: DriverModuleStateKind.loading);
+  const DriverModuleState.loading() : this(kind: DriverModuleStateKind.loading);
 
   final DriverModuleStateKind kind;
   final DriverModuleBootstrap? bootstrap;
@@ -175,7 +174,8 @@ class DriverModuleController extends ChangeNotifier {
         DriverModuleState(
           kind: DriverModuleStateKind.failure,
           bootstrap: bootstrap,
-          message: 'Não foi possível reavaliar o readiness após o retorno ao app.',
+          message:
+              'Não foi possível reavaliar o readiness após o retorno ao app.',
         ),
       );
     }
@@ -202,9 +202,9 @@ class DriverModuleController extends ChangeNotifier {
 
   DriverModuleState _buildState(
     DriverModuleBootstrap bootstrap,
-    DriverNativeFoundationStatus nativeStatus,
-    {String? message}
-  ) {
+    DriverNativeFoundationStatus nativeStatus, {
+    String? message,
+  }) {
     if (!nativeStatus.moduleReady) {
       return DriverModuleState(
         kind: DriverModuleStateKind.nativeReadinessBlocked,
@@ -253,6 +253,105 @@ class DriverModuleController extends ChangeNotifier {
       return 'Pendente';
     }
     return 'Capturado';
+  }
+
+  String signalLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null) {
+      return 'Indisponível';
+    }
+    return nativeStatus.signal.label;
+  }
+
+  String currentProviderLabel() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null || !currentContext.hasProvider) {
+      return 'Nenhum provider em foco';
+    }
+    return currentContext.label;
+  }
+
+  String contextValidityLabel() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null) {
+      return 'Indisponível';
+    }
+    switch (currentContext.validity) {
+      case 'VALID':
+        return 'Válido';
+      case 'STALE':
+        return 'Recente, fora de foco';
+      case 'INCOMPLETE':
+        return 'Incompleto';
+      case 'EXPIRED':
+        return 'Expirado';
+      case 'INVALID':
+        return 'Inválido';
+      default:
+        return currentContext.validity;
+    }
+  }
+
+  String acceptCommandLabel() {
+    final acceptCommand = _state.nativeStatus?.acceptCommand;
+    if (acceptCommand == null) {
+      return 'Indisponível';
+    }
+    switch (acceptCommand.state) {
+      case 'IDLE':
+        return 'Ocioso';
+      case 'PENDING_EXECUTOR':
+        return 'Pendente no executor';
+      case 'EXECUTOR_READY':
+        return 'Executor pronto';
+      case 'BLOCKED':
+        return 'Bloqueado';
+      case 'INVALIDATED':
+        return 'Invalidado';
+      default:
+        return acceptCommand.state;
+    }
+  }
+
+  bool canRequestAcceptCommand() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.moduleReady) {
+      return false;
+    }
+    final currentContext = nativeStatus.currentContext;
+    if (!currentContext.hasProvider || !currentContext.isFresh) {
+      return false;
+    }
+    final targetApp = nativeStatus.targetApps
+        .where((target) => target.key == currentContext.providerKey)
+        .firstOrNull;
+    return targetApp?.appReady == true;
+  }
+
+  Future<void> requestAcceptCommand() async {
+    final bootstrap = _state.bootstrap;
+    if (bootstrap == null) {
+      return;
+    }
+
+    try {
+      final nativeStatus = await _driverNativeBridge.requestAcceptCommand();
+      _setState(
+        _buildState(
+          bootstrap,
+          nativeStatus,
+          message: _acceptCommandMessage(nativeStatus.acceptCommand),
+        ),
+      );
+    } catch (_) {
+      _setState(
+        DriverModuleState(
+          kind: DriverModuleStateKind.failure,
+          bootstrap: bootstrap,
+          message: 'Não foi possível registrar o comando unificado no nativo.',
+        ),
+      );
+    }
   }
 
   List<DriverModuleCapabilityCopy> describeAppMissingCapabilities(
@@ -311,6 +410,42 @@ class DriverModuleController extends ChangeNotifier {
           title: key,
           description: 'Há uma capability pendente para seguir.',
         );
+    }
+  }
+
+  String _acceptCommandMessage(DriverAcceptCommandStatus acceptCommand) {
+    switch (acceptCommand.state) {
+      case 'PENDING_EXECUTOR':
+        return 'Comando registrado no núcleo nativo. O executor real continua restrito ao AccessibilityService.';
+      case 'EXECUTOR_READY':
+        return 'Comando reconhecido pelo executor nativo. A rodada ainda não executa clique em apps terceiros.';
+      case 'BLOCKED':
+        return 'O comando unificado foi bloqueado: ${_mapCommandReason(acceptCommand.reason)}.';
+      case 'INVALIDATED':
+        return 'O comando unificado perdeu validade: ${_mapCommandReason(acceptCommand.reason)}.';
+      default:
+        return 'O caminho unificado de comando está pronto, mas ainda sem execução ativa.';
+    }
+  }
+
+  String _mapCommandReason(String? reason) {
+    switch (reason) {
+      case 'MODULE_NOT_READY':
+        return 'o módulo ainda não está pronto';
+      case 'NO_PROVIDER_CONTEXT':
+        return 'não há contexto recente de provider';
+      case 'TARGET_APP_NOT_READY':
+        return 'o app atual ainda não está apto';
+      case 'CONTEXT_TTL_EXPIRED':
+        return 'o contexto recente expirou';
+      case 'CONTEXT_NOT_CAPTURED':
+        return 'o provider entrou em foco sem contexto suficiente';
+      case 'PROVIDER_CHANGED':
+        return 'o provider atual mudou antes do executor assumir';
+      case 'PROVIDER_OUT_OF_FOCUS':
+        return 'o provider saiu de foco';
+      default:
+        return reason ?? 'motivo não informado';
     }
   }
 

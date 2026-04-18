@@ -1236,13 +1236,16 @@ class FakeDriverNativeBridge implements DriverNativeBridge {
     this.status,
     this.error,
     this.openAccessibilitySettingsResult = true,
+    this.acceptCommandResult,
   });
 
   DriverNativeFoundationStatus? status;
   Exception? error;
   int foundationStatusCalls = 0;
   int openAccessibilitySettingsCalls = 0;
+  int requestAcceptCommandCalls = 0;
   bool openAccessibilitySettingsResult;
+  DriverNativeFoundationStatus? acceptCommandResult;
 
   @override
   Future<DriverNativeFoundationStatus> getFoundationStatus() async {
@@ -1260,6 +1263,17 @@ class FakeDriverNativeBridge implements DriverNativeBridge {
       throw error!;
     }
     return openAccessibilitySettingsResult;
+  }
+
+  @override
+  Future<DriverNativeFoundationStatus> requestAcceptCommand({
+    String source = 'FLUTTER_HANDSET',
+  }) async {
+    requestAcceptCommandCalls += 1;
+    if (error != null) {
+      throw error!;
+    }
+    return acceptCommandResult ?? status ?? fakeDriverNativeFoundationStatus();
   }
 }
 
@@ -1417,6 +1431,26 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   List<String> missingCapabilities = const ['ACCESSIBILITY_SERVICE_DISABLED'],
   List<DriverTargetAppStatus>? targetApps,
   List<DriverProviderContextStatus>? providerContexts,
+  DriverOperationalSignalStatus signal = const DriverOperationalSignalStatus(
+    color: 'RED',
+    label: 'Vermelho',
+    reason: 'MODULE_BLOCKED',
+  ),
+  DriverCurrentContextStatus currentContext = const DriverCurrentContextStatus(
+    providerKey: '',
+    label: '',
+    packageName: '',
+    eventType: '',
+    capturedAt: '',
+    texts: [],
+    inFocus: false,
+    validity: 'INVALID',
+    validUntil: '',
+  ),
+  DriverAcceptCommandStatus acceptCommand = const DriverAcceptCommandStatus(
+    state: 'IDLE',
+  ),
+  int contextTtlSeconds = 15,
   bool androidAutoPrepared = false,
 }) {
   final resolvedTargetApps =
@@ -1508,6 +1542,10 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     missingCapabilities: missingCapabilities,
     targetApps: resolvedTargetApps,
     providerContexts: providerContexts ?? const [],
+    signal: signal,
+    currentContext: currentContext,
+    acceptCommand: acceptCommand,
+    contextTtlSeconds: contextTtlSeconds,
     androidAutoPrepared: androidAutoPrepared,
   );
 }

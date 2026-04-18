@@ -192,6 +192,18 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Contexto local',
               value: controller.contextSummaryLabel(),
             ),
+            _StatusRow(
+              label: 'Farol decidido no nativo',
+              value: controller.signalLabel(),
+            ),
+            _StatusRow(
+              label: 'Provider atual',
+              value: controller.currentProviderLabel(),
+            ),
+            _StatusRow(
+              label: 'Validade do contexto',
+              value: controller.contextValidityLabel(),
+            ),
             const SizedBox(height: 12),
             Text(
               ready ? 'Onboarding técnico concluído.' : 'Onboarding técnico',
@@ -233,8 +245,8 @@ class _DriverModuleReadinessState extends StatelessWidget {
                     ),
                     onPressed: () async {
                       final messenger = ScaffoldMessenger.of(context);
-                      final opened =
-                          await controller.openAccessibilitySettings();
+                      final opened = await controller
+                          .openAccessibilitySettings();
                       if (!context.mounted) {
                         return;
                       }
@@ -261,6 +273,94 @@ class _DriverModuleReadinessState extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _SectionCard(
+          key: const ValueKey('driver-module-shared-state-section'),
+          title: 'Núcleo nativo compartilhado',
+          children: [
+            _StatusRow(
+              label: 'Provider em foco',
+              value: nativeStatus.currentContext.hasProvider
+                  ? nativeStatus.currentContext.label
+                  : 'Nenhum provider em foco',
+            ),
+            _StatusRow(
+              label: 'Package em foco',
+              value: nativeStatus.currentContext.packageName.isEmpty
+                  ? 'Nenhum package monitorado'
+                  : nativeStatus.currentContext.packageName,
+            ),
+            _StatusRow(
+              label: 'Farol estrutural',
+              value:
+                  '${nativeStatus.signal.label} (${nativeStatus.signal.reason})',
+            ),
+            _StatusRow(
+              label: 'Validade temporal',
+              value: nativeStatus.currentContext.validity,
+            ),
+            _StatusRow(
+              label: 'TTL do contexto',
+              value: '${nativeStatus.contextTtlSeconds}s',
+            ),
+            _StatusRow(
+              label: 'Motivo de invalidação',
+              value:
+                  nativeStatus.currentContext.invalidationReason ??
+                  'Sem invalidação registrada',
+            ),
+            _StatusRow(
+              label: 'Comando unificado',
+              value: controller.acceptCommandLabel(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          key: const ValueKey('driver-module-command-section'),
+          title: 'Caminho unificado de comando',
+          children: [
+            const Text(
+              'Flutter e Android Auto futuro pedem o comando pelo mesmo núcleo nativo. O AccessibilityService continua como único executor real.',
+            ),
+            const SizedBox(height: 12),
+            _StatusRow(
+              label: 'Estado do comando',
+              value: controller.acceptCommandLabel(),
+            ),
+            _StatusRow(
+              label: 'Origem',
+              value:
+                  nativeStatus.acceptCommand.source ??
+                  'Nenhuma solicitação ainda',
+            ),
+            _StatusRow(
+              label: 'Provider alvo',
+              value:
+                  nativeStatus.acceptCommand.targetProviderKey ??
+                  'Nenhum provider alvo',
+            ),
+            _StatusRow(
+              label: 'Última atualização',
+              value:
+                  nativeStatus.acceptCommand.lastUpdatedAt ?? 'Sem atualização',
+            ),
+            _StatusRow(
+              label: 'Motivo',
+              value: nativeStatus.acceptCommand.reason ?? 'Sem bloqueio',
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const ValueKey(
+                'driver-module-request-accept-command-button',
+              ),
+              onPressed: nativeStatus.moduleReady
+                  ? controller.requestAcceptCommand
+                  : null,
+              child: const Text('Registrar comando base'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
           key: const ValueKey('driver-module-app-inventory-section'),
           title: 'Inventário operacional por app',
           children: [
@@ -269,9 +369,8 @@ class _DriverModuleReadinessState extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _TargetAppCard(
                   target: target,
-                  missingCapabilities: controller.describeAppMissingCapabilities(
-                    target,
-                  ),
+                  missingCapabilities: controller
+                      .describeAppMissingCapabilities(target),
                 ),
               ),
             ),
@@ -289,9 +388,9 @@ class _DriverModuleReadinessState extends StatelessWidget {
             )) ...[
               _ProviderContextCard(
                 providerLabel: provider.label,
-                targetApp: nativeStatus.targetApps.where(
-                  (target) => target.key == provider.key,
-                ).firstOrNull,
+                targetApp: nativeStatus.targetApps
+                    .where((target) => target.key == provider.key)
+                    .firstOrNull,
                 providerContext: nativeStatus.contextForProvider(provider.key),
               ),
               if (provider !=
@@ -350,8 +449,14 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Android Auto preparado',
               value: nativeStatus.androidAutoPrepared ? 'Sim' : 'Não',
             ),
-            _StatusRow(label: 'Package Android', value: nativeStatus.packageName),
-            _StatusRow(label: 'MethodChannel', value: nativeStatus.methodChannel),
+            _StatusRow(
+              label: 'Package Android',
+              value: nativeStatus.packageName,
+            ),
+            _StatusRow(
+              label: 'MethodChannel',
+              value: nativeStatus.methodChannel,
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -454,9 +559,7 @@ class _TargetAppCard extends StatelessWidget {
               ...missingCapabilities.map(
                 (capability) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    '${capability.title}: ${capability.description}',
-                  ),
+                  child: Text('${capability.title}: ${capability.description}'),
                 ),
               ),
           ],
@@ -509,7 +612,10 @@ class _ProviderContextCard extends StatelessWidget {
               label: 'Package monitorado',
               value: targetApp?.packageName ?? 'Indisponível',
             ),
-            _StatusRow(label: 'App instalado', value: installed ? 'Sim' : 'Não'),
+            _StatusRow(
+              label: 'App instalado',
+              value: installed ? 'Sim' : 'Não',
+            ),
             _StatusRow(label: 'App apto', value: appReady ? 'Sim' : 'Não'),
             if (contextCaptured) ...[
               _StatusRow(
@@ -602,11 +708,7 @@ class _MessageState extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    super.key,
-    required this.title,
-    required this.children,
-  });
+  const _SectionCard({super.key, required this.title, required this.children});
 
   final String title;
   final List<Widget> children;

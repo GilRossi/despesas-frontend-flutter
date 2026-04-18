@@ -63,10 +63,112 @@ class DriverProviderContextStatus {
       packageName: json['packageName'] as String? ?? '',
       eventType: json['eventType'] as String? ?? '',
       capturedAt: json['capturedAt'] as String? ?? '',
-      texts:
-          (json['texts'] as List<Object?>? ?? const [])
-              .whereType<String>()
-              .toList(),
+      texts: (json['texts'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+    );
+  }
+}
+
+class DriverOperationalSignalStatus {
+  const DriverOperationalSignalStatus({
+    required this.color,
+    required this.label,
+    required this.reason,
+  });
+
+  final String color;
+  final String label;
+  final String reason;
+
+  factory DriverOperationalSignalStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverOperationalSignalStatus(
+      color: json['color'] as String? ?? 'RED',
+      label: json['label'] as String? ?? 'Vermelho',
+      reason: json['reason'] as String? ?? 'MODULE_BLOCKED',
+    );
+  }
+}
+
+class DriverCurrentContextStatus {
+  const DriverCurrentContextStatus({
+    required this.providerKey,
+    required this.label,
+    required this.packageName,
+    required this.eventType,
+    required this.capturedAt,
+    required this.texts,
+    required this.inFocus,
+    required this.validity,
+    required this.validUntil,
+    this.invalidationReason,
+  });
+
+  final String providerKey;
+  final String label;
+  final String packageName;
+  final String eventType;
+  final String capturedAt;
+  final List<String> texts;
+  final bool inFocus;
+  final String validity;
+  final String validUntil;
+  final String? invalidationReason;
+
+  bool get hasProvider => providerKey.isNotEmpty;
+
+  bool get isFresh =>
+      validity == 'VALID' || validity == 'STALE' || validity == 'INCOMPLETE';
+
+  factory DriverCurrentContextStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverCurrentContextStatus(
+      providerKey: json['providerKey'] as String? ?? '',
+      label: json['label'] as String? ?? '',
+      packageName: json['packageName'] as String? ?? '',
+      eventType: json['eventType'] as String? ?? '',
+      capturedAt: json['capturedAt'] as String? ?? '',
+      texts: (json['texts'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      inFocus: json['inFocus'] as bool? ?? false,
+      validity: json['validity'] as String? ?? 'INVALID',
+      validUntil: json['validUntil'] as String? ?? '',
+      invalidationReason: json['invalidationReason'] as String?,
+    );
+  }
+}
+
+class DriverAcceptCommandStatus {
+  const DriverAcceptCommandStatus({
+    required this.state,
+    this.source,
+    this.targetProviderKey,
+    this.targetPackageName,
+    this.requestedAt,
+    this.lastUpdatedAt,
+    this.reason,
+  });
+
+  final String state;
+  final String? source;
+  final String? targetProviderKey;
+  final String? targetPackageName;
+  final String? requestedAt;
+  final String? lastUpdatedAt;
+  final String? reason;
+
+  bool get hasPendingWork =>
+      state == 'PENDING_EXECUTOR' || state == 'EXECUTOR_READY';
+
+  factory DriverAcceptCommandStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverAcceptCommandStatus(
+      state: json['state'] as String? ?? 'IDLE',
+      source: json['source'] as String?,
+      targetProviderKey: json['targetProviderKey'] as String?,
+      targetPackageName: json['targetPackageName'] as String?,
+      requestedAt: json['requestedAt'] as String?,
+      lastUpdatedAt: json['lastUpdatedAt'] as String?,
+      reason: json['reason'] as String?,
     );
   }
 }
@@ -84,6 +186,10 @@ class DriverNativeFoundationStatus {
     required this.missingCapabilities,
     required this.targetApps,
     required this.providerContexts,
+    required this.signal,
+    required this.currentContext,
+    required this.acceptCommand,
+    required this.contextTtlSeconds,
     required this.androidAutoPrepared,
   });
 
@@ -98,6 +204,10 @@ class DriverNativeFoundationStatus {
   final List<String> missingCapabilities;
   final List<DriverTargetAppStatus> targetApps;
   final List<DriverProviderContextStatus> providerContexts;
+  final DriverOperationalSignalStatus signal;
+  final DriverCurrentContextStatus currentContext;
+  final DriverAcceptCommandStatus acceptCommand;
+  final int contextTtlSeconds;
   final bool androidAutoPrepared;
 
   bool get hasReadyTargetApps => targetApps.any((target) => target.appReady);
@@ -109,6 +219,9 @@ class DriverNativeFoundationStatus {
       targetApps.where((target) => target.installed).length;
 
   bool get hasCapturedProviderContexts => providerContexts.isNotEmpty;
+
+  bool get hasFreshCurrentContext =>
+      currentContext.hasProvider && currentContext.isFresh;
 
   DriverProviderContextStatus? contextForProvider(String providerKey) {
     for (final context in providerContexts) {
@@ -136,16 +249,24 @@ class DriverNativeFoundationStatus {
           (json['missingCapabilities'] as List<Object?>? ?? const [])
               .whereType<String>()
               .toList(),
-      targetApps:
-          (json['targetApps'] as List<Object?>? ?? const [])
-              .whereType<Map<Object?, Object?>>()
-              .map(DriverTargetAppStatus.fromJson)
-              .toList(),
-      providerContexts:
-          (json['providerContexts'] as List<Object?>? ?? const [])
-              .whereType<Map<Object?, Object?>>()
-              .map(DriverProviderContextStatus.fromJson)
-              .toList(),
+      targetApps: (json['targetApps'] as List<Object?>? ?? const [])
+          .whereType<Map<Object?, Object?>>()
+          .map(DriverTargetAppStatus.fromJson)
+          .toList(),
+      providerContexts: (json['providerContexts'] as List<Object?>? ?? const [])
+          .whereType<Map<Object?, Object?>>()
+          .map(DriverProviderContextStatus.fromJson)
+          .toList(),
+      signal: DriverOperationalSignalStatus.fromJson(
+        json['signal'] as Map<Object?, Object?>? ?? const {},
+      ),
+      currentContext: DriverCurrentContextStatus.fromJson(
+        json['currentContext'] as Map<Object?, Object?>? ?? const {},
+      ),
+      acceptCommand: DriverAcceptCommandStatus.fromJson(
+        json['acceptCommand'] as Map<Object?, Object?>? ?? const {},
+      ),
+      contextTtlSeconds: json['contextTtlSeconds'] as int? ?? 15,
       androidAutoPrepared: json['androidAutoPrepared'] as bool? ?? false,
     );
   }
@@ -155,4 +276,8 @@ abstract interface class DriverNativeBridge {
   Future<DriverNativeFoundationStatus> getFoundationStatus();
 
   Future<bool> openAccessibilitySettings();
+
+  Future<DriverNativeFoundationStatus> requestAcceptCommand({
+    String source = 'FLUTTER_HANDSET',
+  });
 }
