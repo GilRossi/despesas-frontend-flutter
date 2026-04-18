@@ -106,6 +106,13 @@ void main() {
             inFocus: true,
             validity: 'VALID',
             validUntil: '2026-04-17T18:10:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'RELEVANT_CONTEXT',
+              label: 'Contexto relevante',
+              summary:
+                  'Há um sinal local relevante para a próxima fase do módulo.',
+              contextRelevant: true,
+            ),
           ),
           providerContexts: const [
             DriverProviderContextStatus(
@@ -132,6 +139,11 @@ void main() {
       expect(controller.signalLabel(), 'Verde');
       expect(controller.contextValidityLabel(), 'Válido');
       expect(controller.currentProviderLabel(), 'Uber Driver');
+      expect(controller.currentSemanticStateLabel(), 'Contexto relevante');
+      expect(
+        controller.currentSemanticSummary(),
+        'Há um sinal local relevante para a próxima fase do módulo.',
+      );
       expect(
         controller.state.nativeStatus
             ?.contextForProvider('UBER_DRIVER')
@@ -139,6 +151,59 @@ void main() {
             .first,
         'Você está online',
       );
+    },
+  );
+
+  test(
+    'load expõe estado semântico local mais estável para login ou consentimento',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'LOGIN_OR_CONSENT',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'APP99_DRIVER',
+            label: '99 Motorista',
+            packageName: 'com.app99.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-18T10:00:00Z',
+            texts: ['Política de privacidade e uso 99 Motorista', 'Concordo'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-18T10:00:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'LOGIN_OR_CONSENT',
+              label: 'Login ou consentimento',
+              summary:
+                  'O app pede login, consentimento ou permissão antes de seguir.',
+              contextRelevant: false,
+            ),
+          ),
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+
+      expect(controller.currentProviderLabel(), '99 Motorista');
+      expect(controller.currentSemanticStateLabel(), 'Login ou consentimento');
+      expect(
+        controller.currentSemanticSummary(),
+        'O app pede login, consentimento ou permissão antes de seguir.',
+      );
+      expect(controller.signalLabel(), 'Amarelo');
     },
   );
 

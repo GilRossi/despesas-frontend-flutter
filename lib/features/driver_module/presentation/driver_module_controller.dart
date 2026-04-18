@@ -271,6 +271,22 @@ class DriverModuleController extends ChangeNotifier {
     return currentContext.label;
   }
 
+  String currentSemanticStateLabel() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null) {
+      return 'Indisponível';
+    }
+    return currentContext.semanticState.label;
+  }
+
+  String currentSemanticSummary() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null) {
+      return 'Sem leitura local disponível.';
+    }
+    return currentContext.semanticState.summary;
+  }
+
   String contextValidityLabel() {
     final currentContext = _state.nativeStatus?.currentContext;
     if (currentContext == null) {

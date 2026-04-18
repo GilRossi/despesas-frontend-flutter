@@ -2,6 +2,7 @@ package com.example.despesas_frontend.driver
 
 import java.time.Duration
 import java.time.Instant
+import java.util.Locale
 
 object DriverStateManager {
     private const val CONTEXT_TTL_SECONDS = 15L
@@ -67,6 +68,13 @@ object DriverStateManager {
         lastInvalidationReason = null
 
         if (texts.isNotEmpty()) {
+            val semanticState = normalizeSemanticState(
+                providerKey = providerKey,
+                inFocus = true,
+                texts = texts,
+                validity = "VALID",
+                invalidationReason = null,
+            )
             providerContextsByKey[providerKey] = DriverProviderContextSnapshot(
                 providerKey = providerKey,
                 label = providerLabel,
@@ -74,6 +82,7 @@ object DriverStateManager {
                 eventType = eventType,
                 capturedAt = now.toString(),
                 texts = texts,
+                semanticState = semanticState,
             )
         }
 
@@ -184,26 +193,28 @@ object DriverStateManager {
         }
 
         return when (currentContext.validity) {
-            "VALID" -> DriverOperationalSignalSnapshot(
-                color = "GREEN",
-                label = "Verde",
-                reason = "FOCUSED_CONTEXT_READY",
-            )
-            "STALE" -> DriverOperationalSignalSnapshot(
-                color = "YELLOW",
-                label = "Amarelo",
-                reason = "RECENT_CONTEXT_OUT_OF_FOCUS",
-            )
-            "INCOMPLETE" -> DriverOperationalSignalSnapshot(
-                color = "YELLOW",
-                label = "Amarelo",
-                reason = "FOCUSED_CONTEXT_INCOMPLETE",
-            )
-            else -> DriverOperationalSignalSnapshot(
+            "EXPIRED", "INVALID" -> DriverOperationalSignalSnapshot(
                 color = "RED",
                 label = "Vermelho",
                 reason = currentContext.invalidationReason ?: "NO_CONTEXT",
             )
+            else -> when (currentContext.semanticState.code) {
+                "RELEVANT_CONTEXT" -> DriverOperationalSignalSnapshot(
+                    color = "GREEN",
+                    label = "Verde",
+                    reason = "RELEVANT_CONTEXT_DETECTED",
+                )
+                "NO_ACTIVE_PROVIDER" -> DriverOperationalSignalSnapshot(
+                    color = "RED",
+                    label = "Vermelho",
+                    reason = "NO_ACTIVE_PROVIDER",
+                )
+                else -> DriverOperationalSignalSnapshot(
+                    color = "YELLOW",
+                    label = "Amarelo",
+                    reason = currentContext.semanticState.code,
+                )
+            }
         }
     }
 
@@ -229,6 +240,13 @@ object DriverStateManager {
                     validity = "INCOMPLETE",
                     validUntil = "",
                     invalidationReason = "CONTEXT_NOT_CAPTURED",
+                    semanticState = normalizeSemanticState(
+                        providerKey = focusedProviderKey,
+                        inFocus = true,
+                        texts = emptyList(),
+                        validity = "INCOMPLETE",
+                        invalidationReason = "CONTEXT_NOT_CAPTURED",
+                    ),
                 )
             }
             return buildContextSnapshot(
@@ -262,6 +280,12 @@ object DriverStateManager {
             validity = "INVALID",
             validUntil = "",
             invalidationReason = lastInvalidationReason ?: "NO_CONTEXT",
+            semanticState = DriverSemanticStateSnapshot(
+                code = "NO_ACTIVE_PROVIDER",
+                label = "Sem provider ativo",
+                summary = "Abra Uber Driver ou 99 Motorista para iniciar a leitura local.",
+                contextRelevant = false,
+            ),
         )
     }
 
@@ -274,6 +298,16 @@ object DriverStateManager {
         val capturedAt = Instant.parse(snapshot.capturedAt)
         val validUntil = capturedAt.plusSeconds(CONTEXT_TTL_SECONDS)
         val expired = now.isAfter(validUntil)
+        val validity = when {
+            expired -> "EXPIRED"
+            inFocus -> "VALID"
+            else -> "STALE"
+        }
+        val invalidationReason = when {
+            expired -> "CONTEXT_TTL_EXPIRED"
+            inFocus -> null
+            else -> defaultInvalidationReason
+        }
         return DriverCurrentContextSnapshot(
             providerKey = snapshot.providerKey,
             label = snapshot.label,
@@ -282,18 +316,203 @@ object DriverStateManager {
             capturedAt = snapshot.capturedAt,
             texts = snapshot.texts,
             inFocus = inFocus,
-            validity = when {
-                expired -> "EXPIRED"
-                inFocus -> "VALID"
-                else -> "STALE"
-            },
+            validity = validity,
             validUntil = validUntil.toString(),
-            invalidationReason = when {
-                expired -> "CONTEXT_TTL_EXPIRED"
-                inFocus -> null
-                else -> defaultInvalidationReason
-            },
+            invalidationReason = invalidationReason,
+            semanticState = normalizeSemanticState(
+                providerKey = snapshot.providerKey,
+                inFocus = inFocus,
+                texts = snapshot.texts,
+                validity = validity,
+                invalidationReason = invalidationReason,
+            ),
         )
+    }
+
+    private fun normalizeSemanticState(
+        providerKey: String,
+        inFocus: Boolean,
+        texts: List<String>,
+        validity: String,
+        invalidationReason: String?,
+    ): DriverSemanticStateSnapshot {
+        if (providerKey.isBlank()) {
+            return DriverSemanticStateSnapshot(
+                code = "NO_ACTIVE_PROVIDER",
+                label = "Sem provider ativo",
+                summary = "Abra Uber Driver ou 99 Motorista para iniciar a leitura local.",
+                contextRelevant = false,
+            )
+        }
+
+        if (validity == "EXPIRED") {
+            return DriverSemanticStateSnapshot(
+                code = "OUT_OF_FOCUS",
+                label = "Fora de foco",
+                summary = "O contexto recente expirou e precisa ser capturado de novo.",
+                contextRelevant = false,
+            )
+        }
+
+        if (!inFocus || invalidationReason == "PROVIDER_OUT_OF_FOCUS") {
+            return DriverSemanticStateSnapshot(
+                code = "OUT_OF_FOCUS",
+                label = "Fora de foco",
+                summary = "O app foi visto há pouco, mas não está em foco agora.",
+                contextRelevant = false,
+            )
+        }
+
+        val normalizedTexts = texts
+            .map { text -> text.trim().lowercase(Locale.ROOT) }
+            .filter { text -> text.isNotBlank() }
+
+        if (normalizedTexts.isEmpty()) {
+            return DriverSemanticStateSnapshot(
+                code = "INSUFFICIENT_CONTEXT",
+                label = "Contexto insuficiente",
+                summary = "O provider está em foco, mas a captura local ainda é insuficiente.",
+                contextRelevant = false,
+            )
+        }
+
+        if (matchesAny(normalizedTexts, permissionOrConsentKeywords(providerKey))) {
+            return DriverSemanticStateSnapshot(
+                code = "LOGIN_OR_CONSENT",
+                label = "Login ou consentimento",
+                summary = "O app pede login, consentimento ou permissão antes de seguir.",
+                contextRelevant = false,
+            )
+        }
+
+        if (matchesAny(normalizedTexts, relevantContextKeywords(providerKey))) {
+            return DriverSemanticStateSnapshot(
+                code = "RELEVANT_CONTEXT",
+                label = "Contexto relevante",
+                summary = "Há um sinal local relevante para a próxima fase do módulo.",
+                contextRelevant = true,
+            )
+        }
+
+        if (matchesAny(normalizedTexts, waitingKeywords(providerKey))) {
+            return DriverSemanticStateSnapshot(
+                code = "WAITING",
+                label = "Aguardando",
+                summary = "O app está aberto e aguardando novas corridas.",
+                contextRelevant = false,
+            )
+        }
+
+        if (matchesAny(normalizedTexts, homeKeywords(providerKey))) {
+            return DriverSemanticStateSnapshot(
+                code = "HOME",
+                label = "Tela inicial",
+                summary = "O provider está em foco, mas ainda sem contexto operacional útil.",
+                contextRelevant = false,
+            )
+        }
+
+        return DriverSemanticStateSnapshot(
+            code = "INSUFFICIENT_CONTEXT",
+            label = "Contexto insuficiente",
+            summary = "O provider está em foco, mas a captura local ainda é insuficiente.",
+            contextRelevant = false,
+        )
+    }
+
+    private fun matchesAny(
+        texts: List<String>,
+        keywords: List<String>,
+    ): Boolean {
+        return texts.any { text ->
+            keywords.any { keyword -> text.contains(keyword) }
+        }
+    }
+
+    private fun permissionOrConsentKeywords(providerKey: String): List<String> {
+        return when (providerKey) {
+            "UBER_DRIVER" -> listOf(
+                "faça login",
+                "login",
+                "permiss",
+                "permitir",
+                "localização",
+                "localizacao",
+                "modo de gerenciamento",
+                "você já se conectou",
+            )
+            "APP99_DRIVER" -> listOf(
+                "política",
+                "politica",
+                "privacidade",
+                "concordo",
+                "termos",
+                "permitir",
+                "permiss",
+                "entrar",
+                "login",
+            )
+            else -> listOf("login", "concordo", "permitir", "permiss", "privacidade")
+        }
+    }
+
+    private fun waitingKeywords(providerKey: String): List<String> {
+        return when (providerKey) {
+            "UBER_DRIVER" -> listOf(
+                "você está online",
+                "voce esta online",
+                "online",
+                "procurando",
+                "aguardando",
+            )
+            "APP99_DRIVER" -> listOf(
+                "você está online",
+                "voce esta online",
+                "online",
+                "procurando",
+                "aguardando",
+                "disponível",
+                "disponivel",
+            )
+            else -> listOf("online", "procurando", "aguardando")
+        }
+    }
+
+    private fun relevantContextKeywords(providerKey: String): List<String> {
+        return when (providerKey) {
+            "UBER_DRIVER", "APP99_DRIVER" -> listOf(
+                "corrida",
+                "viagem",
+                "solicitação",
+                "solicitacao",
+                "aceitar",
+                "oferta",
+                "embarque",
+                "destino",
+                "r$",
+            )
+            else -> listOf("corrida", "aceitar", "oferta", "r$")
+        }
+    }
+
+    private fun homeKeywords(providerKey: String): List<String> {
+        return when (providerKey) {
+            "UBER_DRIVER" -> listOf(
+                "uber driver",
+                "carbonactivity",
+                "início",
+                "inicio",
+                "tela inicial",
+            )
+            "APP99_DRIVER" -> listOf(
+                "99 motorista",
+                "startactivity",
+                "início",
+                "inicio",
+                "tela inicial",
+            )
+            else -> listOf("início", "inicio", "tela inicial")
+        }
     }
 
     private fun commandBlockReason(

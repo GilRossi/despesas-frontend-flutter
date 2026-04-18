@@ -117,6 +117,7 @@ GoRouter createAppRouter({
 
               return DashboardScreen(
                 dashboardRepository: dashboardRepository,
+                driverModuleRepository: driverModuleRepository,
                 sessionController: sessionController,
               );
             },

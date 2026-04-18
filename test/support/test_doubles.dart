@@ -1446,6 +1446,12 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     inFocus: false,
     validity: 'INVALID',
     validUntil: '',
+    semanticState: DriverSemanticStateStatus(
+      code: 'NO_ACTIVE_PROVIDER',
+      label: 'Sem provider ativo',
+      summary: 'Abra Uber Driver ou 99 Motorista para iniciar a leitura local.',
+      contextRelevant: false,
+    ),
   ),
   DriverAcceptCommandStatus acceptCommand = const DriverAcceptCommandStatus(
     state: 'IDLE',
@@ -1530,6 +1536,23 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
           missingCapabilities: ['PACKAGE_NOT_INSTALLED'],
         ),
       ];
+  final resolvedProviderContexts =
+      providerContexts ?? const <DriverProviderContextStatus>[];
+  final resolvedCurrentContext =
+      currentContext.providerKey.isEmpty && resolvedProviderContexts.isNotEmpty
+      ? DriverCurrentContextStatus(
+          providerKey: resolvedProviderContexts.first.providerKey,
+          label: resolvedProviderContexts.first.label,
+          packageName: resolvedProviderContexts.first.packageName,
+          eventType: resolvedProviderContexts.first.eventType,
+          capturedAt: resolvedProviderContexts.first.capturedAt,
+          texts: resolvedProviderContexts.first.texts,
+          inFocus: true,
+          validity: 'VALID',
+          validUntil: resolvedProviderContexts.first.capturedAt,
+          semanticState: resolvedProviderContexts.first.semanticState,
+        )
+      : currentContext;
   return DriverNativeFoundationStatus(
     packageName: packageName,
     methodChannel: methodChannel,
@@ -1541,9 +1564,9 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     moduleReady: moduleReady,
     missingCapabilities: missingCapabilities,
     targetApps: resolvedTargetApps,
-    providerContexts: providerContexts ?? const [],
+    providerContexts: resolvedProviderContexts,
     signal: signal,
-    currentContext: currentContext,
+    currentContext: resolvedCurrentContext,
     acceptCommand: acceptCommand,
     contextTtlSeconds: contextTtlSeconds,
     androidAutoPrepared: androidAutoPrepared,
