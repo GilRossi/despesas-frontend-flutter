@@ -3,14 +3,17 @@ package com.example.despesas_frontend.driver
 import android.accessibilityservice.AccessibilityService
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityEvent
-import java.time.Instant
 import java.util.LinkedHashSet
 
 class DriverAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val safeEvent = event ?: return
         val packageName = safeEvent.packageName?.toString() ?: return
-        val provider = monitoredProvider(packageName) ?: return
+        val provider = monitoredProvider(packageName)
+        if (provider == null) {
+            DriverStateManager.markProviderOutOfFocus(packageName)
+            return
+        }
         val eventType = eventTypeName(safeEvent.eventType) ?: return
 
         val visibleTexts = LinkedHashSet<String>()
@@ -33,19 +36,13 @@ class DriverAccessibilityService : AccessibilityService() {
         }
         collectWindowContext(packageName, visibleTexts)
         collectNodeTexts(rootInActiveWindow, visibleTexts)
-        if (visibleTexts.isEmpty()) {
-            return
-        }
 
-        DriverAccessibilityContextStore.upsert(
-            DriverProviderContextSnapshot(
-                providerKey = provider.key,
-                label = provider.label,
-                packageName = packageName,
-                eventType = eventType,
-                capturedAt = Instant.now().toString(),
-                texts = visibleTexts.toList(),
-            ),
+        DriverStateManager.recordProviderEvent(
+            providerKey = provider.key,
+            providerLabel = provider.label,
+            packageName = packageName,
+            eventType = eventType,
+            texts = visibleTexts.toList(),
         )
     }
 

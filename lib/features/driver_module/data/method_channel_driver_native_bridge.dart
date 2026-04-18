@@ -22,4 +22,15 @@ class MethodChannelDriverNativeBridge implements DriverNativeBridge {
     return await _channel.invokeMethod<bool>('openAccessibilitySettings') ??
         false;
   }
+
+  @override
+  Future<DriverNativeFoundationStatus> requestAcceptCommand({
+    String source = 'FLUTTER_HANDSET',
+  }) async {
+    final response = await _channel.invokeMethod<Map<Object?, Object?>>(
+      'requestAcceptCommand',
+      <String, Object?>{'source': source},
+    );
+    return DriverNativeFoundationStatus.fromJson(response ?? const {});
+  }
 }
