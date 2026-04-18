@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/features/auth/domain/auth_onboarding.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_summary.dart';
@@ -10,6 +11,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../support/test_doubles.dart';
+
+class DriverModuleScreenPlaceholder extends StatelessWidget {
+  const DriverModuleScreenPlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('driver-module-page');
+  }
+}
 
 void main() {
   SessionController buildSessionController({
@@ -45,6 +55,7 @@ void main() {
     WidgetTester tester, {
     required DashboardRepository repository,
     required SessionController sessionController,
+    FakeDriverModuleRepository? driverModuleRepository,
   }) async {
     await sessionController.login(
       email: 'user@example.com',
@@ -58,7 +69,21 @@ void main() {
           builder: (context, state) => DashboardScreen(
             dashboardRepository: repository,
             sessionController: sessionController,
+            driverModuleRepository:
+                driverModuleRepository ??
+                FakeDriverModuleRepository(
+                  bootstrapError: const ApiException(
+                    statusCode: 403,
+                    code: 'FORBIDDEN',
+                    message: 'Access denied',
+                  ),
+                ),
           ),
+        ),
+        GoRoute(
+          path: '/driver',
+          builder: (context, state) =>
+              const Scaffold(body: DriverModuleScreenPlaceholder()),
         ),
         GoRoute(
           path: '/assistant',
@@ -91,6 +116,70 @@ void main() {
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
   }
+
+  testWidgets(
+    'mostra acesso visivel ao modulo quando o DRIVER esta habilitado',
+    (tester) async {
+      final repository = FakeDashboardRepository(
+        summary: fakeDashboardSummary(role: 'OWNER'),
+      );
+      final sessionController = buildSessionController(role: 'OWNER');
+
+      await pumpDashboard(
+        tester,
+        repository: repository,
+        sessionController: sessionController,
+        driverModuleRepository: FakeDriverModuleRepository(),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('dashboard-driver-module-entry-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Motorista'), findsOneWidget);
+      expect(find.text('Abrir módulo'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('dashboard-driver-module-entry-button')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('dashboard-driver-module-entry-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DriverModuleScreenPlaceholder), findsOneWidget);
+    },
+  );
+
+  testWidgets('oculta o acesso ao modulo quando o DRIVER nao esta habilitado', (
+    tester,
+  ) async {
+    final repository = FakeDashboardRepository(
+      summary: fakeDashboardSummary(role: 'OWNER'),
+    );
+    final sessionController = buildSessionController(role: 'OWNER');
+
+    await pumpDashboard(
+      tester,
+      repository: repository,
+      sessionController: sessionController,
+      driverModuleRepository: FakeDriverModuleRepository(
+        bootstrapError: const ApiException(
+          statusCode: 403,
+          code: 'FORBIDDEN',
+          message: 'Access denied',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('dashboard-driver-module-entry-card')),
+      findsNothing,
+    );
+    expect(find.text('Abrir módulo'), findsNothing);
+  });
 
   testWidgets('renderiza blocos de OWNER e omite quickActions', (tester) async {
     final repository = FakeDashboardRepository(

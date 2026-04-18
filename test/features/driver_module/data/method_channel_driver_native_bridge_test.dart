@@ -61,6 +61,12 @@ void main() {
                   'eventType': 'TYPE_WINDOW_STATE_CHANGED',
                   'capturedAt': '2026-04-17T18:10:00Z',
                   'texts': ['Você está online', 'Promoções'],
+                  'semanticState': {
+                    'code': 'WAITING',
+                    'label': 'Aguardando',
+                    'summary': 'O app está aberto e aguardando novas corridas.',
+                    'contextRelevant': false,
+                  },
                 },
               ],
               'signal': {
@@ -79,6 +85,13 @@ void main() {
                 'validity': 'STALE',
                 'validUntil': '2026-04-17T18:10:15Z',
                 'invalidationReason': 'PROVIDER_OUT_OF_FOCUS',
+                'semanticState': {
+                  'code': 'OUT_OF_FOCUS',
+                  'label': 'Fora de foco',
+                  'summary':
+                      'O app foi visto há pouco, mas não está em foco agora.',
+                  'contextRelevant': false,
+                },
               },
               'acceptCommand': {
                 'state': 'PENDING_EXECUTOR',
@@ -122,11 +135,13 @@ void main() {
         'Você está online',
         'Promoções',
       ]);
+      expect(result.providerContexts.single.semanticState.code, 'WAITING');
       expect(result.signal.color, 'YELLOW');
       expect(result.signal.reason, 'RECENT_CONTEXT_OUT_OF_FOCUS');
       expect(result.currentContext.providerKey, 'UBER_DRIVER');
       expect(result.currentContext.validity, 'STALE');
       expect(result.currentContext.invalidationReason, 'PROVIDER_OUT_OF_FOCUS');
+      expect(result.currentContext.semanticState.code, 'OUT_OF_FOCUS');
       expect(result.acceptCommand.state, 'PENDING_EXECUTOR');
       expect(result.acceptCommand.targetProviderKey, 'UBER_DRIVER');
       expect(result.contextTtlSeconds, 15);
@@ -187,6 +202,13 @@ void main() {
                 'validity': 'STALE',
                 'validUntil': '2026-04-17T18:10:15Z',
                 'invalidationReason': 'PROVIDER_OUT_OF_FOCUS',
+                'semanticState': {
+                  'code': 'OUT_OF_FOCUS',
+                  'label': 'Fora de foco',
+                  'summary':
+                      'O app foi visto há pouco, mas não está em foco agora.',
+                  'contextRelevant': false,
+                },
               },
               'acceptCommand': {
                 'state': 'PENDING_EXECUTOR',

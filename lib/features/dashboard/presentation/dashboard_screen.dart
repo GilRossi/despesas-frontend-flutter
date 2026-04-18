@@ -1,10 +1,13 @@
 import 'package:despesas_frontend/app/session_controller.dart';
+import 'package:despesas_frontend/core/network/api_exception.dart';
 import 'package:despesas_frontend/core/presentation/responsive_scroll_body.dart';
 import 'package:despesas_frontend/core/ui/components/authenticated_shell_scaffold.dart';
 import 'package:despesas_frontend/core/ui/components/section_card.dart';
 import 'package:despesas_frontend/core/utils/currency_formatter.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_repository.dart';
 import 'package:despesas_frontend/features/dashboard/domain/dashboard_summary.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_bootstrap.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_module_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,10 +15,12 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     super.key,
     required this.dashboardRepository,
+    required this.driverModuleRepository,
     required this.sessionController,
   });
 
   final DashboardRepository dashboardRepository;
+  final DriverModuleRepository driverModuleRepository;
   final SessionController sessionController;
 
   @override
@@ -24,19 +29,25 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<DashboardSummary> _future;
+  late Future<DriverModuleBootstrap?> _driverModuleFuture;
   bool _isCompletingOnboarding = false;
 
   @override
   void initState() {
     super.initState();
     _future = widget.dashboardRepository.fetchDashboard();
+    _driverModuleFuture = _loadDriverModuleAccess();
   }
 
   Future<void> _reload() async {
     setState(() {
       _future = widget.dashboardRepository.fetchDashboard();
+      _driverModuleFuture = _loadDriverModuleAccess();
     });
-    await _future;
+    await Future.wait<void>([
+      _future.then((_) {}),
+      _driverModuleFuture.then((_) {}),
+    ]);
   }
 
   Future<void> _startManualFlow() async {
@@ -62,6 +73,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
     context.go('/expenses/new');
+  }
+
+  Future<DriverModuleBootstrap?> _loadDriverModuleAccess() async {
+    try {
+      return await widget.driverModuleRepository.fetchBootstrap();
+    } on ApiException catch (error) {
+      if (error.statusCode == 403) {
+        return null;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -113,6 +137,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTourTap: () => context.go('/assistant?tour=1'),
                   ),
                   const SizedBox(height: 16),
+                  FutureBuilder<DriverModuleBootstrap?>(
+                    future: _driverModuleFuture,
+                    builder: (context, snapshot) {
+                      final bootstrap = snapshot.data;
+                      if (bootstrap == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          _DriverModuleEntryCard(
+                            bootstrap: bootstrap,
+                            onOpenModule: () => context.go('/driver'),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    },
+                  ),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final isWide = constraints.maxWidth >= 920;
@@ -299,6 +341,70 @@ class _DashboardErrorState extends StatelessWidget {
           FilledButton(
             onPressed: onRetry,
             child: const Text('Tentar novamente'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriverModuleEntryCard extends StatelessWidget {
+  const _DriverModuleEntryCard({
+    required this.bootstrap,
+    required this.onOpenModule,
+  });
+
+  final DriverModuleBootstrap bootstrap;
+  final VoidCallback onOpenModule;
+
+  @override
+  Widget build(BuildContext context) {
+    final providerLabels = bootstrap.providers
+        .where(
+          (provider) =>
+              provider.key == 'UBER_DRIVER' || provider.key == 'APP99_DRIVER',
+        )
+        .map((provider) => provider.label)
+        .join(' e ');
+
+    return SectionCard(
+      key: const ValueKey('dashboard-driver-module-entry-card'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.drive_eta_outlined,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Motorista',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Use para validar o módulo do seu espaço e acompanhar $providerLabels no device.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${bootstrap.targetCity}, ${bootstrap.targetState}, ${bootstrap.targetCountry}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            key: const ValueKey('dashboard-driver-module-entry-button'),
+            onPressed: onOpenModule,
+            icon: const Icon(Icons.chevron_right),
+            label: const Text('Abrir módulo'),
           ),
         ],
       ),

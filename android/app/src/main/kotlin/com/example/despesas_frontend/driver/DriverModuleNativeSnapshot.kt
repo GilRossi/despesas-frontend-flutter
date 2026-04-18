@@ -33,6 +33,7 @@ data class DriverProviderContextSnapshot(
     val eventType: String,
     val capturedAt: String,
     val texts: List<String>,
+    val semanticState: DriverSemanticStateSnapshot,
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -42,6 +43,23 @@ data class DriverProviderContextSnapshot(
             "eventType" to eventType,
             "capturedAt" to capturedAt,
             "texts" to texts,
+            "semanticState" to semanticState.toMap(),
+        )
+    }
+}
+
+data class DriverSemanticStateSnapshot(
+    val code: String,
+    val label: String,
+    val summary: String,
+    val contextRelevant: Boolean,
+) {
+    fun toMap(): Map<String, Any?> {
+        return mapOf(
+            "code" to code,
+            "label" to label,
+            "summary" to summary,
+            "contextRelevant" to contextRelevant,
         )
     }
 }
@@ -71,6 +89,7 @@ data class DriverCurrentContextSnapshot(
     val validity: String,
     val validUntil: String,
     val invalidationReason: String?,
+    val semanticState: DriverSemanticStateSnapshot,
 ) {
     val isActionable: Boolean
         get() = validity == "VALID" || validity == "STALE"
@@ -87,6 +106,7 @@ data class DriverCurrentContextSnapshot(
             "validity" to validity,
             "validUntil" to validUntil,
             "invalidationReason" to invalidationReason,
+            "semanticState" to semanticState.toMap(),
         )
     }
 }

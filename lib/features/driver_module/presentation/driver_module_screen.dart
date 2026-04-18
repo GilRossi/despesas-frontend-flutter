@@ -201,6 +201,14 @@ class _DriverModuleReadinessState extends StatelessWidget {
               value: controller.currentProviderLabel(),
             ),
             _StatusRow(
+              label: 'Estado semântico atual',
+              value: controller.currentSemanticStateLabel(),
+            ),
+            _StatusRow(
+              label: 'Resumo do contexto',
+              value: controller.currentSemanticSummary(),
+            ),
+            _StatusRow(
               label: 'Validade do contexto',
               value: controller.contextValidityLabel(),
             ),
@@ -292,6 +300,14 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Farol estrutural',
               value:
                   '${nativeStatus.signal.label} (${nativeStatus.signal.reason})',
+            ),
+            _StatusRow(
+              label: 'Estado semântico atual',
+              value: controller.currentSemanticStateLabel(),
+            ),
+            _StatusRow(
+              label: 'Resumo do contexto',
+              value: controller.currentSemanticSummary(),
             ),
             _StatusRow(
               label: 'Validade temporal',
@@ -604,7 +620,7 @@ class _ProviderContextCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$providerLabel · ${contextCaptured ? 'Contexto capturado' : 'Contexto pendente'}',
+              '$providerLabel · ${contextCaptured ? providerContext!.semanticState.label : 'Contexto pendente'}',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 12),
@@ -618,6 +634,14 @@ class _ProviderContextCard extends StatelessWidget {
             ),
             _StatusRow(label: 'App apto', value: appReady ? 'Sim' : 'Não'),
             if (contextCaptured) ...[
+              _StatusRow(
+                label: 'Estado normalizado',
+                value: providerContext!.semanticState.label,
+              ),
+              _StatusRow(
+                label: 'Resumo local',
+                value: providerContext!.semanticState.summary,
+              ),
               _StatusRow(
                 label: 'Última captura',
                 value: _formatCapturedAt(providerContext!.capturedAt),

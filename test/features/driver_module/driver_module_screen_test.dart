@@ -241,6 +241,12 @@ void main() {
             validity: 'STALE',
             validUntil: '2026-04-17T18:10:15Z',
             invalidationReason: 'PROVIDER_OUT_OF_FOCUS',
+            semanticState: DriverSemanticStateStatus(
+              code: 'OUT_OF_FOCUS',
+              label: 'Fora de foco',
+              summary: 'O app foi visto há pouco, mas não está em foco agora.',
+              contextRelevant: false,
+            ),
           ),
           acceptCommand: const DriverAcceptCommandStatus(
             state: 'PENDING_EXECUTOR',
@@ -279,12 +285,126 @@ void main() {
       );
       expect(find.textContaining('Farol', findRichText: true), findsWidgets);
       expect(find.textContaining('Amarelo', findRichText: true), findsWidgets);
+      expect(
+        find.textContaining(
+          'Estado semântico atual: Fora de foco',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Resumo do contexto: O app foi visto há pouco, mas não está em foco agora.',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
       expect(find.text('Caminho unificado de comando'), findsOneWidget);
       expect(
         find.textContaining('Pendente no executor', findRichText: true),
         findsWidgets,
       );
       expect(find.text('Registrar comando base'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'mostra estado normalizado por provider quando ha leitura semantica local',
+    (tester) async {
+      configureLargeViewport(tester);
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'LOGIN_OR_CONSENT',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'APP99_DRIVER',
+            label: '99 Motorista',
+            packageName: 'com.app99.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-18T10:00:00Z',
+            texts: ['Política de privacidade', 'Concordo'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-18T10:00:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'LOGIN_OR_CONSENT',
+              label: 'Login ou consentimento',
+              summary:
+                  'O app pede login, consentimento ou permissão antes de seguir.',
+              contextRelevant: false,
+            ),
+          ),
+          providerContexts: const [
+            DriverProviderContextStatus(
+              providerKey: 'APP99_DRIVER',
+              label: '99 Motorista',
+              packageName: 'com.app99.driver',
+              eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+              capturedAt: '2026-04-18T10:00:00Z',
+              texts: ['Política de privacidade', 'Concordo'],
+              semanticState: DriverSemanticStateStatus(
+                code: 'LOGIN_OR_CONSENT',
+                label: 'Login ou consentimento',
+                summary:
+                    'O app pede login, consentimento ou permissão antes de seguir.',
+                contextRelevant: false,
+              ),
+            ),
+          ],
+          targetApps: const [
+            DriverTargetAppStatus(
+              key: 'APP99_DRIVER',
+              label: '99 Motorista',
+              packageName: 'com.app99.driver',
+              installed: true,
+              enabledInSystem: true,
+              launchIntentAvailable: true,
+              appReady: true,
+              missingCapabilities: [],
+              detectedPackageName: 'com.app99.driver',
+            ),
+          ],
+        ),
+      );
+
+      await pumpScreen(
+        tester,
+        sessionController: sessionController,
+        repository: repository,
+        nativeBridge: nativeBridge,
+      );
+
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-provider-context-section'),
+      );
+
+      expect(
+        find.text('99 Motorista · Login ou consentimento'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          'Estado normalizado: Login ou consentimento',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Resumo local: O app pede login, consentimento ou permissão antes de seguir.',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
     },
   );
 
@@ -432,6 +552,12 @@ void main() {
               eventType: 'TYPE_WINDOW_STATE_CHANGED',
               capturedAt: '2026-04-17T18:10:00Z',
               texts: ['Você está online', 'Promoções'],
+              semanticState: DriverSemanticStateStatus(
+                code: 'WAITING',
+                label: 'Aguardando',
+                summary: 'O app está aberto e aguardando novas corridas.',
+                contextRelevant: false,
+              ),
             ),
             DriverProviderContextStatus(
               providerKey: 'APP99_DRIVER',
@@ -440,6 +566,13 @@ void main() {
               eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
               capturedAt: '2026-04-17T18:11:00Z',
               texts: ['Aceite corridas', 'Dinâmico'],
+              semanticState: DriverSemanticStateStatus(
+                code: 'RELEVANT_CONTEXT',
+                label: 'Contexto relevante',
+                summary:
+                    'Há um sinal local relevante para a próxima fase do módulo.',
+                contextRelevant: true,
+              ),
             ),
           ],
         ),
@@ -458,8 +591,8 @@ void main() {
       );
 
       expect(find.text('Contexto local monitorado'), findsOneWidget);
-      expect(find.text('Uber Driver · Contexto capturado'), findsOneWidget);
-      expect(find.text('99 Motorista · Contexto capturado'), findsOneWidget);
+      expect(find.text('Uber Driver · Aguardando'), findsOneWidget);
+      expect(find.text('99 Motorista · Contexto relevante'), findsOneWidget);
       expect(find.textContaining('Você está online'), findsOneWidget);
       expect(find.textContaining('Aceite corridas'), findsOneWidget);
     },

@@ -1,3 +1,28 @@
+class DriverSemanticStateStatus {
+  const DriverSemanticStateStatus({
+    required this.code,
+    required this.label,
+    required this.summary,
+    required this.contextRelevant,
+  });
+
+  final String code;
+  final String label;
+  final String summary;
+  final bool contextRelevant;
+
+  factory DriverSemanticStateStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverSemanticStateStatus(
+      code: json['code'] as String? ?? 'NO_ACTIVE_PROVIDER',
+      label: json['label'] as String? ?? 'Sem provider ativo',
+      summary:
+          json['summary'] as String? ??
+          'Abra Uber Driver ou 99 Motorista para iniciar a leitura local.',
+      contextRelevant: json['contextRelevant'] as bool? ?? false,
+    );
+  }
+}
+
 class DriverTargetAppStatus {
   const DriverTargetAppStatus({
     required this.key,
@@ -47,6 +72,12 @@ class DriverProviderContextStatus {
     required this.eventType,
     required this.capturedAt,
     required this.texts,
+    this.semanticState = const DriverSemanticStateStatus(
+      code: 'INSUFFICIENT_CONTEXT',
+      label: 'Contexto insuficiente',
+      summary: 'Ainda não há sinal local estável para este provider.',
+      contextRelevant: false,
+    ),
   });
 
   final String providerKey;
@@ -55,6 +86,7 @@ class DriverProviderContextStatus {
   final String eventType;
   final String capturedAt;
   final List<String> texts;
+  final DriverSemanticStateStatus semanticState;
 
   factory DriverProviderContextStatus.fromJson(Map<Object?, Object?> json) {
     return DriverProviderContextStatus(
@@ -66,6 +98,9 @@ class DriverProviderContextStatus {
       texts: (json['texts'] as List<Object?>? ?? const [])
           .whereType<String>()
           .toList(),
+      semanticState: DriverSemanticStateStatus.fromJson(
+        json['semanticState'] as Map<Object?, Object?>? ?? const {},
+      ),
     );
   }
 }
@@ -102,6 +137,12 @@ class DriverCurrentContextStatus {
     required this.validity,
     required this.validUntil,
     this.invalidationReason,
+    this.semanticState = const DriverSemanticStateStatus(
+      code: 'NO_ACTIVE_PROVIDER',
+      label: 'Sem provider ativo',
+      summary: 'Abra Uber Driver ou 99 Motorista para iniciar a leitura local.',
+      contextRelevant: false,
+    ),
   });
 
   final String providerKey;
@@ -114,6 +155,7 @@ class DriverCurrentContextStatus {
   final String validity;
   final String validUntil;
   final String? invalidationReason;
+  final DriverSemanticStateStatus semanticState;
 
   bool get hasProvider => providerKey.isNotEmpty;
 
@@ -134,6 +176,9 @@ class DriverCurrentContextStatus {
       validity: json['validity'] as String? ?? 'INVALID',
       validUntil: json['validUntil'] as String? ?? '',
       invalidationReason: json['invalidationReason'] as String?,
+      semanticState: DriverSemanticStateStatus.fromJson(
+        json['semanticState'] as Map<Object?, Object?>? ?? const {},
+      ),
     );
   }
 }
