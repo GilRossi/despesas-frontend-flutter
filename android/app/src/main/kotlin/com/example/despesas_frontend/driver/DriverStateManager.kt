@@ -28,6 +28,26 @@ object DriverStateManager {
     private var acceptCommand = DriverAcceptCommandSnapshot.idle()
 
     @Synchronized
+    fun resetForTest() {
+        packageName = ""
+        methodChannel = ""
+        nativeBridgeAvailable = false
+        methodChannelReady = false
+        accessibilityServiceDeclared = false
+        accessibilityServiceEnabled = false
+        canOpenAccessibilitySettings = false
+        missingCapabilities = emptyList()
+        targetApps = emptyList()
+        androidAutoPrepared = false
+        providerContextsByKey.clear()
+        focusedProviderKey = null
+        focusedProviderLabel = null
+        focusedPackageName = null
+        lastInvalidationReason = "NO_CONTEXT"
+        acceptCommand = DriverAcceptCommandSnapshot.idle()
+    }
+
+    @Synchronized
     fun updateFoundation(
         packageName: String,
         methodChannel: String,
@@ -363,11 +383,11 @@ object DriverStateManager {
             )
         }
 
-        val normalizedTexts = texts
-            .map { text -> text.trim().lowercase(Locale.ROOT) }
+        val capturedTexts = texts
+            .map { text -> text.trim() }
             .filter { text -> text.isNotBlank() }
 
-        if (normalizedTexts.isEmpty()) {
+        if (capturedTexts.isEmpty()) {
             return DriverSemanticStateSnapshot(
                 code = "INSUFFICIENT_CONTEXT",
                 label = "Contexto insuficiente",
@@ -376,38 +396,66 @@ object DriverStateManager {
             )
         }
 
-        if (matchesAny(normalizedTexts, permissionOrConsentKeywords(providerKey))) {
+        val permissionEvidence = matchingEvidence(
+            capturedTexts,
+            permissionOrConsentKeywords(providerKey),
+        )
+        if (permissionEvidence.isNotEmpty()) {
             return DriverSemanticStateSnapshot(
                 code = "LOGIN_OR_CONSENT",
                 label = "Login ou consentimento",
-                summary = "O app pede login, consentimento ou permissão antes de seguir.",
+                summary = buildSummary(
+                    base = "O app pede login, consentimento ou permissão antes de seguir.",
+                    evidence = permissionEvidence,
+                ),
                 contextRelevant = false,
             )
         }
 
-        if (matchesAny(normalizedTexts, relevantContextKeywords(providerKey))) {
+        val relevantEvidence = matchingEvidence(
+            capturedTexts,
+            relevantContextKeywords(providerKey),
+        )
+        if (relevantEvidence.isNotEmpty()) {
             return DriverSemanticStateSnapshot(
                 code = "RELEVANT_CONTEXT",
                 label = "Contexto relevante",
-                summary = "Há um sinal local relevante para a próxima fase do módulo.",
+                summary = buildSummary(
+                    base = "Há sinais locais de contexto relevante para a próxima fase do módulo.",
+                    evidence = relevantEvidence,
+                ),
                 contextRelevant = true,
             )
         }
 
-        if (matchesAny(normalizedTexts, waitingKeywords(providerKey))) {
+        val waitingEvidence = matchingEvidence(
+            capturedTexts,
+            waitingKeywords(providerKey),
+        )
+        if (waitingEvidence.isNotEmpty()) {
             return DriverSemanticStateSnapshot(
                 code = "WAITING",
                 label = "Aguardando",
-                summary = "O app está aberto e aguardando novas corridas.",
+                summary = buildSummary(
+                    base = "O app está aberto e aguardando novas corridas.",
+                    evidence = waitingEvidence,
+                ),
                 contextRelevant = false,
             )
         }
 
-        if (matchesAny(normalizedTexts, homeKeywords(providerKey))) {
+        val homeEvidence = matchingEvidence(
+            capturedTexts,
+            homeKeywords(providerKey),
+        )
+        if (homeEvidence.isNotEmpty()) {
             return DriverSemanticStateSnapshot(
                 code = "HOME",
                 label = "Tela inicial",
-                summary = "O provider está em foco, mas ainda sem contexto operacional útil.",
+                summary = buildSummary(
+                    base = "O provider está em foco na tela principal, mas ainda sem contexto operacional útil.",
+                    evidence = homeEvidence,
+                ),
                 contextRelevant = false,
             )
         }
@@ -415,18 +463,74 @@ object DriverStateManager {
         return DriverSemanticStateSnapshot(
             code = "INSUFFICIENT_CONTEXT",
             label = "Contexto insuficiente",
-            summary = "O provider está em foco, mas a captura local ainda é insuficiente.",
+            summary = buildSummary(
+                base = "O provider está em foco, mas a captura local ainda é insuficiente.",
+                evidence = capturedTexts.take(2),
+            ),
             contextRelevant = false,
         )
     }
 
-    private fun matchesAny(
+    private fun matchingEvidence(
         texts: List<String>,
         keywords: List<String>,
-    ): Boolean {
-        return texts.any { text ->
-            keywords.any { keyword -> text.contains(keyword) }
+    ): List<String> {
+        val evidence = linkedSetOf<String>()
+        texts.forEach { text ->
+            val normalized = text.lowercase(Locale.ROOT)
+            if (keywords.any { keyword -> normalized.contains(keyword) }) {
+                evidence += text
+            }
         }
+        return evidence
+            .sortedWith(
+                compareByDescending<String> { evidencePriority(it) }
+                    .thenBy { it.length },
+            )
+            .take(2)
+    }
+
+    private fun buildSummary(
+        base: String,
+        evidence: List<String>,
+    ): String {
+        if (evidence.isEmpty()) {
+            return base
+        }
+        val excerpts = evidence.joinToString(separator = "; ") { text ->
+            "\"${text.take(80)}${if (text.length > 80) "…" else ""}\""
+        }
+        return "$base Sinais: $excerpts."
+    }
+
+    private fun evidencePriority(text: String): Int {
+        val normalized = text.lowercase(Locale.ROOT)
+        var score = 0
+        if (normalized.contains("r$")) {
+            score += 4
+        }
+        if (
+            normalized.contains("alta demanda") ||
+            normalized.contains("oportunidades") ||
+            normalized.contains("sempre permitir") ||
+            normalized.contains("configure as permissões") ||
+            normalized.contains("configure as permissoes") ||
+            normalized.contains("aceitar") ||
+            normalized.contains("online")
+        ) {
+            score += 3
+        }
+        if (
+            normalized.contains("tudo pronto para fazer entregas") ||
+            normalized.contains("página inicial") ||
+            normalized.contains("pagina inicial")
+        ) {
+            score += 2
+        }
+        if (text.length <= 48) {
+            score += 1
+        }
+        return score
     }
 
     private fun permissionOrConsentKeywords(providerKey: String): List<String> {
@@ -440,8 +544,12 @@ object DriverStateManager {
                 "localizacao",
                 "modo de gerenciamento",
                 "você já se conectou",
+                "sempre permitir",
             )
             "APP99_DRIVER" -> listOf(
+                "configure as permissões de localização",
+                "configure as permissoes de localizacao",
+                "sempre permitir",
                 "política",
                 "politica",
                 "privacidade",
@@ -464,6 +572,7 @@ object DriverStateManager {
                 "online",
                 "procurando",
                 "aguardando",
+                "novas corridas",
             )
             "APP99_DRIVER" -> listOf(
                 "você está online",
@@ -481,6 +590,13 @@ object DriverStateManager {
     private fun relevantContextKeywords(providerKey: String): List<String> {
         return when (providerKey) {
             "UBER_DRIVER", "APP99_DRIVER" -> listOf(
+                "alta demanda",
+                "demanda está alta",
+                "demanda esta alta",
+                "tempo de espera baixo",
+                "oportunidades",
+                "+r$",
+                "r$ ",
                 "corrida",
                 "viagem",
                 "solicitação",
@@ -498,18 +614,22 @@ object DriverStateManager {
     private fun homeKeywords(providerKey: String): List<String> {
         return when (providerKey) {
             "UBER_DRIVER" -> listOf(
+                "tudo pronto para fazer entregas",
+                "ficar online",
+                "página inicial",
+                "pagina inicial",
+                "ganhos",
+                "mensagens",
+                "menu",
                 "uber driver",
                 "carbonactivity",
-                "início",
-                "inicio",
-                "tela inicial",
             )
             "APP99_DRIVER" -> listOf(
                 "99 motorista",
-                "startactivity",
                 "início",
                 "inicio",
                 "tela inicial",
+                "startactivity",
             )
             else -> listOf("início", "inicio", "tela inicial")
         }
