@@ -384,6 +384,61 @@ class _DriverModuleReadinessState extends StatelessWidget {
         const SizedBox(height: 16),
         _SectionCard(
           key: const ValueKey('driver-module-command-section'),
+          title: 'Oferta estruturada',
+          children: [
+            _StatusRow(
+              label: 'Estado da oferta estruturada',
+              value: controller.structuredOfferStatusLabel(),
+            ),
+            _StatusRow(
+              label: 'Classificação estruturada',
+              value: controller.structuredOfferClassificationLabel(),
+            ),
+            _StatusRow(
+              label: 'Acionável',
+              value: controller.structuredOfferActionabilityLabel(),
+            ),
+            _StatusRow(
+              label: 'Valor',
+              value: controller.structuredOfferValueLabel(),
+            ),
+            _StatusRow(
+              label: 'Produto',
+              value: controller.structuredOfferProductLabel(),
+            ),
+            _StatusRow(
+              label: 'Embarque',
+              value: controller.structuredOfferPickupLabel(),
+            ),
+            _StatusRow(
+              label: 'Viagem',
+              value: controller.structuredOfferTripLabel(),
+            ),
+            _StatusRow(
+              label: 'Local principal',
+              value: controller.structuredOfferPrimaryLocationLabel(),
+            ),
+            _StatusRow(
+              label: 'Local secundário',
+              value: controller.structuredOfferSecondaryLocationLabel(),
+            ),
+            _StatusRow(
+              label: 'CTA',
+              value: controller.structuredOfferCtaLabel(),
+            ),
+            _StatusRow(
+              label: 'Confiança do parsing',
+              value: controller.structuredOfferConfidenceLabel(),
+            ),
+            _StatusRow(
+              label: 'Campos ausentes',
+              value: controller.structuredOfferMissingFieldsLabel(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          key: const ValueKey('driver-module-command-section'),
           title: 'Caminho unificado de comando',
           children: [
             const Text(

@@ -79,6 +79,10 @@ void main() {
       expect(find.text('Readiness do módulo'), findsOneWidget);
       expect(find.text('Núcleo nativo compartilhado'), findsOneWidget);
       expect(find.text('Abrir acessibilidade'), findsOneWidget);
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-command-section'),
+      );
       expect(find.text('Registrar comando base'), findsOneWidget);
       await scrollToKey(
         tester,
@@ -373,6 +377,30 @@ void main() {
             classification: 'ACTIONABLE_OFFER',
             isActionable: true,
           ),
+          structuredOfferPresent: true,
+          structuredOffer: const DriverStructuredOfferStatus(
+            providerKey: 'UBER_DRIVER',
+            classification: 'ACTIONABLE_OFFER',
+            isActionable: true,
+            productName: 'UberX',
+            fareAmountText: 'R\$ 18,50',
+            fareAmountCents: 1850,
+            pickupEtaText: '5 min',
+            pickupDistanceText: '2.1 km',
+            tripDurationText: '18 minutos',
+            tripDistanceText: '8.4 km',
+            primaryLocationText: 'Rua Exemplo, Praia Grande',
+            secondaryLocationText: 'Av. Destino, Santos',
+            ctaText: 'Selecionar',
+            confidence: 'HIGH',
+            missingFields: [],
+            rawTexts: ['UberX', 'R\$ 18,50', 'Selecionar'],
+            parsedAt: '2026-04-25T12:00:01Z',
+          ),
+          offerClassification: 'ACTIONABLE_OFFER',
+          offerActionable: true,
+          offerMissingFields: const [],
+          offerParsingConfidence: 'HIGH',
         ),
       );
 
@@ -404,6 +432,25 @@ void main() {
       );
       expect(
         find.textContaining('Oferta acionável: Sim', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Estado da oferta estruturada: Oferta estruturada acionável disponível.',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Valor: R\$ 18,50', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Produto: UberX', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('CTA: Selecionar', findRichText: true),
         findsWidgets,
       );
     },
@@ -445,6 +492,31 @@ void main() {
               missingRequirements: ['cta_forte'],
             ),
           ),
+          structuredOfferPresent: true,
+          structuredOffer: const DriverStructuredOfferStatus(
+            providerKey: 'UBER_DRIVER',
+            classification: 'OFFER_CANDIDATE',
+            isActionable: false,
+            productName: 'UberX',
+            fareAmountText: 'R\$ 37,37',
+            fareAmountCents: 3737,
+            pickupEtaText: '5 min',
+            pickupDistanceText: '2.0 km',
+            tripDurationText: '33 minutos',
+            tripDistanceText: '22.0 km',
+            primaryLocationText:
+                'Rua Antônio Monteiro, Balneário Maracanã, Praia Grande',
+            secondaryLocationText:
+                'Avenida Washington Luís, 483, Boqueirão, Santos',
+            confidence: 'MEDIUM',
+            missingFields: ['cta'],
+            rawTexts: ['UberX', 'R\$ 37,37', '5 min (2.0 km)'],
+            parsedAt: '2026-04-29T01:05:00Z',
+          ),
+          offerClassification: 'OFFER_CANDIDATE',
+          offerActionable: false,
+          offerMissingFields: const ['cta'],
+          offerParsingConfidence: 'MEDIUM',
         ),
       );
 
@@ -464,6 +536,84 @@ void main() {
           'Requisitos faltantes: cta_forte',
           findRichText: true,
         ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Classificação estruturada: OFFER_CANDIDATE',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Campos ausentes: cta', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('CTA: Não identificado', findRichText: true),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets(
+    'não mostra oferta estruturada acionável quando o evento está expirado ou perdido',
+    (tester) async {
+      configureLargeViewport(tester);
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'OFFER_EXPIRED_OR_MISSED',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-29T01:06:00Z',
+            texts: ['-R\$ 0,01', 'Procurando viagens', '1-4 min'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-29T01:06:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'OFFER_EXPIRED_OR_MISSED',
+              label: 'Oferta expirada ou perdida',
+              summary: 'O cartão completo já não estava íntegro.',
+              contextRelevant: false,
+              confidence: 'MEDIUM',
+              detectedSignals: ['-R\$ 0,01', 'Procurando viagens'],
+            ),
+          ),
+        ),
+      );
+
+      await pumpScreen(
+        tester,
+        sessionController: sessionController,
+        repository: repository,
+        nativeBridge: nativeBridge,
+      );
+
+      expect(
+        find.textContaining(
+          'Estado da oferta estruturada: Nenhuma oferta estruturada no contexto atual.',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Acionável: Não', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Valor: Não identificado', findRichText: true),
         findsWidgets,
       );
     },

@@ -370,6 +370,96 @@ class DriverModuleController extends ChangeNotifier {
     return currentContext.semanticState.missingRequirements.join(' | ');
   }
 
+  String structuredOfferStatusLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.structuredOfferPresent) {
+      return 'Nenhuma oferta estruturada no contexto atual.';
+    }
+    return nativeStatus.offerActionable
+        ? 'Oferta estruturada acionável disponível.'
+        : 'Oferta estruturada parcial disponível.';
+  }
+
+  String structuredOfferClassificationLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.structuredOfferPresent) {
+      return 'Nenhuma classificação disponível.';
+    }
+    return nativeStatus.offerClassification ?? 'Sem classificação';
+  }
+
+  String structuredOfferActionabilityLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.structuredOfferPresent) {
+      return 'Não';
+    }
+    return nativeStatus.offerActionable ? 'Sim' : 'Não';
+  }
+
+  String structuredOfferValueLabel() {
+    final offer = _state.nativeStatus?.structuredOffer;
+    return offer?.fareAmountText ?? 'Não identificado';
+  }
+
+  String structuredOfferProductLabel() {
+    final offer = _state.nativeStatus?.structuredOffer;
+    return offer?.productName ?? 'Não identificado';
+  }
+
+  String structuredOfferPickupLabel() {
+    final offer = _state.nativeStatus?.structuredOffer;
+    if (offer == null) {
+      return 'Não identificado';
+    }
+    final parts = [
+      if (offer.pickupEtaText != null) offer.pickupEtaText!,
+      if (offer.pickupDistanceText != null) offer.pickupDistanceText!,
+    ];
+    return parts.isEmpty ? 'Não identificado' : parts.join(' | ');
+  }
+
+  String structuredOfferTripLabel() {
+    final offer = _state.nativeStatus?.structuredOffer;
+    if (offer == null) {
+      return 'Não identificado';
+    }
+    final parts = [
+      if (offer.tripDurationText != null) offer.tripDurationText!,
+      if (offer.tripDistanceText != null) offer.tripDistanceText!,
+    ];
+    return parts.isEmpty ? 'Não identificado' : parts.join(' | ');
+  }
+
+  String structuredOfferPrimaryLocationLabel() {
+    return _state.nativeStatus?.structuredOffer?.primaryLocationText ??
+        'Não identificado';
+  }
+
+  String structuredOfferSecondaryLocationLabel() {
+    return _state.nativeStatus?.structuredOffer?.secondaryLocationText ??
+        'Não identificado';
+  }
+
+  String structuredOfferCtaLabel() {
+    return _state.nativeStatus?.structuredOffer?.ctaText ?? 'Não identificado';
+  }
+
+  String structuredOfferConfidenceLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.structuredOfferPresent) {
+      return 'Indisponível';
+    }
+    return nativeStatus.offerParsingConfidence ?? 'LOW';
+  }
+
+  String structuredOfferMissingFieldsLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || nativeStatus.offerMissingFields.isEmpty) {
+      return 'Nenhum campo ausente.';
+    }
+    return nativeStatus.offerMissingFields.join(' | ');
+  }
+
   String contextValidityLabel() {
     final currentContext = _state.nativeStatus?.currentContext;
     if (currentContext == null) {

@@ -228,6 +228,13 @@ object DriverStateManager {
             classification = assessment.classification,
             isActionable = assessment.isActionable,
             missingRequirements = assessment.missingRequirements,
+            structuredOffer = UberOfferParser.parse(
+                providerKey = providerKey,
+                classification = assessment.classification,
+                isActionable = assessment.isActionable,
+                texts = rawTexts,
+                parsedAt = capturedAt,
+            ),
         )
         lastOfferSnapshot = snapshot
         offerCandidateWindow = null
@@ -382,6 +389,11 @@ object DriverStateManager {
         reconcileAcceptCommand(now)
         val currentContext = resolveCurrentContext(now)
         val recentOffer = resolveRecentOffer(now)
+        val structuredOffer = resolveStructuredOffer(
+            currentContext = currentContext,
+            recentOffer = recentOffer,
+            now = now,
+        )
         DriverOfferTraceLogger.d(
             "snapshot semantic=${currentContext.semanticState.code} " +
                 "lastOfferDetected=${recentOffer != null} " +
@@ -411,6 +423,12 @@ object DriverStateManager {
             lastOfferClassification = recentOffer?.classification,
             lastOfferActionable = recentOffer?.isActionable ?: false,
             lastOfferMissingRequirements = recentOffer?.missingRequirements ?: emptyList(),
+            structuredOfferPresent = structuredOffer != null,
+            structuredOffer = structuredOffer,
+            offerClassification = structuredOffer?.classification,
+            offerActionable = structuredOffer?.isActionable ?: false,
+            offerMissingFields = structuredOffer?.missingFields ?: emptyList(),
+            offerParsingConfidence = structuredOffer?.confidence,
             contextTtlSeconds = CONTEXT_TTL_SECONDS.toInt(),
             androidAutoPrepared = androidAutoPrepared,
         )
@@ -624,6 +642,36 @@ object DriverStateManager {
             validUntil = validUntil.toString(),
             invalidationReason = if (inFocus) null else invalidationReason,
             semanticState = offerSemanticState(offer),
+        )
+    }
+
+    private fun resolveStructuredOffer(
+        currentContext: DriverCurrentContextSnapshot,
+        recentOffer: DriverOfferSnapshot?,
+        now: Instant,
+    ): DriverStructuredOffer? {
+        recentOffer?.structuredOffer?.let { return it }
+
+        val classification = currentContext.semanticState.code
+        if (classification != "ACTIONABLE_OFFER" && classification != "OFFER_CANDIDATE") {
+            return null
+        }
+
+        if (currentContext.texts.isEmpty()) {
+            return null
+        }
+
+        val parsedAt = currentContext.capturedAt
+            .takeIf { it.isNotBlank() }
+            ?.let(Instant::parse)
+            ?: now
+
+        return UberOfferParser.parse(
+            providerKey = currentContext.providerKey,
+            classification = classification,
+            isActionable = classification == "ACTIONABLE_OFFER",
+            texts = currentContext.texts,
+            parsedAt = parsedAt,
         )
     }
 

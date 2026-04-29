@@ -127,6 +127,12 @@ class DriverStateManagerTest {
         assertEquals("OFFER_CANDIDATE", snapshot.currentContext.semanticState.code)
         assertFalse(snapshot.currentContext.isActionable)
         assertFalse(snapshot.lastOfferDetected)
+        assertTrue(snapshot.structuredOfferPresent)
+        assertEquals("OFFER_CANDIDATE", snapshot.offerClassification)
+        assertEquals(false, snapshot.offerActionable)
+        assertTrue(snapshot.offerMissingFields.contains("cta"))
+        assertEquals("UberX", snapshot.structuredOffer?.productName)
+        assertEquals("R\$ 37,37", snapshot.structuredOffer?.fareAmountText)
         assertTrue(snapshot.currentContext.semanticState.missingRequirements.contains("cta_forte"))
     }
 
@@ -159,6 +165,8 @@ class DriverStateManagerTest {
             assertEquals("OFFER_EXPIRED_OR_MISSED", snapshot.currentContext.semanticState.code)
             assertFalse(snapshot.currentContext.isActionable)
             assertFalse(snapshot.lastOfferDetected)
+            assertFalse(snapshot.structuredOfferPresent)
+            assertEquals(null, snapshot.structuredOffer)
         }
     }
 
@@ -361,6 +369,12 @@ class DriverStateManagerTest {
         assertTrue(snapshot.lastOfferSignals.any { it.contains(expectedSignal) })
         assertTrue(snapshot.lastOfferSignals.any { it.contains(expectedProduct) })
         assertEquals(true, snapshot.lastOfferActionable)
+        assertTrue(snapshot.structuredOfferPresent)
+        assertEquals("ACTIONABLE_OFFER", snapshot.offerClassification)
+        assertEquals(true, snapshot.offerActionable)
+        assertEquals(expectedProduct, snapshot.structuredOffer?.productName)
+        assertEquals(expectedSignal, snapshot.structuredOffer?.fareAmountText)
+        assertEquals("Selecionar", snapshot.structuredOffer?.ctaText)
     }
 
     private fun configureReadyUber() {
