@@ -273,6 +273,72 @@ class DriverOfferStatus {
   }
 }
 
+class DriverStructuredOfferStatus {
+  const DriverStructuredOfferStatus({
+    required this.providerKey,
+    required this.classification,
+    required this.isActionable,
+    this.productName,
+    this.fareAmountText,
+    this.fareAmountCents,
+    this.pickupEtaText,
+    this.pickupDistanceText,
+    this.tripDurationText,
+    this.tripDistanceText,
+    this.primaryLocationText,
+    this.secondaryLocationText,
+    this.ctaText,
+    this.confidence = 'LOW',
+    this.missingFields = const [],
+    this.rawTexts = const [],
+    required this.parsedAt,
+  });
+
+  final String providerKey;
+  final String classification;
+  final bool isActionable;
+  final String? productName;
+  final String? fareAmountText;
+  final int? fareAmountCents;
+  final String? pickupEtaText;
+  final String? pickupDistanceText;
+  final String? tripDurationText;
+  final String? tripDistanceText;
+  final String? primaryLocationText;
+  final String? secondaryLocationText;
+  final String? ctaText;
+  final String confidence;
+  final List<String> missingFields;
+  final List<String> rawTexts;
+  final String parsedAt;
+
+  factory DriverStructuredOfferStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverStructuredOfferStatus(
+      providerKey: json['providerKey'] as String? ?? '',
+      classification: json['classification'] as String? ?? '',
+      isActionable: json['isActionable'] as bool? ?? false,
+      productName: json['productName'] as String?,
+      fareAmountText: json['fareAmountText'] as String?,
+      fareAmountCents: json['fareAmountCents'] as int?,
+      pickupEtaText: json['pickupEtaText'] as String?,
+      pickupDistanceText: json['pickupDistanceText'] as String?,
+      tripDurationText: json['tripDurationText'] as String?,
+      tripDistanceText: json['tripDistanceText'] as String?,
+      primaryLocationText: json['primaryLocationText'] as String?,
+      secondaryLocationText: json['secondaryLocationText'] as String?,
+      ctaText: json['ctaText'] as String?,
+      confidence: json['confidence'] as String? ?? 'LOW',
+      missingFields: (json['missingFields'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      rawTexts: (json['rawTexts'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      parsedAt: json['parsedAt'] as String? ?? '',
+    );
+  }
+}
+
 class DriverNativeFoundationStatus {
   const DriverNativeFoundationStatus({
     required this.packageName,
@@ -290,6 +356,12 @@ class DriverNativeFoundationStatus {
     required this.currentContext,
     required this.acceptCommand,
     required this.lastOffer,
+    required this.structuredOfferPresent,
+    required this.structuredOffer,
+    required this.offerClassification,
+    required this.offerActionable,
+    required this.offerMissingFields,
+    required this.offerParsingConfidence,
     required this.contextTtlSeconds,
     required this.androidAutoPrepared,
   });
@@ -309,6 +381,12 @@ class DriverNativeFoundationStatus {
   final DriverCurrentContextStatus currentContext;
   final DriverAcceptCommandStatus acceptCommand;
   final DriverOfferStatus lastOffer;
+  final bool structuredOfferPresent;
+  final DriverStructuredOfferStatus? structuredOffer;
+  final String? offerClassification;
+  final bool offerActionable;
+  final List<String> offerMissingFields;
+  final String? offerParsingConfidence;
   final int contextTtlSeconds;
   final bool androidAutoPrepared;
 
@@ -369,6 +447,19 @@ class DriverNativeFoundationStatus {
         json['acceptCommand'] as Map<Object?, Object?>? ?? const {},
       ),
       lastOffer: DriverOfferStatus.fromJson(json),
+      structuredOfferPresent: json['structuredOfferPresent'] as bool? ?? false,
+      structuredOffer:
+          (json['structuredOffer'] as Map<Object?, Object?>?) != null
+          ? DriverStructuredOfferStatus.fromJson(
+              json['structuredOffer'] as Map<Object?, Object?>,
+            )
+          : null,
+      offerClassification: json['offerClassification'] as String?,
+      offerActionable: json['isActionable'] as bool? ?? false,
+      offerMissingFields: (json['missingFields'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      offerParsingConfidence: json['parsingConfidence'] as String?,
       contextTtlSeconds: json['contextTtlSeconds'] as int? ?? 15,
       androidAutoPrepared: json['androidAutoPrepared'] as bool? ?? false,
     );

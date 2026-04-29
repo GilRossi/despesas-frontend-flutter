@@ -312,6 +312,30 @@ void main() {
             classification: 'ACTIONABLE_OFFER',
             isActionable: true,
           ),
+          structuredOfferPresent: true,
+          structuredOffer: const DriverStructuredOfferStatus(
+            providerKey: 'UBER_DRIVER',
+            classification: 'ACTIONABLE_OFFER',
+            isActionable: true,
+            productName: 'UberX',
+            fareAmountText: 'R\$ 18,50',
+            fareAmountCents: 1850,
+            pickupEtaText: '5 min',
+            pickupDistanceText: '2.1 km',
+            tripDurationText: '18 minutos',
+            tripDistanceText: '8.4 km',
+            primaryLocationText: 'Rua Exemplo, Praia Grande',
+            secondaryLocationText: 'Av. Destino, Santos',
+            ctaText: 'Selecionar',
+            confidence: 'HIGH',
+            missingFields: [],
+            rawTexts: ['UberX', 'R\$ 18,50', 'Selecionar'],
+            parsedAt: '2026-04-25T12:00:01Z',
+          ),
+          offerClassification: 'ACTIONABLE_OFFER',
+          offerActionable: true,
+          offerMissingFields: const [],
+          offerParsingConfidence: 'HIGH',
         ),
       );
       final controller = DriverModuleController(
@@ -333,6 +357,23 @@ void main() {
       expect(
         controller.lastOfferMissingRequirementsLabel(),
         'Nenhum requisito pendente.',
+      );
+      expect(
+        controller.structuredOfferStatusLabel(),
+        'Oferta estruturada acionável disponível.',
+      );
+      expect(controller.structuredOfferValueLabel(), 'R\$ 18,50');
+      expect(controller.structuredOfferProductLabel(), 'UberX');
+      expect(controller.structuredOfferPickupLabel(), '5 min | 2.1 km');
+      expect(controller.structuredOfferTripLabel(), '18 minutos | 8.4 km');
+      expect(
+        controller.structuredOfferPrimaryLocationLabel(),
+        'Rua Exemplo, Praia Grande',
+      );
+      expect(controller.structuredOfferCtaLabel(), 'Selecionar');
+      expect(
+        controller.structuredOfferMissingFieldsLabel(),
+        'Nenhum campo ausente.',
       );
     },
   );
@@ -372,6 +413,31 @@ void main() {
               missingRequirements: ['cta_forte'],
             ),
           ),
+          structuredOfferPresent: true,
+          structuredOffer: const DriverStructuredOfferStatus(
+            providerKey: 'UBER_DRIVER',
+            classification: 'OFFER_CANDIDATE',
+            isActionable: false,
+            productName: 'UberX',
+            fareAmountText: 'R\$ 37,37',
+            fareAmountCents: 3737,
+            pickupEtaText: '5 min',
+            pickupDistanceText: '2.0 km',
+            tripDurationText: '33 minutos',
+            tripDistanceText: '22.0 km',
+            primaryLocationText:
+                'Rua Antônio Monteiro, Balneário Maracanã, Praia Grande',
+            secondaryLocationText:
+                'Avenida Washington Luís, 483, Boqueirão, Santos',
+            confidence: 'MEDIUM',
+            missingFields: ['cta'],
+            rawTexts: ['UberX', 'R\$ 37,37', '5 min (2.0 km)'],
+            parsedAt: '2026-04-29T01:05:00Z',
+          ),
+          offerClassification: 'OFFER_CANDIDATE',
+          offerActionable: false,
+          offerMissingFields: const ['cta'],
+          offerParsingConfidence: 'MEDIUM',
         ),
       );
       final controller = DriverModuleController(
@@ -384,6 +450,72 @@ void main() {
 
       expect(controller.currentSemanticStateCode(), 'OFFER_CANDIDATE');
       expect(controller.currentSemanticMissingRequirementsLabel(), 'cta_forte');
+      expect(
+        controller.structuredOfferStatusLabel(),
+        'Oferta estruturada parcial disponível.',
+      );
+      expect(
+        controller.structuredOfferClassificationLabel(),
+        'OFFER_CANDIDATE',
+      );
+      expect(controller.structuredOfferActionabilityLabel(), 'Não');
+      expect(controller.structuredOfferValueLabel(), 'R\$ 37,37');
+      expect(controller.structuredOfferCtaLabel(), 'Não identificado');
+      expect(controller.structuredOfferMissingFieldsLabel(), 'cta');
+      expect(controller.canRequestAcceptCommand(), isFalse);
+    },
+  );
+
+  test(
+    'load não expõe oferta estruturada acionável para OFFER_EXPIRED_OR_MISSED',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'OFFER_EXPIRED_OR_MISSED',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-29T01:06:00Z',
+            texts: ['-R\$ 0,01', 'Procurando viagens', '1-4 min'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-29T01:06:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'OFFER_EXPIRED_OR_MISSED',
+              label: 'Oferta expirada ou perdida',
+              summary: 'O cartão completo já não estava íntegro.',
+              contextRelevant: false,
+              confidence: 'MEDIUM',
+              detectedSignals: ['-R\$ 0,01', 'Procurando viagens'],
+            ),
+          ),
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+
+      expect(
+        controller.structuredOfferStatusLabel(),
+        'Nenhuma oferta estruturada no contexto atual.',
+      );
+      expect(controller.structuredOfferActionabilityLabel(), 'Não');
+      expect(controller.structuredOfferValueLabel(), 'Não identificado');
       expect(controller.canRequestAcceptCommand(), isFalse);
     },
   );

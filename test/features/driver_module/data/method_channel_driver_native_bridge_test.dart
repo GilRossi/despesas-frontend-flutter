@@ -122,6 +122,30 @@ void main() {
               'lastOfferClassification': 'ACTIONABLE_OFFER',
               'lastOfferActionable': true,
               'lastOfferMissingRequirements': const [],
+              'structuredOfferPresent': true,
+              'structuredOffer': {
+                'providerKey': 'UBER_DRIVER',
+                'classification': 'ACTIONABLE_OFFER',
+                'isActionable': true,
+                'productName': 'UberX',
+                'fareAmountText': 'R\$ 18,50',
+                'fareAmountCents': 1850,
+                'pickupEtaText': '5 min',
+                'pickupDistanceText': '2.1 km',
+                'tripDurationText': '18 minutos',
+                'tripDistanceText': '8.4 km',
+                'primaryLocationText': 'Rua Exemplo, Praia Grande',
+                'secondaryLocationText': 'Av. Destino, Santos',
+                'ctaText': 'Selecionar',
+                'confidence': 'HIGH',
+                'missingFields': const [],
+                'rawTexts': const ['UberX', 'R\$ 18,50', 'Selecionar'],
+                'parsedAt': '2026-04-17T18:10:12Z',
+              },
+              'offerClassification': 'ACTIONABLE_OFFER',
+              'isActionable': true,
+              'missingFields': const [],
+              'parsingConfidence': 'HIGH',
               'contextTtlSeconds': 15,
               'androidAutoPrepared': false,
             };
@@ -178,6 +202,17 @@ void main() {
       expect(result.lastOffer.classification, 'ACTIONABLE_OFFER');
       expect(result.lastOffer.isActionable, isTrue);
       expect(result.lastOffer.missingRequirements, isEmpty);
+      expect(result.structuredOfferPresent, isTrue);
+      expect(result.offerClassification, 'ACTIONABLE_OFFER');
+      expect(result.offerActionable, isTrue);
+      expect(result.offerMissingFields, isEmpty);
+      expect(result.offerParsingConfidence, 'HIGH');
+      expect(result.structuredOffer?.productName, 'UberX');
+      expect(result.structuredOffer?.fareAmountText, 'R\$ 18,50');
+      expect(result.structuredOffer?.fareAmountCents, 1850);
+      expect(result.structuredOffer?.pickupEtaText, '5 min');
+      expect(result.structuredOffer?.tripDurationText, '18 minutos');
+      expect(result.structuredOffer?.ctaText, 'Selecionar');
       expect(result.contextTtlSeconds, 15);
       expect(result.androidAutoPrepared, isFalse);
     },

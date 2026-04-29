@@ -82,6 +82,7 @@ data class DriverOfferSnapshot(
     val classification: String,
     val isActionable: Boolean,
     val missingRequirements: List<String>,
+    val structuredOffer: DriverStructuredOffer?,
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -96,6 +97,7 @@ data class DriverOfferSnapshot(
             "classification" to classification,
             "isActionable" to isActionable,
             "missingRequirements" to missingRequirements,
+            "structuredOffer" to structuredOffer?.toMap(),
         )
     }
 }
@@ -262,6 +264,12 @@ data class DriverModuleNativeSnapshot(
     val lastOfferClassification: String?,
     val lastOfferActionable: Boolean,
     val lastOfferMissingRequirements: List<String>,
+    val structuredOfferPresent: Boolean,
+    val structuredOffer: DriverStructuredOffer?,
+    val offerClassification: String?,
+    val offerActionable: Boolean,
+    val offerMissingFields: List<String>,
+    val offerParsingConfidence: String?,
     val contextTtlSeconds: Int,
     val androidAutoPrepared: Boolean,
 ) {
@@ -288,6 +296,12 @@ data class DriverModuleNativeSnapshot(
             "lastOfferClassification" to lastOfferClassification,
             "lastOfferActionable" to lastOfferActionable,
             "lastOfferMissingRequirements" to lastOfferMissingRequirements,
+            "structuredOfferPresent" to structuredOfferPresent,
+            "structuredOffer" to structuredOffer?.toMap(),
+            "offerClassification" to offerClassification,
+            "isActionable" to offerActionable,
+            "missingFields" to offerMissingFields,
+            "parsingConfidence" to offerParsingConfidence,
             "contextTtlSeconds" to contextTtlSeconds,
             "androidAutoPrepared" to androidAutoPrepared,
         )
