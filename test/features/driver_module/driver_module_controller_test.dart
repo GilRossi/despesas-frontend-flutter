@@ -336,6 +336,31 @@ void main() {
           offerActionable: true,
           offerMissingFields: const [],
           offerParsingConfidence: 'HIGH',
+          offerSignalPresent: true,
+          offerSignal: const DriverOfferSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason:
+                'Oferta acionável, mas abaixo do patamar verde da regra v1.',
+            warnings: [],
+            farePerKmText: 'R\$ 1,76/km',
+            farePerMinuteText: 'R\$ 0,80/min',
+            estimatedTotalDistanceKm: 10.5,
+            estimatedTotalDurationMin: 23,
+            estimatedTotalDistanceText: '10,5 km',
+            estimatedTotalDurationText: '23 min',
+            ruleVersion: 'UBER_SIGNAL_V1',
+            computedAt: '2026-04-25T12:00:02Z',
+          ),
+          offerSignalColor: 'YELLOW',
+          offerSignalReason:
+              'Oferta acionável, mas abaixo do patamar verde da regra v1.',
+          offerSignalWarnings: const [],
+          farePerKmText: 'R\$ 1,76/km',
+          farePerMinuteText: 'R\$ 0,80/min',
+          estimatedTotalDistanceText: '10,5 km',
+          estimatedTotalDurationText: '23 min',
+          signalRuleVersion: 'UBER_SIGNAL_V1',
         ),
       );
       final controller = DriverModuleController(
@@ -375,6 +400,17 @@ void main() {
         controller.structuredOfferMissingFieldsLabel(),
         'Nenhum campo ausente.',
       );
+      expect(controller.offerSignalStatusLabel(), 'Amarelo');
+      expect(
+        controller.offerSignalReasonLabel(),
+        'Oferta acionável, mas abaixo do patamar verde da regra v1.',
+      );
+      expect(controller.offerSignalFarePerKmLabel(), 'R\$ 1,76/km');
+      expect(controller.offerSignalFarePerMinuteLabel(), 'R\$ 0,80/min');
+      expect(controller.offerSignalEstimatedDistanceLabel(), '10,5 km');
+      expect(controller.offerSignalEstimatedDurationLabel(), '23 min');
+      expect(controller.offerSignalWarningsLabel(), 'Nenhum aviso.');
+      expect(controller.offerSignalRuleVersionLabel(), 'UBER_SIGNAL_V1');
     },
   );
 
@@ -438,6 +474,30 @@ void main() {
           offerActionable: false,
           offerMissingFields: const ['cta'],
           offerParsingConfidence: 'MEDIUM',
+          offerSignalPresent: true,
+          offerSignal: const DriverOfferSignalStatus(
+            color: 'RED',
+            label: 'Vermelho',
+            reason: 'Oferta incompleta: falta requisito crítico para ação.',
+            warnings: ['CTA ausente.'],
+            farePerKmText: 'R\$ 1,56/km',
+            farePerMinuteText: 'R\$ 0,98/min',
+            estimatedTotalDistanceKm: 24.0,
+            estimatedTotalDurationMin: 38,
+            estimatedTotalDistanceText: '24,0 km',
+            estimatedTotalDurationText: '38 min',
+            ruleVersion: 'UBER_SIGNAL_V1',
+            computedAt: '2026-04-29T01:05:01Z',
+          ),
+          offerSignalColor: 'RED',
+          offerSignalReason:
+              'Oferta incompleta: falta requisito crítico para ação.',
+          offerSignalWarnings: const ['CTA ausente.'],
+          farePerKmText: 'R\$ 1,56/km',
+          farePerMinuteText: 'R\$ 0,98/min',
+          estimatedTotalDistanceText: '24,0 km',
+          estimatedTotalDurationText: '38 min',
+          signalRuleVersion: 'UBER_SIGNAL_V1',
         ),
       );
       final controller = DriverModuleController(
@@ -462,6 +522,12 @@ void main() {
       expect(controller.structuredOfferValueLabel(), 'R\$ 37,37');
       expect(controller.structuredOfferCtaLabel(), 'Não identificado');
       expect(controller.structuredOfferMissingFieldsLabel(), 'cta');
+      expect(controller.offerSignalStatusLabel(), 'Vermelho');
+      expect(
+        controller.offerSignalReasonLabel(),
+        'Oferta incompleta: falta requisito crítico para ação.',
+      );
+      expect(controller.offerSignalWarningsLabel(), 'CTA ausente.');
       expect(controller.canRequestAcceptCommand(), isFalse);
     },
   );
@@ -516,6 +582,10 @@ void main() {
       );
       expect(controller.structuredOfferActionabilityLabel(), 'Não');
       expect(controller.structuredOfferValueLabel(), 'Não identificado');
+      expect(
+        controller.offerSignalStatusLabel(),
+        'Nenhum farol calculado para a oferta atual.',
+      );
       expect(controller.canRequestAcceptCommand(), isFalse);
     },
   );

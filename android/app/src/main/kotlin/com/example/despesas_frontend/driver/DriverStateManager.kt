@@ -394,10 +394,17 @@ object DriverStateManager {
             recentOffer = recentOffer,
             now = now,
         )
+        val offerSignal = structuredOffer?.let {
+            UberOfferSignalEvaluator.evaluate(
+                offer = it,
+                computedAt = now,
+            )
+        }
         DriverOfferTraceLogger.d(
             "snapshot semantic=${currentContext.semanticState.code} " +
                 "lastOfferDetected=${recentOffer != null} " +
-                "offerAgeMs=${recentOffer?.let { Duration.between(Instant.parse(it.timestamp), now).toMillis() }}",
+                "offerAgeMs=${recentOffer?.let { Duration.between(Instant.parse(it.timestamp), now).toMillis() }} " +
+                "signalColor=${offerSignal?.color}",
         )
         return DriverModuleNativeSnapshot(
             packageName = packageName,
@@ -429,6 +436,16 @@ object DriverStateManager {
             offerActionable = structuredOffer?.isActionable ?: false,
             offerMissingFields = structuredOffer?.missingFields ?: emptyList(),
             offerParsingConfidence = structuredOffer?.confidence,
+            offerSignalPresent = offerSignal != null,
+            offerSignal = offerSignal,
+            offerSignalColor = offerSignal?.color,
+            offerSignalReason = offerSignal?.reason,
+            offerSignalWarnings = offerSignal?.warnings ?: emptyList(),
+            farePerKmText = offerSignal?.farePerKmText,
+            farePerMinuteText = offerSignal?.farePerMinuteText,
+            estimatedTotalDistanceText = offerSignal?.estimatedTotalDistanceText,
+            estimatedTotalDurationText = offerSignal?.estimatedTotalDurationText,
+            signalRuleVersion = offerSignal?.ruleVersion,
             contextTtlSeconds = CONTEXT_TTL_SECONDS.toInt(),
             androidAutoPrepared = androidAutoPrepared,
         )

@@ -434,6 +434,38 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Campos ausentes',
               value: controller.structuredOfferMissingFieldsLabel(),
             ),
+            _StatusRow(
+              label: 'Farol da oferta',
+              value: controller.offerSignalStatusLabel(),
+            ),
+            _StatusRow(
+              label: 'Motivo do farol',
+              value: controller.offerSignalReasonLabel(),
+            ),
+            _StatusRow(
+              label: 'Valor por km',
+              value: controller.offerSignalFarePerKmLabel(),
+            ),
+            _StatusRow(
+              label: 'Valor por minuto',
+              value: controller.offerSignalFarePerMinuteLabel(),
+            ),
+            _StatusRow(
+              label: 'Distância total estimada',
+              value: controller.offerSignalEstimatedDistanceLabel(),
+            ),
+            _StatusRow(
+              label: 'Tempo total estimado',
+              value: controller.offerSignalEstimatedDurationLabel(),
+            ),
+            _StatusRow(
+              label: 'Avisos do farol',
+              value: controller.offerSignalWarningsLabel(),
+            ),
+            _StatusRow(
+              label: 'Regra do farol',
+              value: controller.offerSignalRuleVersionLabel(),
+            ),
           ],
         ),
         const SizedBox(height: 16),

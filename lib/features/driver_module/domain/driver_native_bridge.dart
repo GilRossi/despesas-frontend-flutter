@@ -339,6 +339,57 @@ class DriverStructuredOfferStatus {
   }
 }
 
+class DriverOfferSignalStatus {
+  const DriverOfferSignalStatus({
+    required this.color,
+    required this.label,
+    required this.reason,
+    this.warnings = const [],
+    this.farePerKmText,
+    this.farePerMinuteText,
+    this.estimatedTotalDistanceKm,
+    this.estimatedTotalDurationMin,
+    this.estimatedTotalDistanceText,
+    this.estimatedTotalDurationText,
+    this.ruleVersion,
+    this.computedAt,
+  });
+
+  final String color;
+  final String label;
+  final String reason;
+  final List<String> warnings;
+  final String? farePerKmText;
+  final String? farePerMinuteText;
+  final double? estimatedTotalDistanceKm;
+  final int? estimatedTotalDurationMin;
+  final String? estimatedTotalDistanceText;
+  final String? estimatedTotalDurationText;
+  final String? ruleVersion;
+  final String? computedAt;
+
+  factory DriverOfferSignalStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverOfferSignalStatus(
+      color: json['color'] as String? ?? 'RED',
+      label: json['label'] as String? ?? 'Vermelho',
+      reason: json['reason'] as String? ?? 'Farol indisponível.',
+      warnings: (json['warnings'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      farePerKmText: json['farePerKmText'] as String?,
+      farePerMinuteText: json['farePerMinuteText'] as String?,
+      estimatedTotalDistanceKm: (json['estimatedTotalDistanceKm'] as num?)
+          ?.toDouble(),
+      estimatedTotalDurationMin: (json['estimatedTotalDurationMin'] as num?)
+          ?.toInt(),
+      estimatedTotalDistanceText: json['estimatedTotalDistanceText'] as String?,
+      estimatedTotalDurationText: json['estimatedTotalDurationText'] as String?,
+      ruleVersion: json['ruleVersion'] as String?,
+      computedAt: json['computedAt'] as String?,
+    );
+  }
+}
+
 class DriverNativeFoundationStatus {
   const DriverNativeFoundationStatus({
     required this.packageName,
@@ -362,6 +413,16 @@ class DriverNativeFoundationStatus {
     required this.offerActionable,
     required this.offerMissingFields,
     required this.offerParsingConfidence,
+    required this.offerSignalPresent,
+    required this.offerSignal,
+    required this.offerSignalColor,
+    required this.offerSignalReason,
+    required this.offerSignalWarnings,
+    required this.farePerKmText,
+    required this.farePerMinuteText,
+    required this.estimatedTotalDistanceText,
+    required this.estimatedTotalDurationText,
+    required this.signalRuleVersion,
     required this.contextTtlSeconds,
     required this.androidAutoPrepared,
   });
@@ -387,6 +448,16 @@ class DriverNativeFoundationStatus {
   final bool offerActionable;
   final List<String> offerMissingFields;
   final String? offerParsingConfidence;
+  final bool offerSignalPresent;
+  final DriverOfferSignalStatus? offerSignal;
+  final String? offerSignalColor;
+  final String? offerSignalReason;
+  final List<String> offerSignalWarnings;
+  final String? farePerKmText;
+  final String? farePerMinuteText;
+  final String? estimatedTotalDistanceText;
+  final String? estimatedTotalDurationText;
+  final String? signalRuleVersion;
   final int contextTtlSeconds;
   final bool androidAutoPrepared;
 
@@ -460,6 +531,23 @@ class DriverNativeFoundationStatus {
           .whereType<String>()
           .toList(),
       offerParsingConfidence: json['parsingConfidence'] as String?,
+      offerSignalPresent: json['offerSignalPresent'] as bool? ?? false,
+      offerSignal: (json['offerSignal'] as Map<Object?, Object?>?) != null
+          ? DriverOfferSignalStatus.fromJson(
+              json['offerSignal'] as Map<Object?, Object?>,
+            )
+          : null,
+      offerSignalColor: json['offerSignalColor'] as String?,
+      offerSignalReason: json['offerSignalReason'] as String?,
+      offerSignalWarnings:
+          (json['offerSignalWarnings'] as List<Object?>? ?? const [])
+              .whereType<String>()
+              .toList(),
+      farePerKmText: json['farePerKmText'] as String?,
+      farePerMinuteText: json['farePerMinuteText'] as String?,
+      estimatedTotalDistanceText: json['estimatedTotalDistanceText'] as String?,
+      estimatedTotalDurationText: json['estimatedTotalDurationText'] as String?,
+      signalRuleVersion: json['signalRuleVersion'] as String?,
       contextTtlSeconds: json['contextTtlSeconds'] as int? ?? 15,
       androidAutoPrepared: json['androidAutoPrepared'] as bool? ?? false,
     );

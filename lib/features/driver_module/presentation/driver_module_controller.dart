@@ -460,6 +460,76 @@ class DriverModuleController extends ChangeNotifier {
     return nativeStatus.offerMissingFields.join(' | ');
   }
 
+  String offerSignalStatusLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Nenhum farol calculado para a oferta atual.';
+    }
+    final color = nativeStatus.offerSignalColor ?? 'RED';
+    return switch (color) {
+      'GREEN' => 'Verde',
+      'YELLOW' => 'Amarelo',
+      'RED' => 'Vermelho',
+      _ => color,
+    };
+  }
+
+  String offerSignalReasonLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Sem motivo calculado.';
+    }
+    return nativeStatus.offerSignalReason ?? 'Sem motivo calculado.';
+  }
+
+  String offerSignalFarePerKmLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Não calculado';
+    }
+    return nativeStatus.farePerKmText ?? 'Não calculado';
+  }
+
+  String offerSignalFarePerMinuteLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Não calculado';
+    }
+    return nativeStatus.farePerMinuteText ?? 'Não calculado';
+  }
+
+  String offerSignalEstimatedDistanceLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Não calculado';
+    }
+    return nativeStatus.estimatedTotalDistanceText ?? 'Não calculado';
+  }
+
+  String offerSignalEstimatedDurationLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Não calculado';
+    }
+    return nativeStatus.estimatedTotalDurationText ?? 'Não calculado';
+  }
+
+  String offerSignalWarningsLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || nativeStatus.offerSignalWarnings.isEmpty) {
+      return 'Nenhum aviso.';
+    }
+    return nativeStatus.offerSignalWarnings.join(' | ');
+  }
+
+  String offerSignalRuleVersionLabel() {
+    final nativeStatus = _state.nativeStatus;
+    if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
+      return 'Indisponível';
+    }
+    return nativeStatus.signalRuleVersion ?? 'Indisponível';
+  }
+
   String contextValidityLabel() {
     final currentContext = _state.nativeStatus?.currentContext;
     if (currentContext == null) {
