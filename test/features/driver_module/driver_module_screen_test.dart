@@ -401,6 +401,31 @@ void main() {
           offerActionable: true,
           offerMissingFields: const [],
           offerParsingConfidence: 'HIGH',
+          offerSignalPresent: true,
+          offerSignal: const DriverOfferSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason:
+                'Oferta acionável, mas abaixo do patamar verde da regra v1.',
+            warnings: [],
+            farePerKmText: 'R\$ 1,76/km',
+            farePerMinuteText: 'R\$ 0,80/min',
+            estimatedTotalDistanceKm: 10.5,
+            estimatedTotalDurationMin: 23,
+            estimatedTotalDistanceText: '10,5 km',
+            estimatedTotalDurationText: '23 min',
+            ruleVersion: 'UBER_SIGNAL_V1',
+            computedAt: '2026-04-25T12:00:02Z',
+          ),
+          offerSignalColor: 'YELLOW',
+          offerSignalReason:
+              'Oferta acionável, mas abaixo do patamar verde da regra v1.',
+          offerSignalWarnings: const [],
+          farePerKmText: 'R\$ 1,76/km',
+          farePerMinuteText: 'R\$ 0,80/min',
+          estimatedTotalDistanceText: '10,5 km',
+          estimatedTotalDurationText: '23 min',
+          signalRuleVersion: 'UBER_SIGNAL_V1',
         ),
       );
 
@@ -451,6 +476,21 @@ void main() {
       );
       expect(
         find.textContaining('CTA: Selecionar', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Farol da oferta: Amarelo', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Valor por km: R\$ 1,76/km', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Regra do farol: UBER_SIGNAL_V1',
+          findRichText: true,
+        ),
         findsWidgets,
       );
     },
@@ -517,6 +557,30 @@ void main() {
           offerActionable: false,
           offerMissingFields: const ['cta'],
           offerParsingConfidence: 'MEDIUM',
+          offerSignalPresent: true,
+          offerSignal: const DriverOfferSignalStatus(
+            color: 'RED',
+            label: 'Vermelho',
+            reason: 'Oferta incompleta: falta requisito crítico para ação.',
+            warnings: ['CTA ausente.'],
+            farePerKmText: 'R\$ 1,56/km',
+            farePerMinuteText: 'R\$ 0,98/min',
+            estimatedTotalDistanceKm: 24.0,
+            estimatedTotalDurationMin: 38,
+            estimatedTotalDistanceText: '24,0 km',
+            estimatedTotalDurationText: '38 min',
+            ruleVersion: 'UBER_SIGNAL_V1',
+            computedAt: '2026-04-29T01:05:01Z',
+          ),
+          offerSignalColor: 'RED',
+          offerSignalReason:
+              'Oferta incompleta: falta requisito crítico para ação.',
+          offerSignalWarnings: const ['CTA ausente.'],
+          farePerKmText: 'R\$ 1,56/km',
+          farePerMinuteText: 'R\$ 0,98/min',
+          estimatedTotalDistanceText: '24,0 km',
+          estimatedTotalDurationText: '38 min',
+          signalRuleVersion: 'UBER_SIGNAL_V1',
         ),
       );
 
@@ -551,6 +615,17 @@ void main() {
       );
       expect(
         find.textContaining('CTA: Não identificado', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Farol da oferta: Vermelho', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Avisos do farol: CTA ausente.',
+          findRichText: true,
+        ),
         findsWidgets,
       );
     },
@@ -610,6 +685,13 @@ void main() {
       );
       expect(
         find.textContaining('Acionável: Não', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Farol da oferta: Nenhum farol calculado para a oferta atual.',
+          findRichText: true,
+        ),
         findsWidgets,
       );
       expect(

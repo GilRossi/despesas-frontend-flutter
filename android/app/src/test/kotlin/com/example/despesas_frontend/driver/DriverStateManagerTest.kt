@@ -76,6 +76,8 @@ class DriverStateManagerTest {
             expectedSignal = "R\$ 10,02",
             expectedProduct = "Comfort",
             capturedAt = Instant.parse("2026-04-29T01:02:00Z"),
+            expectedOfferSignalColor = "YELLOW",
+            expectedFarePerKmText = "R$ 1,96/km",
         )
     }
 
@@ -86,6 +88,8 @@ class DriverStateManagerTest {
             expectedSignal = "R\$ 37,37",
             expectedProduct = "UberX",
             capturedAt = Instant.parse("2026-04-29T01:03:00Z"),
+            expectedOfferSignalColor = "YELLOW",
+            expectedFarePerKmText = "R$ 1,56/km",
         )
     }
 
@@ -96,6 +100,8 @@ class DriverStateManagerTest {
             expectedSignal = "R\$ 6,93",
             expectedProduct = "UberX",
             capturedAt = Instant.parse("2026-04-29T01:04:00Z"),
+            expectedOfferSignalColor = "YELLOW",
+            expectedFarePerKmText = "R$ 1,98/km",
         )
     }
 
@@ -133,6 +139,10 @@ class DriverStateManagerTest {
         assertTrue(snapshot.offerMissingFields.contains("cta"))
         assertEquals("UberX", snapshot.structuredOffer?.productName)
         assertEquals("R\$ 37,37", snapshot.structuredOffer?.fareAmountText)
+        assertTrue(snapshot.offerSignalPresent)
+        assertEquals("RED", snapshot.offerSignalColor)
+        assertEquals("R$ 1,56/km", snapshot.farePerKmText)
+        assertTrue(snapshot.offerSignalWarnings.contains("CTA ausente."))
         assertTrue(snapshot.currentContext.semanticState.missingRequirements.contains("cta_forte"))
     }
 
@@ -166,6 +176,7 @@ class DriverStateManagerTest {
             assertFalse(snapshot.currentContext.isActionable)
             assertFalse(snapshot.lastOfferDetected)
             assertFalse(snapshot.structuredOfferPresent)
+            assertFalse(snapshot.offerSignalPresent)
             assertEquals(null, snapshot.structuredOffer)
         }
     }
@@ -339,6 +350,8 @@ class DriverStateManagerTest {
         expectedSignal: String,
         expectedProduct: String,
         capturedAt: Instant,
+        expectedOfferSignalColor: String,
+        expectedFarePerKmText: String,
     ) {
         configureReadyUber()
         val texts = loadFixtureTexts(resourceName)
@@ -375,6 +388,10 @@ class DriverStateManagerTest {
         assertEquals(expectedProduct, snapshot.structuredOffer?.productName)
         assertEquals(expectedSignal, snapshot.structuredOffer?.fareAmountText)
         assertEquals("Selecionar", snapshot.structuredOffer?.ctaText)
+        assertTrue(snapshot.offerSignalPresent)
+        assertEquals(expectedOfferSignalColor, snapshot.offerSignalColor)
+        assertEquals(expectedFarePerKmText, snapshot.farePerKmText)
+        assertEquals(UberOfferSignalEvaluator.RULE_VERSION, snapshot.signalRuleVersion)
     }
 
     private fun configureReadyUber() {
