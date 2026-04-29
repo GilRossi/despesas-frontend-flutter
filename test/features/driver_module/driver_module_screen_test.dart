@@ -78,9 +78,13 @@ void main() {
       expect(find.text('Driver Module'), findsOneWidget);
       expect(find.text('Readiness do módulo'), findsOneWidget);
       expect(find.text('Núcleo nativo compartilhado'), findsOneWidget);
-      expect(find.text('Inventário operacional por app'), findsOneWidget);
       expect(find.text('Abrir acessibilidade'), findsOneWidget);
       expect(find.text('Registrar comando base'), findsOneWidget);
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-app-inventory-section'),
+      );
+      expect(find.text('Inventário operacional por app'), findsOneWidget);
       await scrollToKey(
         tester,
         const ValueKey('driver-module-provider-context-section'),
@@ -242,10 +246,15 @@ void main() {
             validUntil: '2026-04-17T18:10:15Z',
             invalidationReason: 'PROVIDER_OUT_OF_FOCUS',
             semanticState: DriverSemanticStateStatus(
-              code: 'OUT_OF_FOCUS',
-              label: 'Fora de foco',
-              summary: 'O app foi visto há pouco, mas não está em foco agora.',
+              code: 'ONLINE_IDLE',
+              label: 'Online aguardando corrida',
+              summary: 'O motorista está online e aguardando corrida no Uber.',
               contextRelevant: false,
+              confidence: 'HIGH',
+              detectedSignals: [
+                'Tudo pronto para fazer entregas',
+                'Página inicial',
+              ],
             ),
           ),
           acceptCommand: const DriverAcceptCommandStatus(
@@ -287,16 +296,27 @@ void main() {
       expect(find.textContaining('Amarelo', findRichText: true), findsWidgets);
       expect(
         find.textContaining(
-          'Estado semântico atual: Fora de foco',
+          'Estado semântico atual: ONLINE_IDLE',
           findRichText: true,
         ),
         findsWidgets,
       );
       expect(
         find.textContaining(
-          'Resumo do contexto: O app foi visto há pouco, mas não está em foco agora.',
+          'Leitura normalizada: Online aguardando corrida',
           findRichText: true,
         ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Resumo do contexto: O motorista está online e aguardando corrida no Uber.',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Confiança: HIGH', findRichText: true),
         findsWidgets,
       );
       expect(find.text('Caminho unificado de comando'), findsOneWidget);
@@ -305,6 +325,147 @@ void main() {
         findsWidgets,
       );
       expect(find.text('Registrar comando base'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'mostra a última oferta detectada do Uber quando o snapshot ainda está retido',
+    (tester) async {
+      configureLargeViewport(tester);
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'ACTIONABLE_OFFER',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-25T12:00:01Z',
+            texts: ['Página inicial', 'Ganhos'],
+            inFocus: false,
+            validity: 'STALE',
+            validUntil: '2026-04-25T12:00:16Z',
+            invalidationReason: 'PROVIDER_OUT_OF_FOCUS',
+            semanticState: DriverSemanticStateStatus(
+              code: 'ACTIONABLE_OFFER',
+              label: 'Oferta acionável',
+              summary: 'Última oferta recente do Uber ainda está preservada.',
+              contextRelevant: true,
+              confidence: 'HIGH',
+              detectedSignals: ['R\$ 18,50', 'Selecionar'],
+            ),
+          ),
+          lastOffer: const DriverOfferStatus(
+            detected: true,
+            ageMs: 4200,
+            summary:
+                'Oferta acionável do Uber detectada com valor, CTA e contexto de rota completos.',
+            signals: ['R\$ 18,50', 'Selecionar'],
+            classification: 'ACTIONABLE_OFFER',
+            isActionable: true,
+          ),
+        ),
+      );
+
+      await pumpScreen(
+        tester,
+        sessionController: sessionController,
+        repository: repository,
+        nativeBridge: nativeBridge,
+      );
+
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-shared-state-section'),
+      );
+      expect(
+        find.textContaining('Detectada há 4,2s', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('R\$ 18,50 | Selecionar', findRichText: true),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining(
+          'Classificação da oferta: ACTIONABLE_OFFER',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.textContaining('Oferta acionável: Sim', findRichText: true),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets(
+    'mostra requisitos faltantes quando o Uber está em OFFER_CANDIDATE',
+    (tester) async {
+      configureLargeViewport(tester);
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'OFFER_CANDIDATE',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-29T01:05:00Z',
+            texts: ['UberX', 'R\$ 37,37', '5 min (2.0 km)'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-29T01:05:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'OFFER_CANDIDATE',
+              label: 'Oferta candidata',
+              summary: 'Há indício forte de oferta, mas ainda falta CTA.',
+              contextRelevant: false,
+              confidence: 'HIGH',
+              detectedSignals: ['R\$ 37,37', 'UberX', '5 min (2.0 km)'],
+              missingRequirements: ['cta_forte'],
+            ),
+          ),
+        ),
+      );
+
+      await pumpScreen(
+        tester,
+        sessionController: sessionController,
+        repository: repository,
+        nativeBridge: nativeBridge,
+      );
+
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-shared-state-section'),
+      );
+      expect(
+        find.textContaining(
+          'Requisitos faltantes: cta_forte',
+          findRichText: true,
+        ),
+        findsWidgets,
+      );
     },
   );
 
@@ -387,13 +548,17 @@ void main() {
         const ValueKey('driver-module-provider-context-section'),
       );
 
+      expect(find.text('99 Motorista · LOGIN_OR_CONSENT'), findsOneWidget);
       expect(
-        find.text('99 Motorista · Login ou consentimento'),
-        findsOneWidget,
+        find.textContaining(
+          'Estado normalizado: LOGIN_OR_CONSENT',
+          findRichText: true,
+        ),
+        findsWidgets,
       );
       expect(
         find.textContaining(
-          'Estado normalizado: Login ou consentimento',
+          'Leitura: Login ou consentimento',
           findRichText: true,
         ),
         findsWidgets,
@@ -453,6 +618,10 @@ void main() {
       );
 
       expect(find.text('Driver Module em inventário'), findsOneWidget);
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-app-inventory-section'),
+      );
       expect(find.text('Uber Driver · Pendente'), findsOneWidget);
       expect(
         find.text(
@@ -499,6 +668,10 @@ void main() {
       );
 
       expect(find.text('Driver Module apto'), findsOneWidget);
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-app-inventory-section'),
+      );
       expect(find.text('Uber Driver · Apto'), findsOneWidget);
       expect(
         find.text('Nenhuma capability pendente para este app.'),
@@ -551,12 +724,18 @@ void main() {
               packageName: 'com.ubercab.driver',
               eventType: 'TYPE_WINDOW_STATE_CHANGED',
               capturedAt: '2026-04-17T18:10:00Z',
-              texts: ['Você está online', 'Promoções'],
+              texts: ['Tudo pronto para fazer entregas', 'Página inicial'],
               semanticState: DriverSemanticStateStatus(
-                code: 'WAITING',
-                label: 'Aguardando',
-                summary: 'O app está aberto e aguardando novas corridas.',
+                code: 'ONLINE_IDLE',
+                label: 'Online aguardando corrida',
+                summary:
+                    'O motorista está online e aguardando corrida no Uber.',
                 contextRelevant: false,
+                confidence: 'HIGH',
+                detectedSignals: [
+                  'Tudo pronto para fazer entregas',
+                  'Página inicial',
+                ],
               ),
             ),
             DriverProviderContextStatus(
@@ -591,9 +770,12 @@ void main() {
       );
 
       expect(find.text('Contexto local monitorado'), findsOneWidget);
-      expect(find.text('Uber Driver · Aguardando'), findsOneWidget);
-      expect(find.text('99 Motorista · Contexto relevante'), findsOneWidget);
-      expect(find.textContaining('Você está online'), findsOneWidget);
+      expect(find.text('Uber Driver · ONLINE_IDLE'), findsOneWidget);
+      expect(find.text('99 Motorista · RELEVANT_CONTEXT'), findsOneWidget);
+      expect(
+        find.textContaining('Tudo pronto para fazer entregas'),
+        findsOneWidget,
+      );
       expect(find.textContaining('Aceite corridas'), findsOneWidget);
     },
   );

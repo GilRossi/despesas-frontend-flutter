@@ -7,6 +7,7 @@ void main() {
     final manifest = File('android/app/src/main/AndroidManifest.xml');
     final content = await manifest.readAsString();
     expect(content, contains('android.permission.INTERNET'));
+    expect(content, contains('android:launchMode="singleTask"'));
     expect(
       content,
       contains('android.permission.BIND_ACCESSIBILITY_SERVICE'),

@@ -279,12 +279,95 @@ class DriverModuleController extends ChangeNotifier {
     return currentContext.semanticState.label;
   }
 
+  String currentSemanticStateCode() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null) {
+      return 'INDISPONIVEL';
+    }
+    return currentContext.semanticState.code;
+  }
+
   String currentSemanticSummary() {
     final currentContext = _state.nativeStatus?.currentContext;
     if (currentContext == null) {
       return 'Sem leitura local disponível.';
     }
     return currentContext.semanticState.summary;
+  }
+
+  String currentSemanticConfidenceLabel() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null) {
+      return 'Indisponível';
+    }
+    return currentContext.semanticState.confidence;
+  }
+
+  String currentSemanticDetectedSignalsLabel() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null) {
+      return 'Nenhum sinal detectado.';
+    }
+    final signals = currentContext.semanticState.detectedSignals;
+    if (signals.isEmpty) {
+      return 'Nenhum sinal detectado.';
+    }
+    return signals.join(' | ');
+  }
+
+  String lastOfferStatusLabel() {
+    final lastOffer = _state.nativeStatus?.lastOffer;
+    if (lastOffer == null || !lastOffer.detected || lastOffer.ageMs == null) {
+      return 'Nenhuma oferta recente detectada.';
+    }
+    final ageSeconds = (lastOffer.ageMs! / 1000).toStringAsFixed(1);
+    return 'Detectada há ${ageSeconds.replaceAll('.', ',')}s';
+  }
+
+  String lastOfferSummary() {
+    final lastOffer = _state.nativeStatus?.lastOffer;
+    return lastOffer?.summary ?? 'Nenhuma oferta recente preservada.';
+  }
+
+  String lastOfferSignalsLabel() {
+    final lastOffer = _state.nativeStatus?.lastOffer;
+    if (lastOffer == null || lastOffer.signals.isEmpty) {
+      return 'Nenhum sinal recente de oferta.';
+    }
+    return lastOffer.signals.join(' | ');
+  }
+
+  String lastOfferClassificationLabel() {
+    final lastOffer = _state.nativeStatus?.lastOffer;
+    if (lastOffer == null || !lastOffer.detected) {
+      return 'Nenhuma classificação recente.';
+    }
+    return lastOffer.classification ?? 'Sem classificação';
+  }
+
+  String lastOfferActionabilityLabel() {
+    final lastOffer = _state.nativeStatus?.lastOffer;
+    if (lastOffer == null || !lastOffer.detected) {
+      return 'Não';
+    }
+    return lastOffer.isActionable ? 'Sim' : 'Não';
+  }
+
+  String lastOfferMissingRequirementsLabel() {
+    final lastOffer = _state.nativeStatus?.lastOffer;
+    if (lastOffer == null || lastOffer.missingRequirements.isEmpty) {
+      return 'Nenhum requisito pendente.';
+    }
+    return lastOffer.missingRequirements.join(' | ');
+  }
+
+  String currentSemanticMissingRequirementsLabel() {
+    final currentContext = _state.nativeStatus?.currentContext;
+    if (currentContext == null ||
+        currentContext.semanticState.missingRequirements.isEmpty) {
+      return 'Nenhum requisito pendente.';
+    }
+    return currentContext.semanticState.missingRequirements.join(' | ');
   }
 
   String contextValidityLabel() {
@@ -335,7 +418,9 @@ class DriverModuleController extends ChangeNotifier {
       return false;
     }
     final currentContext = nativeStatus.currentContext;
-    if (!currentContext.hasProvider || !currentContext.isFresh) {
+    if (!currentContext.hasProvider ||
+        !currentContext.isFresh ||
+        !currentContext.isActionable) {
       return false;
     }
     final targetApp = nativeStatus.targetApps

@@ -1456,6 +1456,10 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   DriverAcceptCommandStatus acceptCommand = const DriverAcceptCommandStatus(
     state: 'IDLE',
   ),
+  DriverOfferStatus lastOffer = const DriverOfferStatus(
+    detected: false,
+    signals: [],
+  ),
   int contextTtlSeconds = 15,
   bool androidAutoPrepared = false,
 }) {
@@ -1568,6 +1572,7 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     signal: signal,
     currentContext: resolvedCurrentContext,
     acceptCommand: acceptCommand,
+    lastOffer: lastOffer,
     contextTtlSeconds: contextTtlSeconds,
     androidAutoPrepared: androidAutoPrepared,
   );

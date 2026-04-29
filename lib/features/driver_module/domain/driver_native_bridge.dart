@@ -4,12 +4,18 @@ class DriverSemanticStateStatus {
     required this.label,
     required this.summary,
     required this.contextRelevant,
+    this.confidence = 'LOW',
+    this.detectedSignals = const [],
+    this.missingRequirements = const [],
   });
 
   final String code;
   final String label;
   final String summary;
   final bool contextRelevant;
+  final String confidence;
+  final List<String> detectedSignals;
+  final List<String> missingRequirements;
 
   factory DriverSemanticStateStatus.fromJson(Map<Object?, Object?> json) {
     return DriverSemanticStateStatus(
@@ -19,6 +25,14 @@ class DriverSemanticStateStatus {
           json['summary'] as String? ??
           'Abra Uber Driver ou 99 Motorista para iniciar a leitura local.',
       contextRelevant: json['contextRelevant'] as bool? ?? false,
+      confidence: json['confidence'] as String? ?? 'LOW',
+      detectedSignals: (json['detectedSignals'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      missingRequirements:
+          (json['missingRequirements'] as List<Object?>? ?? const [])
+              .whereType<String>()
+              .toList(),
     );
   }
 }
@@ -162,6 +176,10 @@ class DriverCurrentContextStatus {
   bool get isFresh =>
       validity == 'VALID' || validity == 'STALE' || validity == 'INCOMPLETE';
 
+  bool get isActionable =>
+      (validity == 'VALID' || validity == 'STALE') &&
+      semanticState.contextRelevant;
+
   factory DriverCurrentContextStatus.fromJson(Map<Object?, Object?> json) {
     return DriverCurrentContextStatus(
       providerKey: json['providerKey'] as String? ?? '',
@@ -218,6 +236,43 @@ class DriverAcceptCommandStatus {
   }
 }
 
+class DriverOfferStatus {
+  const DriverOfferStatus({
+    required this.detected,
+    this.ageMs,
+    this.summary,
+    this.signals = const [],
+    this.classification,
+    this.isActionable = false,
+    this.missingRequirements = const [],
+  });
+
+  final bool detected;
+  final int? ageMs;
+  final String? summary;
+  final List<String> signals;
+  final String? classification;
+  final bool isActionable;
+  final List<String> missingRequirements;
+
+  factory DriverOfferStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverOfferStatus(
+      detected: json['lastOfferDetected'] as bool? ?? false,
+      ageMs: json['lastOfferAgeMs'] as int?,
+      summary: json['lastOfferSummary'] as String?,
+      signals: (json['lastOfferSignals'] as List<Object?>? ?? const [])
+          .whereType<String>()
+          .toList(),
+      classification: json['lastOfferClassification'] as String?,
+      isActionable: json['lastOfferActionable'] as bool? ?? false,
+      missingRequirements:
+          (json['lastOfferMissingRequirements'] as List<Object?>? ?? const [])
+              .whereType<String>()
+              .toList(),
+    );
+  }
+}
+
 class DriverNativeFoundationStatus {
   const DriverNativeFoundationStatus({
     required this.packageName,
@@ -234,6 +289,7 @@ class DriverNativeFoundationStatus {
     required this.signal,
     required this.currentContext,
     required this.acceptCommand,
+    required this.lastOffer,
     required this.contextTtlSeconds,
     required this.androidAutoPrepared,
   });
@@ -252,6 +308,7 @@ class DriverNativeFoundationStatus {
   final DriverOperationalSignalStatus signal;
   final DriverCurrentContextStatus currentContext;
   final DriverAcceptCommandStatus acceptCommand;
+  final DriverOfferStatus lastOffer;
   final int contextTtlSeconds;
   final bool androidAutoPrepared;
 
@@ -311,6 +368,7 @@ class DriverNativeFoundationStatus {
       acceptCommand: DriverAcceptCommandStatus.fromJson(
         json['acceptCommand'] as Map<Object?, Object?>? ?? const {},
       ),
+      lastOffer: DriverOfferStatus.fromJson(json),
       contextTtlSeconds: json['contextTtlSeconds'] as int? ?? 15,
       androidAutoPrepared: json['androidAutoPrepared'] as bool? ?? false,
     );
