@@ -62,10 +62,17 @@ void main() {
                   'capturedAt': '2026-04-17T18:10:00Z',
                   'texts': ['Você está online', 'Promoções'],
                   'semanticState': {
-                    'code': 'WAITING',
-                    'label': 'Aguardando',
-                    'summary': 'O app está aberto e aguardando novas corridas.',
+                    'code': 'ONLINE_IDLE',
+                    'label': 'Online aguardando corrida',
+                    'summary':
+                        'O motorista está online e aguardando corrida no Uber.',
                     'contextRelevant': false,
+                    'confidence': 'HIGH',
+                    'detectedSignals': [
+                      'Tudo pronto para fazer entregas',
+                      'Página inicial',
+                    ],
+                    'missingRequirements': const [],
                   },
                 },
               ],
@@ -86,11 +93,17 @@ void main() {
                 'validUntil': '2026-04-17T18:10:15Z',
                 'invalidationReason': 'PROVIDER_OUT_OF_FOCUS',
                 'semanticState': {
-                  'code': 'OUT_OF_FOCUS',
-                  'label': 'Fora de foco',
+                  'code': 'ONLINE_IDLE',
+                  'label': 'Online aguardando corrida',
                   'summary':
-                      'O app foi visto há pouco, mas não está em foco agora.',
+                      'O motorista está online e aguardando corrida no Uber.',
                   'contextRelevant': false,
+                  'confidence': 'HIGH',
+                  'detectedSignals': [
+                    'Tudo pronto para fazer entregas',
+                    'Página inicial',
+                  ],
+                  'missingRequirements': const [],
                 },
               },
               'acceptCommand': {
@@ -101,6 +114,14 @@ void main() {
                 'requestedAt': '2026-04-17T18:10:12Z',
                 'lastUpdatedAt': '2026-04-17T18:10:12Z',
               },
+              'lastOfferDetected': true,
+              'lastOfferAgeMs': 4200,
+              'lastOfferSummary':
+                  'Oferta recente do Uber preservada. Sinais: "R\$ 18,50"; "Aceitar corrida".',
+              'lastOfferSignals': ['R\$ 18,50', 'Aceitar corrida'],
+              'lastOfferClassification': 'ACTIONABLE_OFFER',
+              'lastOfferActionable': true,
+              'lastOfferMissingRequirements': const [],
               'contextTtlSeconds': 15,
               'androidAutoPrepared': false,
             };
@@ -135,15 +156,28 @@ void main() {
         'Você está online',
         'Promoções',
       ]);
-      expect(result.providerContexts.single.semanticState.code, 'WAITING');
+      expect(result.providerContexts.single.semanticState.code, 'ONLINE_IDLE');
+      expect(result.providerContexts.single.semanticState.confidence, 'HIGH');
+      expect(result.providerContexts.single.semanticState.detectedSignals, [
+        'Tudo pronto para fazer entregas',
+        'Página inicial',
+      ]);
       expect(result.signal.color, 'YELLOW');
       expect(result.signal.reason, 'RECENT_CONTEXT_OUT_OF_FOCUS');
       expect(result.currentContext.providerKey, 'UBER_DRIVER');
       expect(result.currentContext.validity, 'STALE');
       expect(result.currentContext.invalidationReason, 'PROVIDER_OUT_OF_FOCUS');
-      expect(result.currentContext.semanticState.code, 'OUT_OF_FOCUS');
+      expect(result.currentContext.semanticState.code, 'ONLINE_IDLE');
+      expect(result.currentContext.semanticState.confidence, 'HIGH');
       expect(result.acceptCommand.state, 'PENDING_EXECUTOR');
       expect(result.acceptCommand.targetProviderKey, 'UBER_DRIVER');
+      expect(result.lastOffer.detected, isTrue);
+      expect(result.lastOffer.ageMs, 4200);
+      expect(result.lastOffer.summary, contains('Oferta recente do Uber'));
+      expect(result.lastOffer.signals, ['R\$ 18,50', 'Aceitar corrida']);
+      expect(result.lastOffer.classification, 'ACTIONABLE_OFFER');
+      expect(result.lastOffer.isActionable, isTrue);
+      expect(result.lastOffer.missingRequirements, isEmpty);
       expect(result.contextTtlSeconds, 15);
       expect(result.androidAutoPrepared, isFalse);
     },
@@ -203,11 +237,17 @@ void main() {
                 'validUntil': '2026-04-17T18:10:15Z',
                 'invalidationReason': 'PROVIDER_OUT_OF_FOCUS',
                 'semanticState': {
-                  'code': 'OUT_OF_FOCUS',
-                  'label': 'Fora de foco',
+                  'code': 'ONLINE_IDLE',
+                  'label': 'Online aguardando corrida',
                   'summary':
-                      'O app foi visto há pouco, mas não está em foco agora.',
+                      'O motorista está online e aguardando corrida no Uber.',
                   'contextRelevant': false,
+                  'confidence': 'HIGH',
+                  'detectedSignals': [
+                    'Tudo pronto para fazer entregas',
+                    'Página inicial',
+                  ],
+                  'missingRequirements': const [],
                 },
               },
               'acceptCommand': {
@@ -218,6 +258,13 @@ void main() {
                 'requestedAt': '2026-04-17T18:10:12Z',
                 'lastUpdatedAt': '2026-04-17T18:10:12Z',
               },
+              'lastOfferDetected': false,
+              'lastOfferAgeMs': null,
+              'lastOfferSummary': null,
+              'lastOfferSignals': const [],
+              'lastOfferClassification': null,
+              'lastOfferActionable': false,
+              'lastOfferMissingRequirements': const [],
               'contextTtlSeconds': 15,
               'androidAutoPrepared': true,
             };
@@ -229,6 +276,7 @@ void main() {
       expect(capturedCall.method, 'requestAcceptCommand');
       expect(capturedCall.arguments, {'source': 'FLUTTER_HANDSET'});
       expect(result.acceptCommand.state, 'PENDING_EXECUTOR');
+      expect(result.lastOffer.detected, isFalse);
       expect(result.androidAutoPrepared, isTrue);
     },
   );

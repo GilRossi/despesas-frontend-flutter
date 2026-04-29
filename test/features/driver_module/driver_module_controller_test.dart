@@ -198,12 +198,193 @@ void main() {
       await controller.load();
 
       expect(controller.currentProviderLabel(), '99 Motorista');
+      expect(controller.currentSemanticStateCode(), 'LOGIN_OR_CONSENT');
       expect(controller.currentSemanticStateLabel(), 'Login ou consentimento');
       expect(
         controller.currentSemanticSummary(),
         'O app pede login, consentimento ou permissão antes de seguir.',
       );
       expect(controller.signalLabel(), 'Amarelo');
+    },
+  );
+
+  test(
+    'load expõe sinais e confiança do Uber online aguardando corrida',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'GREEN',
+            label: 'Verde',
+            reason: 'ONLINE_IDLE',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-24T19:02:00Z',
+            texts: ['Tudo pronto para fazer entregas', 'Página inicial'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-24T19:02:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'ONLINE_IDLE',
+              label: 'Online aguardando corrida',
+              summary: 'O motorista está online e aguardando corrida no Uber.',
+              contextRelevant: false,
+              confidence: 'HIGH',
+              detectedSignals: [
+                'Tudo pronto para fazer entregas',
+                'Página inicial',
+              ],
+            ),
+          ),
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+
+      expect(controller.currentSemanticStateCode(), 'ONLINE_IDLE');
+      expect(
+        controller.currentSemanticStateLabel(),
+        'Online aguardando corrida',
+      );
+      expect(controller.currentSemanticConfidenceLabel(), 'HIGH');
+      expect(
+        controller.currentSemanticDetectedSignalsLabel(),
+        'Tudo pronto para fazer entregas | Página inicial',
+      );
+    },
+  );
+
+  test(
+    'load expõe última oferta recente do Uber quando o snapshot nativo traz retenção ativa',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'ACTIONABLE_OFFER',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-25T12:00:01Z',
+            texts: ['Página inicial', 'Ganhos'],
+            inFocus: false,
+            validity: 'STALE',
+            validUntil: '2026-04-25T12:00:16Z',
+            invalidationReason: 'PROVIDER_OUT_OF_FOCUS',
+            semanticState: DriverSemanticStateStatus(
+              code: 'ACTIONABLE_OFFER',
+              label: 'Oferta acionável',
+              summary: 'Última oferta recente do Uber ainda está preservada.',
+              contextRelevant: true,
+              confidence: 'HIGH',
+              detectedSignals: ['R\$ 18,50', 'Selecionar'],
+            ),
+          ),
+          lastOffer: const DriverOfferStatus(
+            detected: true,
+            ageMs: 4200,
+            summary:
+                'Oferta acionável do Uber detectada com valor, CTA e contexto de rota completos.',
+            signals: ['R\$ 18,50', 'Selecionar'],
+            classification: 'ACTIONABLE_OFFER',
+            isActionable: true,
+          ),
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+
+      expect(controller.lastOfferStatusLabel(), 'Detectada há 4,2s');
+      expect(
+        controller.lastOfferSummary(),
+        'Oferta acionável do Uber detectada com valor, CTA e contexto de rota completos.',
+      );
+      expect(controller.lastOfferSignalsLabel(), 'R\$ 18,50 | Selecionar');
+      expect(controller.lastOfferClassificationLabel(), 'ACTIONABLE_OFFER');
+      expect(controller.lastOfferActionabilityLabel(), 'Sim');
+      expect(
+        controller.lastOfferMissingRequirementsLabel(),
+        'Nenhum requisito pendente.',
+      );
+    },
+  );
+
+  test(
+    'load expõe requisitos faltantes quando o Uber fica em OFFER_CANDIDATE',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signal: const DriverOperationalSignalStatus(
+            color: 'YELLOW',
+            label: 'Amarelo',
+            reason: 'OFFER_CANDIDATE',
+          ),
+          currentContext: const DriverCurrentContextStatus(
+            providerKey: 'UBER_DRIVER',
+            label: 'Uber Driver',
+            packageName: 'com.ubercab.driver',
+            eventType: 'TYPE_WINDOW_CONTENT_CHANGED',
+            capturedAt: '2026-04-29T01:05:00Z',
+            texts: ['UberX', 'R\$ 37,37', '5 min (2.0 km)'],
+            inFocus: true,
+            validity: 'VALID',
+            validUntil: '2026-04-29T01:05:15Z',
+            semanticState: DriverSemanticStateStatus(
+              code: 'OFFER_CANDIDATE',
+              label: 'Oferta candidata',
+              summary: 'Há indício forte de oferta, mas ainda falta CTA.',
+              contextRelevant: false,
+              confidence: 'HIGH',
+              detectedSignals: ['R\$ 37,37', 'UberX', '5 min (2.0 km)'],
+              missingRequirements: ['cta_forte'],
+            ),
+          ),
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+
+      expect(controller.currentSemanticStateCode(), 'OFFER_CANDIDATE');
+      expect(controller.currentSemanticMissingRequirementsLabel(), 'cta_forte');
+      expect(controller.canRequestAcceptCommand(), isFalse);
     },
   );
 

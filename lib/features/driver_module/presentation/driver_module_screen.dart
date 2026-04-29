@@ -202,11 +202,23 @@ class _DriverModuleReadinessState extends StatelessWidget {
             ),
             _StatusRow(
               label: 'Estado semântico atual',
+              value: controller.currentSemanticStateCode(),
+            ),
+            _StatusRow(
+              label: 'Leitura normalizada',
               value: controller.currentSemanticStateLabel(),
             ),
             _StatusRow(
               label: 'Resumo do contexto',
               value: controller.currentSemanticSummary(),
+            ),
+            _StatusRow(
+              label: 'Confiança',
+              value: controller.currentSemanticConfidenceLabel(),
+            ),
+            _StatusRow(
+              label: 'Sinais detectados',
+              value: controller.currentSemanticDetectedSignalsLabel(),
             ),
             _StatusRow(
               label: 'Validade do contexto',
@@ -303,11 +315,27 @@ class _DriverModuleReadinessState extends StatelessWidget {
             ),
             _StatusRow(
               label: 'Estado semântico atual',
+              value: controller.currentSemanticStateCode(),
+            ),
+            _StatusRow(
+              label: 'Leitura normalizada',
               value: controller.currentSemanticStateLabel(),
             ),
             _StatusRow(
               label: 'Resumo do contexto',
               value: controller.currentSemanticSummary(),
+            ),
+            _StatusRow(
+              label: 'Confiança',
+              value: controller.currentSemanticConfidenceLabel(),
+            ),
+            _StatusRow(
+              label: 'Sinais detectados',
+              value: controller.currentSemanticDetectedSignalsLabel(),
+            ),
+            _StatusRow(
+              label: 'Requisitos faltantes',
+              value: controller.currentSemanticMissingRequirementsLabel(),
             ),
             _StatusRow(
               label: 'Validade temporal',
@@ -326,6 +354,30 @@ class _DriverModuleReadinessState extends StatelessWidget {
             _StatusRow(
               label: 'Comando unificado',
               value: controller.acceptCommandLabel(),
+            ),
+            _StatusRow(
+              label: 'Última oferta detectada',
+              value: controller.lastOfferStatusLabel(),
+            ),
+            _StatusRow(
+              label: 'Resumo da última oferta',
+              value: controller.lastOfferSummary(),
+            ),
+            _StatusRow(
+              label: 'Classificação da oferta',
+              value: controller.lastOfferClassificationLabel(),
+            ),
+            _StatusRow(
+              label: 'Oferta acionável',
+              value: controller.lastOfferActionabilityLabel(),
+            ),
+            _StatusRow(
+              label: 'Sinais da última oferta',
+              value: controller.lastOfferSignalsLabel(),
+            ),
+            _StatusRow(
+              label: 'Requisitos faltantes da oferta',
+              value: controller.lastOfferMissingRequirementsLabel(),
             ),
           ],
         ),
@@ -620,7 +672,7 @@ class _ProviderContextCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$providerLabel · ${contextCaptured ? providerContext!.semanticState.label : 'Contexto pendente'}',
+              '$providerLabel · ${contextCaptured ? providerContext!.semanticState.code : 'Contexto pendente'}',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 12),
@@ -636,11 +688,27 @@ class _ProviderContextCard extends StatelessWidget {
             if (contextCaptured) ...[
               _StatusRow(
                 label: 'Estado normalizado',
+                value: providerContext!.semanticState.code,
+              ),
+              _StatusRow(
+                label: 'Leitura',
                 value: providerContext!.semanticState.label,
               ),
               _StatusRow(
                 label: 'Resumo local',
                 value: providerContext!.semanticState.summary,
+              ),
+              _StatusRow(
+                label: 'Confiança',
+                value: providerContext!.semanticState.confidence,
+              ),
+              _StatusRow(
+                label: 'Sinais detectados',
+                value: providerContext!.semanticState.detectedSignals.isEmpty
+                    ? 'Nenhum sinal detectado.'
+                    : providerContext!.semanticState.detectedSignals.join(
+                        ' | ',
+                      ),
               ),
               _StatusRow(
                 label: 'Última captura',

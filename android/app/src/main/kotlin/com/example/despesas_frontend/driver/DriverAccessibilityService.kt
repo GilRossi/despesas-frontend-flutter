@@ -3,11 +3,13 @@ package com.example.despesas_frontend.driver
 import android.accessibilityservice.AccessibilityService
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityEvent
+import java.time.Instant
 import java.util.LinkedHashSet
 
 class DriverAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val safeEvent = event ?: return
+        val capturedAt = Instant.now()
         val packageName = safeEvent.packageName?.toString() ?: return
         val provider = monitoredProvider(packageName)
         if (provider == null) {
@@ -37,12 +39,39 @@ class DriverAccessibilityService : AccessibilityService() {
         collectWindowContext(packageName, visibleTexts)
         collectNodeTexts(rootInActiveWindow, visibleTexts)
 
+        val capturedTexts = visibleTexts.toList()
+        val offerCandidateTexts = DriverStateManager.mergeOfferCandidateTextsAt(
+            providerKey = provider.key,
+            providerLabel = provider.label,
+            packageName = packageName,
+            texts = collectOfferCandidateTexts(safeEvent, packageName),
+            capturedAt = capturedAt,
+        )
+        val offerAssessment = DriverOfferEventDetector.assessOffer(offerCandidateTexts)
+        DriverOfferTraceLogger.d(
+            "service event package=$packageName type=$eventType root=${rootInActiveWindow != null} " +
+                "captured=${capturedTexts.size} candidates=${offerCandidateTexts.size} " +
+                "classification=${offerAssessment.classification} " +
+                "offerSignals=${offerAssessment.detectedSignals.joinToString(" | ")} " +
+                "missing=${offerAssessment.missingRequirements.joinToString(" | ")} " +
+                "actionable=${offerAssessment.isActionable}",
+        )
+        if (offerAssessment.isActionable) {
+            DriverStateManager.recordOfferSnapshot(
+                providerKey = provider.key,
+                providerLabel = provider.label,
+                packageName = packageName,
+                rawTexts = offerCandidateTexts,
+                detectedSignals = offerAssessment.detectedSignals,
+            )
+        }
+
         DriverStateManager.recordProviderEvent(
             providerKey = provider.key,
             providerLabel = provider.label,
             packageName = packageName,
             eventType = eventType,
-            texts = visibleTexts.toList(),
+            texts = capturedTexts,
         )
     }
 
@@ -62,6 +91,7 @@ class DriverAccessibilityService : AccessibilityService() {
         return when (eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "TYPE_WINDOW_STATE_CHANGED"
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "TYPE_WINDOW_CONTENT_CHANGED"
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "TYPE_WINDOWS_CHANGED"
             else -> null
         }
     }
@@ -115,6 +145,28 @@ class DriverAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun collectOfferCandidateTexts(
+        event: AccessibilityEvent,
+        packageName: String,
+    ): List<String> {
+        val collector = LinkedHashSet<String>()
+        event.text
+            ?.mapNotNull { candidate -> candidate?.toString()?.trim() }
+            ?.forEach { candidate -> addCandidate(collector, candidate) }
+        addCandidate(collector, event.contentDescription?.toString()?.trim())
+
+        val source = event.source
+        try {
+            collectNodeTexts(source, collector, limit = 40)
+        } finally {
+            source?.recycle()
+        }
+
+        collectWindowContext(packageName, collector, limit = 40)
+        collectNodeTexts(rootInActiveWindow, collector, limit = 40)
+        return collector.toList()
+    }
+
     private fun addCandidate(
         collector: LinkedHashSet<String>,
         candidate: String?,
@@ -128,7 +180,6 @@ class DriverAccessibilityService : AccessibilityService() {
         }
         collector += normalized
     }
-
     companion object {
         private val MONITORED_PROVIDERS = listOf(
             DriverModuleMethodChannelHandler.DriverTargetApp(

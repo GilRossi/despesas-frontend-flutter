@@ -53,6 +53,9 @@ data class DriverSemanticStateSnapshot(
     val label: String,
     val summary: String,
     val contextRelevant: Boolean,
+    val confidence: String,
+    val detectedSignals: List<String>,
+    val missingRequirements: List<String> = emptyList(),
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -60,6 +63,39 @@ data class DriverSemanticStateSnapshot(
             "label" to label,
             "summary" to summary,
             "contextRelevant" to contextRelevant,
+            "confidence" to confidence,
+            "detectedSignals" to detectedSignals,
+            "missingRequirements" to missingRequirements,
+        )
+    }
+}
+
+data class DriverOfferSnapshot(
+    val timestamp: String,
+    val providerKey: String,
+    val providerLabel: String,
+    val packageName: String,
+    val rawTexts: List<String>,
+    val detectedSignals: List<String>,
+    val summary: String,
+    val confidence: String,
+    val classification: String,
+    val isActionable: Boolean,
+    val missingRequirements: List<String>,
+) {
+    fun toMap(): Map<String, Any?> {
+        return mapOf(
+            "timestamp" to timestamp,
+            "providerKey" to providerKey,
+            "providerLabel" to providerLabel,
+            "packageName" to packageName,
+            "rawTexts" to rawTexts,
+            "detectedSignals" to detectedSignals,
+            "summary" to summary,
+            "confidence" to confidence,
+            "classification" to classification,
+            "isActionable" to isActionable,
+            "missingRequirements" to missingRequirements,
         )
     }
 }
@@ -92,7 +128,7 @@ data class DriverCurrentContextSnapshot(
     val semanticState: DriverSemanticStateSnapshot,
 ) {
     val isActionable: Boolean
-        get() = validity == "VALID" || validity == "STALE"
+        get() = (validity == "VALID" || validity == "STALE") && semanticState.contextRelevant
 
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -219,6 +255,13 @@ data class DriverModuleNativeSnapshot(
     val signal: DriverOperationalSignalSnapshot,
     val currentContext: DriverCurrentContextSnapshot,
     val acceptCommand: DriverAcceptCommandSnapshot,
+    val lastOfferDetected: Boolean,
+    val lastOfferAgeMs: Long?,
+    val lastOfferSummary: String?,
+    val lastOfferSignals: List<String>,
+    val lastOfferClassification: String?,
+    val lastOfferActionable: Boolean,
+    val lastOfferMissingRequirements: List<String>,
     val contextTtlSeconds: Int,
     val androidAutoPrepared: Boolean,
 ) {
@@ -238,6 +281,13 @@ data class DriverModuleNativeSnapshot(
             "signal" to signal.toMap(),
             "currentContext" to currentContext.toMap(),
             "acceptCommand" to acceptCommand.toMap(),
+            "lastOfferDetected" to lastOfferDetected,
+            "lastOfferAgeMs" to lastOfferAgeMs,
+            "lastOfferSummary" to lastOfferSummary,
+            "lastOfferSignals" to lastOfferSignals,
+            "lastOfferClassification" to lastOfferClassification,
+            "lastOfferActionable" to lastOfferActionable,
+            "lastOfferMissingRequirements" to lastOfferMissingRequirements,
             "contextTtlSeconds" to contextTtlSeconds,
             "androidAutoPrepared" to androidAutoPrepared,
         )
