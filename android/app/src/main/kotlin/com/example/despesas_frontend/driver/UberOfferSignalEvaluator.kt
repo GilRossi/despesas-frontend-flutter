@@ -11,13 +11,14 @@ data class DriverOfferSignal(
     val reason: String,
     val warnings: List<String>,
     val farePerKmText: String?,
-    val farePerMinuteText: String?,
+    val farePerHourText: String?,
     val estimatedTotalDistanceKm: Double?,
     val estimatedTotalDurationMin: Int?,
     val estimatedTotalDistanceText: String?,
     val estimatedTotalDurationText: String?,
     val ruleVersion: String,
     val computedAt: String,
+    val preferencesSource: String,
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -26,45 +27,42 @@ data class DriverOfferSignal(
             "reason" to reason,
             "warnings" to warnings,
             "farePerKmText" to farePerKmText,
-            "farePerMinuteText" to farePerMinuteText,
+            "farePerHourText" to farePerHourText,
             "estimatedTotalDistanceKm" to estimatedTotalDistanceKm,
             "estimatedTotalDurationMin" to estimatedTotalDurationMin,
             "estimatedTotalDistanceText" to estimatedTotalDistanceText,
             "estimatedTotalDurationText" to estimatedTotalDurationText,
             "ruleVersion" to ruleVersion,
             "computedAt" to computedAt,
+            "preferencesSource" to preferencesSource,
         )
     }
 }
 
 internal object UberOfferSignalEvaluator {
-    const val RULE_VERSION = "UBER_SIGNAL_V1"
+    const val RULE_VERSION = "UBER_SIGNAL_V1_CONFIGURABLE"
 
     private val DISTANCE_PATTERN = Regex("""(\d+[.,]?\d*)\s*km""", RegexOption.IGNORE_CASE)
     private val DURATION_PATTERN = Regex("""(\d+)\s*(?:min|minutos)""", RegexOption.IGNORE_CASE)
-    private val LOW_TOTAL_FARE = BigDecimal("10.00")
-    private val GREEN_MIN_FARE_PER_KM = BigDecimal("2.00")
-    private val YELLOW_MIN_FARE_PER_KM = BigDecimal("1.50")
-    private val MAX_GREEN_DISTANCE_KM = BigDecimal("25.0")
-    private val HIGH_DISTANCE_WARNING_KM = BigDecimal("20.0")
-    private const val HIGH_DURATION_WARNING_MIN = 35
-
     fun evaluate(
         offer: DriverStructuredOffer,
+        preferences: DriverSignalPreferences,
         computedAt: Instant,
     ): DriverOfferSignal {
         val warnings = mutableListOf<String>()
         val metrics = parseMetrics(offer)
         val fareAmount = offer.fareAmountCents?.let(::centsToAmount)
+        val distanceWarningThreshold = preferences.maxTotalDistanceKm.multiply(BigDecimal("0.80"))
+        val durationWarningThreshold = maxOf(1, (preferences.maxTotalDurationMin * 0.60).toInt())
 
-        if (fareAmount != null && fareAmount < LOW_TOTAL_FARE) {
+        if (fareAmount != null && fareAmount < preferences.minTotalFare) {
             warnings += "Valor total baixo."
         }
-        if (metrics.totalDistanceKm != null && metrics.totalDistanceKm > HIGH_DISTANCE_WARNING_KM) {
-            warnings += "Distância total alta."
+        if (metrics.totalDistanceKm != null && metrics.totalDistanceKm >= distanceWarningThreshold) {
+            warnings += "Distância total perto do limite configurado."
         }
-        if (metrics.totalDurationMin != null && metrics.totalDurationMin > HIGH_DURATION_WARNING_MIN) {
-            warnings += "Tempo total alto."
+        if (metrics.totalDurationMin != null && metrics.totalDurationMin >= durationWarningThreshold) {
+            warnings += "Tempo total perto do limite configurado."
         }
 
         if (!offer.isActionable) {
@@ -78,15 +76,16 @@ internal object UberOfferSignalEvaluator {
                 },
                 warnings = warnings.distinct(),
                 farePerKm = metrics.farePerKm,
-                farePerMinute = metrics.farePerMinute,
+                farePerHour = metrics.farePerHour,
                 totalDistanceKm = metrics.totalDistanceKm,
                 totalDurationMin = metrics.totalDurationMin,
+                preferencesSource = preferences.source,
                 computedAt = computedAt,
             )
         }
 
         if (fareAmount == null || metrics.totalDistanceKm == null || metrics.totalDurationMin == null ||
-            metrics.farePerKm == null || metrics.farePerMinute == null
+            metrics.farePerKm == null || metrics.farePerHour == null
         ) {
             warnings += "Dados insuficientes para decidir com segurança."
             return signal(
@@ -95,37 +94,62 @@ internal object UberOfferSignalEvaluator {
                 reason = "Farol indisponível por dados insuficientes.",
                 warnings = warnings.distinct(),
                 farePerKm = metrics.farePerKm,
-                farePerMinute = metrics.farePerMinute,
+                farePerHour = metrics.farePerHour,
                 totalDistanceKm = metrics.totalDistanceKm,
                 totalDurationMin = metrics.totalDurationMin,
+                preferencesSource = preferences.source,
                 computedAt = computedAt,
             )
         }
 
-        if (metrics.farePerKm >= GREEN_MIN_FARE_PER_KM &&
-            fareAmount >= LOW_TOTAL_FARE &&
-            metrics.totalDistanceKm <= MAX_GREEN_DISTANCE_KM
+        if (metrics.totalDistanceKm > preferences.maxTotalDistanceKm ||
+            metrics.totalDurationMin > preferences.maxTotalDurationMin
+        ) {
+            warnings += "Oferta ultrapassa o limite configurado."
+            return signal(
+                color = "RED",
+                label = "Vermelho",
+                reason = "Distância ou tempo acima do limite configurado.",
+                warnings = warnings.distinct(),
+                farePerKm = metrics.farePerKm,
+                farePerHour = metrics.farePerHour,
+                totalDistanceKm = metrics.totalDistanceKm,
+                totalDurationMin = metrics.totalDurationMin,
+                preferencesSource = preferences.source,
+                computedAt = computedAt,
+            )
+        }
+
+        if (metrics.farePerKm >= preferences.minGreenFarePerKm &&
+            metrics.farePerHour >= preferences.minGreenFarePerHour &&
+            fareAmount >= preferences.minTotalFare &&
+            metrics.totalDistanceKm <= preferences.maxTotalDistanceKm &&
+            metrics.totalDurationMin <= preferences.maxTotalDurationMin
         ) {
             return signal(
                 color = "GREEN",
                 label = "Verde",
-                reason = "Valor por km forte para a regra v1.",
+                reason = "Oferta acima dos limites verdes configurados.",
                 warnings = warnings.distinct(),
                 farePerKm = metrics.farePerKm,
-                farePerMinute = metrics.farePerMinute,
+                farePerHour = metrics.farePerHour,
                 totalDistanceKm = metrics.totalDistanceKm,
                 totalDurationMin = metrics.totalDurationMin,
+                preferencesSource = preferences.source,
                 computedAt = computedAt,
             )
         }
 
-        if (metrics.farePerKm >= YELLOW_MIN_FARE_PER_KM) {
+        if (metrics.farePerKm >= preferences.minYellowFarePerKm &&
+            metrics.farePerHour >= preferences.minYellowFarePerHour
+        ) {
             val reason = when {
-                fareAmount < LOW_TOTAL_FARE -> "Oferta acionável, mas com valor total baixo."
-                metrics.totalDistanceKm > HIGH_DISTANCE_WARNING_KM ||
-                    metrics.totalDurationMin > HIGH_DURATION_WARNING_MIN ->
-                    "Oferta acionável, mas com distância ou tempo altos."
-                else -> "Oferta acionável, mas abaixo do patamar verde da regra v1."
+                fareAmount < preferences.minTotalFare ->
+                    "Oferta acionável, mas abaixo do valor mínimo configurado."
+                metrics.farePerKm < preferences.minGreenFarePerKm ||
+                    metrics.farePerHour < preferences.minGreenFarePerHour ->
+                    "Oferta acionável, mas abaixo do patamar verde configurado."
+                else -> "Oferta acionável com avisos, mas acima dos mínimos amarelos configurados."
             }
             return signal(
                 color = "YELLOW",
@@ -133,9 +157,10 @@ internal object UberOfferSignalEvaluator {
                 reason = reason,
                 warnings = warnings.distinct(),
                 farePerKm = metrics.farePerKm,
-                farePerMinute = metrics.farePerMinute,
+                farePerHour = metrics.farePerHour,
                 totalDistanceKm = metrics.totalDistanceKm,
                 totalDurationMin = metrics.totalDurationMin,
+                preferencesSource = preferences.source,
                 computedAt = computedAt,
             )
         }
@@ -143,12 +168,13 @@ internal object UberOfferSignalEvaluator {
         return signal(
             color = "RED",
             label = "Vermelho",
-            reason = "Valor por km abaixo do mínimo da regra v1.",
+            reason = "Oferta abaixo dos mínimos amarelos configurados.",
             warnings = warnings.distinct(),
             farePerKm = metrics.farePerKm,
-            farePerMinute = metrics.farePerMinute,
+            farePerHour = metrics.farePerHour,
             totalDistanceKm = metrics.totalDistanceKm,
             totalDurationMin = metrics.totalDurationMin,
+            preferencesSource = preferences.source,
             computedAt = computedAt,
         )
     }
@@ -159,9 +185,10 @@ internal object UberOfferSignalEvaluator {
         reason: String,
         warnings: List<String>,
         farePerKm: BigDecimal?,
-        farePerMinute: BigDecimal?,
+        farePerHour: BigDecimal?,
         totalDistanceKm: BigDecimal?,
         totalDurationMin: Int?,
+        preferencesSource: String,
         computedAt: Instant,
     ): DriverOfferSignal {
         return DriverOfferSignal(
@@ -170,13 +197,14 @@ internal object UberOfferSignalEvaluator {
             reason = reason,
             warnings = warnings,
             farePerKmText = farePerKm?.let { "R$ ${formatDecimal(it)}/km" },
-            farePerMinuteText = farePerMinute?.let { "R$ ${formatDecimal(it)}/min" },
+            farePerHourText = farePerHour?.let { "R$ ${formatDecimal(it)}/h" },
             estimatedTotalDistanceKm = totalDistanceKm?.toDouble(),
             estimatedTotalDurationMin = totalDurationMin,
             estimatedTotalDistanceText = totalDistanceKm?.let { "${formatSingleDecimal(it)} km" },
             estimatedTotalDurationText = totalDurationMin?.let { "$it min" },
             ruleVersion = RULE_VERSION,
             computedAt = computedAt.toString(),
+            preferencesSource = preferencesSource,
         )
     }
 
@@ -201,14 +229,16 @@ internal object UberOfferSignalEvaluator {
         } else {
             null
         }
-        val farePerMinute = if (fareAmount != null && totalDurationMin != null && totalDurationMin > 0) {
-            fareAmount.divide(BigDecimal.valueOf(totalDurationMin.toLong()), 2, RoundingMode.HALF_UP)
+        val farePerHour = if (fareAmount != null && totalDurationMin != null && totalDurationMin > 0) {
+            fareAmount
+                .multiply(BigDecimal("60"))
+                .divide(BigDecimal.valueOf(totalDurationMin.toLong()), 2, RoundingMode.HALF_UP)
         } else {
             null
         }
         return ParsedOfferMetrics(
             farePerKm = farePerKm,
-            farePerMinute = farePerMinute,
+            farePerHour = farePerHour,
             totalDistanceKm = totalDistanceKm,
             totalDurationMin = totalDurationMin,
         )
@@ -263,7 +293,7 @@ internal object UberOfferSignalEvaluator {
 
     private data class ParsedOfferMetrics(
         val farePerKm: BigDecimal?,
-        val farePerMinute: BigDecimal?,
+        val farePerHour: BigDecimal?,
         val totalDistanceKm: BigDecimal?,
         val totalDurationMin: Int?,
     )

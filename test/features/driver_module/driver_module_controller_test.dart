@@ -344,23 +344,24 @@ void main() {
                 'Oferta acionável, mas abaixo do patamar verde da regra v1.',
             warnings: [],
             farePerKmText: 'R\$ 1,76/km',
-            farePerMinuteText: 'R\$ 0,80/min',
+            farePerHourText: 'R\$ 48,26/h',
             estimatedTotalDistanceKm: 10.5,
             estimatedTotalDurationMin: 23,
             estimatedTotalDistanceText: '10,5 km',
             estimatedTotalDurationText: '23 min',
-            ruleVersion: 'UBER_SIGNAL_V1',
+            ruleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
             computedAt: '2026-04-25T12:00:02Z',
+            preferencesSource: 'DEFAULT',
           ),
           offerSignalColor: 'YELLOW',
           offerSignalReason:
               'Oferta acionável, mas abaixo do patamar verde da regra v1.',
           offerSignalWarnings: const [],
           farePerKmText: 'R\$ 1,76/km',
-          farePerMinuteText: 'R\$ 0,80/min',
+          farePerHourText: 'R\$ 48,26/h',
           estimatedTotalDistanceText: '10,5 km',
           estimatedTotalDurationText: '23 min',
-          signalRuleVersion: 'UBER_SIGNAL_V1',
+          signalRuleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
         ),
       );
       final controller = DriverModuleController(
@@ -406,11 +407,15 @@ void main() {
         'Oferta acionável, mas abaixo do patamar verde da regra v1.',
       );
       expect(controller.offerSignalFarePerKmLabel(), 'R\$ 1,76/km');
-      expect(controller.offerSignalFarePerMinuteLabel(), 'R\$ 0,80/min');
+      expect(controller.offerSignalFarePerHourLabel(), 'R\$ 48,26/h');
       expect(controller.offerSignalEstimatedDistanceLabel(), '10,5 km');
       expect(controller.offerSignalEstimatedDurationLabel(), '23 min');
       expect(controller.offerSignalWarningsLabel(), 'Nenhum aviso.');
-      expect(controller.offerSignalRuleVersionLabel(), 'UBER_SIGNAL_V1');
+      expect(
+        controller.offerSignalRuleVersionLabel(),
+        'UBER_SIGNAL_V1_CONFIGURABLE',
+      );
+      expect(controller.signalPreferencesSourceLabel(), 'Usando padrão do app');
     },
   );
 
@@ -481,23 +486,24 @@ void main() {
             reason: 'Oferta incompleta: falta requisito crítico para ação.',
             warnings: ['CTA ausente.'],
             farePerKmText: 'R\$ 1,56/km',
-            farePerMinuteText: 'R\$ 0,98/min',
+            farePerHourText: 'R\$ 58,99/h',
             estimatedTotalDistanceKm: 24.0,
             estimatedTotalDurationMin: 38,
             estimatedTotalDistanceText: '24,0 km',
             estimatedTotalDurationText: '38 min',
-            ruleVersion: 'UBER_SIGNAL_V1',
+            ruleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
             computedAt: '2026-04-29T01:05:01Z',
+            preferencesSource: 'DEFAULT',
           ),
           offerSignalColor: 'RED',
           offerSignalReason:
               'Oferta incompleta: falta requisito crítico para ação.',
           offerSignalWarnings: const ['CTA ausente.'],
           farePerKmText: 'R\$ 1,56/km',
-          farePerMinuteText: 'R\$ 0,98/min',
+          farePerHourText: 'R\$ 58,99/h',
           estimatedTotalDistanceText: '24,0 km',
           estimatedTotalDurationText: '38 min',
-          signalRuleVersion: 'UBER_SIGNAL_V1',
+          signalRuleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
         ),
       );
       final controller = DriverModuleController(
@@ -826,4 +832,143 @@ void main() {
       expect(nativeBridge.foundationStatusCalls, 2);
     },
   );
+
+  test(
+    'saveSignalPreferences atualiza estado com configuracao do motorista',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+        ),
+        saveSignalPreferencesResult: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+          signalPreferences: fakeDriverSignalPreferencesStatus(
+            minGreenFarePerKm: 2.4,
+            minYellowFarePerKm: 1.8,
+            minGreenFarePerHour: 52.0,
+            minYellowFarePerHour: 35.0,
+            minTotalFare: 12.0,
+            maxTotalDistanceKm: 20.0,
+            maxTotalDurationMin: 45,
+            updatedAt: '2026-04-29T15:00:00Z',
+            source: 'USER_CONFIGURED',
+          ),
+        ),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+      await controller.saveSignalPreferences(
+        const DriverSignalPreferencesInput(
+          minGreenFarePerKm: '2,40',
+          minYellowFarePerKm: '1,80',
+          minGreenFarePerHour: '52,00',
+          minYellowFarePerHour: '35,00',
+          minTotalFare: '12,00',
+          maxTotalDistanceKm: '20,00',
+          maxTotalDurationMin: '45',
+        ),
+      );
+
+      expect(nativeBridge.saveSignalPreferencesCalls, 1);
+      expect(
+        nativeBridge.lastSignalPreferencesInput?.minGreenFarePerKm,
+        '2,40',
+      );
+      expect(
+        controller.signalPreferencesSourceLabel(),
+        'Usando configuração do motorista',
+      );
+      expect(
+        controller.state.message,
+        'Parâmetros do farol salvos no dispositivo.',
+      );
+    },
+  );
+
+  test(
+    'saveSignalPreferences preserva estado e mostra erro de validacao',
+    () async {
+      final sessionController = await loginAsDriverOwner();
+      final repository = FakeDriverModuleRepository();
+      final nativeBridge = FakeDriverNativeBridge(
+        status: fakeDriverNativeFoundationStatus(
+          accessibilityServiceEnabled: true,
+          moduleReady: true,
+          missingCapabilities: const [],
+        ),
+        signalPreferencesError:
+            const DriverSignalPreferencesValidationException([
+              'Verde por km deve ser maior ou igual ao amarelo por km.',
+            ]),
+      );
+      final controller = DriverModuleController(
+        sessionController: sessionController,
+        driverModuleRepository: repository,
+        driverNativeBridge: nativeBridge,
+      );
+
+      await controller.load();
+      await controller.saveSignalPreferences(
+        const DriverSignalPreferencesInput(
+          minGreenFarePerKm: '1,40',
+          minYellowFarePerKm: '1,50',
+          minGreenFarePerHour: '45,00',
+          minYellowFarePerHour: '30,00',
+          minTotalFare: '10,00',
+          maxTotalDistanceKm: '25,00',
+          maxTotalDurationMin: '60',
+        ),
+      );
+
+      expect(controller.state.kind, DriverModuleStateKind.ready);
+      expect(
+        controller.state.message,
+        'Verde por km deve ser maior ou igual ao amarelo por km.',
+      );
+    },
+  );
+
+  test('resetSignalPreferences volta para o fallback default', () async {
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+      ),
+      resetSignalPreferencesResult: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        signalPreferences: fakeDriverSignalPreferencesStatus(),
+      ),
+    );
+    final controller = DriverModuleController(
+      sessionController: sessionController,
+      driverModuleRepository: repository,
+      driverNativeBridge: nativeBridge,
+    );
+
+    await controller.load();
+    await controller.resetSignalPreferences();
+
+    expect(nativeBridge.resetSignalPreferencesCalls, 1);
+    expect(controller.signalPreferencesSourceLabel(), 'Usando padrão do app');
+    expect(
+      controller.state.message,
+      'Parâmetros do farol restaurados para o padrão do app.',
+    );
+  });
 }

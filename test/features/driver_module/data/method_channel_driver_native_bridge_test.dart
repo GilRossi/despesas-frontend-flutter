@@ -1,4 +1,5 @@
 import 'package:despesas_frontend/features/driver_module/data/method_channel_driver_native_bridge.dart';
+import 'package:despesas_frontend/features/driver_module/domain/driver_native_bridge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -152,23 +153,35 @@ void main() {
                   'Oferta acionável, mas abaixo do patamar verde da regra v1.',
               'warnings': const [],
               'farePerKmText': 'R\$ 1,76/km',
-              'farePerMinuteText': 'R\$ 0,80/min',
+              'farePerHourText': 'R\$ 48,26/h',
               'estimatedTotalDistanceKm': 10.5,
               'estimatedTotalDurationMin': 23,
               'estimatedTotalDistanceText': '10,5 km',
               'estimatedTotalDurationText': '23 min',
-              'ruleVersion': 'UBER_SIGNAL_V1',
+              'ruleVersion': 'UBER_SIGNAL_V1_CONFIGURABLE',
               'computedAt': '2026-04-17T18:10:12Z',
+              'preferencesSource': 'DEFAULT',
             },
             'offerSignalColor': 'YELLOW',
             'offerSignalReason':
                 'Oferta acionável, mas abaixo do patamar verde da regra v1.',
             'offerSignalWarnings': const [],
             'farePerKmText': 'R\$ 1,76/km',
-            'farePerMinuteText': 'R\$ 0,80/min',
+            'farePerHourText': 'R\$ 48,26/h',
             'estimatedTotalDistanceText': '10,5 km',
             'estimatedTotalDurationText': '23 min',
-            'signalRuleVersion': 'UBER_SIGNAL_V1',
+            'signalRuleVersion': 'UBER_SIGNAL_V1_CONFIGURABLE',
+            'signalPreferences': {
+              'minGreenFarePerKm': 2.0,
+              'minYellowFarePerKm': 1.5,
+              'minGreenFarePerHour': 45.0,
+              'minYellowFarePerHour': 30.0,
+              'minTotalFare': 10.0,
+              'maxTotalDistanceKm': 25.0,
+              'maxTotalDurationMin': 60,
+              'updatedAt': '',
+              'source': 'DEFAULT',
+            },
             'contextTtlSeconds': 15,
             'androidAutoPrepared': false,
           };
@@ -238,11 +251,14 @@ void main() {
     );
     expect(result.offerSignalWarnings, isEmpty);
     expect(result.farePerKmText, 'R\$ 1,76/km');
-    expect(result.farePerMinuteText, 'R\$ 0,80/min');
+    expect(result.farePerHourText, 'R\$ 48,26/h');
     expect(result.estimatedTotalDistanceText, '10,5 km');
     expect(result.estimatedTotalDurationText, '23 min');
-    expect(result.signalRuleVersion, 'UBER_SIGNAL_V1');
+    expect(result.signalRuleVersion, 'UBER_SIGNAL_V1_CONFIGURABLE');
+    expect(result.signalPreferences.source, 'DEFAULT');
+    expect(result.signalPreferences.minGreenFarePerKm, 2.0);
     expect(result.offerSignal?.color, 'YELLOW');
+    expect(result.offerSignal?.farePerHourText, 'R\$ 48,26/h');
     expect(result.structuredOffer?.productName, 'UberX');
     expect(result.structuredOffer?.fareAmountText, 'R\$ 18,50');
     expect(result.structuredOffer?.fareAmountCents, 1850);
@@ -270,6 +286,223 @@ void main() {
       expect(opened, isTrue);
     },
   );
+
+  test(
+    'getSignalPreferences consome as preferencias locais do nativo',
+    () async {
+      late MethodCall capturedCall;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            capturedCall = call;
+            return {
+              'minGreenFarePerKm': 2.4,
+              'minYellowFarePerKm': 1.8,
+              'minGreenFarePerHour': 52.0,
+              'minYellowFarePerHour': 35.0,
+              'minTotalFare': 12.0,
+              'maxTotalDistanceKm': 20.0,
+              'maxTotalDurationMin': 45,
+              'updatedAt': '2026-04-29T15:00:00Z',
+              'source': 'USER_CONFIGURED',
+            };
+          });
+
+      final bridge = MethodChannelDriverNativeBridge();
+      final result = await bridge.getSignalPreferences();
+
+      expect(capturedCall.method, 'getSignalPreferences');
+      expect(result.source, 'USER_CONFIGURED');
+      expect(result.minGreenFarePerKm, 2.4);
+      expect(result.maxTotalDurationMin, 45);
+    },
+  );
+
+  test(
+    'saveSignalPreferences envia payload e devolve snapshot atualizado',
+    () async {
+      late MethodCall capturedCall;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            capturedCall = call;
+            return {
+              'packageName': 'com.example.despesas_frontend',
+              'methodChannel': MethodChannelDriverNativeBridge.channelName,
+              'nativeBridgeAvailable': true,
+              'methodChannelReady': true,
+              'accessibilityServiceDeclared': true,
+              'accessibilityServiceEnabled': true,
+              'canOpenAccessibilitySettings': true,
+              'moduleReady': true,
+              'missingCapabilities': const [],
+              'targetApps': const [],
+              'providerContexts': const [],
+              'signal': {'color': 'GREEN', 'label': 'Verde', 'reason': 'READY'},
+              'currentContext': const {
+                'providerKey': '',
+                'label': '',
+                'packageName': '',
+                'eventType': '',
+                'capturedAt': '',
+                'texts': [],
+                'inFocus': false,
+                'validity': 'INVALID',
+                'validUntil': '',
+                'semanticState': {
+                  'code': 'NO_ACTIVE_PROVIDER',
+                  'label': 'Sem provider ativo',
+                  'summary': 'Sem leitura local.',
+                  'contextRelevant': false,
+                },
+              },
+              'acceptCommand': const {'state': 'IDLE'},
+              'lastOfferDetected': false,
+              'lastOfferSignals': const [],
+              'lastOfferMissingRequirements': const [],
+              'structuredOfferPresent': false,
+              'isActionable': false,
+              'missingFields': const [],
+              'offerSignalPresent': false,
+              'offerSignalWarnings': const [],
+              'signalPreferences': {
+                'minGreenFarePerKm': 2.4,
+                'minYellowFarePerKm': 1.8,
+                'minGreenFarePerHour': 52.0,
+                'minYellowFarePerHour': 35.0,
+                'minTotalFare': 12.0,
+                'maxTotalDistanceKm': 20.0,
+                'maxTotalDurationMin': 45,
+                'updatedAt': '2026-04-29T15:00:00Z',
+                'source': 'USER_CONFIGURED',
+              },
+              'contextTtlSeconds': 15,
+              'androidAutoPrepared': false,
+            };
+          });
+
+      final bridge = MethodChannelDriverNativeBridge();
+      final result = await bridge.saveSignalPreferences(
+        input: const DriverSignalPreferencesInput(
+          minGreenFarePerKm: '2,40',
+          minYellowFarePerKm: '1,80',
+          minGreenFarePerHour: '52,00',
+          minYellowFarePerHour: '35,00',
+          minTotalFare: '12,00',
+          maxTotalDistanceKm: '20,00',
+          maxTotalDurationMin: '45',
+        ),
+      );
+
+      expect(capturedCall.method, 'saveSignalPreferences');
+      expect(capturedCall.arguments, containsPair('minGreenFarePerKm', '2,40'));
+      expect(result.signalPreferences.source, 'USER_CONFIGURED');
+      expect(result.signalPreferences.maxTotalDistanceKm, 20.0);
+    },
+  );
+
+  test('saveSignalPreferences traduz erro de validacao do nativo', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          throw PlatformException(
+            code: 'INVALID_SIGNAL_PREFERENCES',
+            message: 'Parâmetros inválidos.',
+            details: {
+              'validationErrors': [
+                'Verde por km deve ser maior ou igual ao amarelo por km.',
+              ],
+            },
+          );
+        });
+
+    final bridge = MethodChannelDriverNativeBridge();
+
+    expect(
+      () => bridge.saveSignalPreferences(
+        input: const DriverSignalPreferencesInput(
+          minGreenFarePerKm: '1,40',
+          minYellowFarePerKm: '1,50',
+          minGreenFarePerHour: '45,00',
+          minYellowFarePerHour: '30,00',
+          minTotalFare: '10,00',
+          maxTotalDistanceKm: '25,00',
+          maxTotalDurationMin: '60',
+        ),
+      ),
+      throwsA(
+        isA<DriverSignalPreferencesValidationException>().having(
+          (error) => error.validationErrors.single,
+          'validationError',
+          'Verde por km deve ser maior ou igual ao amarelo por km.',
+        ),
+      ),
+    );
+  });
+
+  test('resetSignalPreferences volta para o fallback default', () async {
+    late MethodCall capturedCall;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          capturedCall = call;
+          return {
+            'packageName': 'com.example.despesas_frontend',
+            'methodChannel': MethodChannelDriverNativeBridge.channelName,
+            'nativeBridgeAvailable': true,
+            'methodChannelReady': true,
+            'accessibilityServiceDeclared': true,
+            'accessibilityServiceEnabled': true,
+            'canOpenAccessibilitySettings': true,
+            'moduleReady': true,
+            'missingCapabilities': const [],
+            'targetApps': const [],
+            'providerContexts': const [],
+            'signal': {'color': 'GREEN', 'label': 'Verde', 'reason': 'READY'},
+            'currentContext': const {
+              'providerKey': '',
+              'label': '',
+              'packageName': '',
+              'eventType': '',
+              'capturedAt': '',
+              'texts': [],
+              'inFocus': false,
+              'validity': 'INVALID',
+              'validUntil': '',
+              'semanticState': {
+                'code': 'NO_ACTIVE_PROVIDER',
+                'label': 'Sem provider ativo',
+                'summary': 'Sem leitura local.',
+                'contextRelevant': false,
+              },
+            },
+            'acceptCommand': const {'state': 'IDLE'},
+            'lastOfferDetected': false,
+            'lastOfferSignals': const [],
+            'lastOfferMissingRequirements': const [],
+            'structuredOfferPresent': false,
+            'isActionable': false,
+            'missingFields': const [],
+            'offerSignalPresent': false,
+            'offerSignalWarnings': const [],
+            'signalPreferences': {
+              'minGreenFarePerKm': 2.0,
+              'minYellowFarePerKm': 1.5,
+              'minGreenFarePerHour': 45.0,
+              'minYellowFarePerHour': 30.0,
+              'minTotalFare': 10.0,
+              'maxTotalDistanceKm': 25.0,
+              'maxTotalDurationMin': 60,
+              'updatedAt': '',
+              'source': 'DEFAULT',
+            },
+            'contextTtlSeconds': 15,
+            'androidAutoPrepared': false,
+          };
+        });
+
+    final bridge = MethodChannelDriverNativeBridge();
+    final result = await bridge.resetSignalPreferences();
+
+    expect(capturedCall.method, 'resetSignalPreferences');
+    expect(result.signalPreferences.source, 'DEFAULT');
+  });
 
   test(
     'requestAcceptCommand dispara o caminho unificado de comando no nativo',

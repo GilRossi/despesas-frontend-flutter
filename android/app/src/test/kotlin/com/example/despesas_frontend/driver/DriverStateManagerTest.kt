@@ -300,6 +300,36 @@ class DriverStateManagerTest {
     }
 
     @Test
+    fun `snapshot carrega preferencias do usuario e recalcula farol`() {
+        configureReadyUber()
+        DriverStateManager.updateSignalPreferences(
+            DriverSignalPreferences.defaults().copy(
+                minGreenFarePerKm = java.math.BigDecimal("1.90"),
+                minGreenFarePerHour = java.math.BigDecimal("40.00"),
+                source = "USER_CONFIGURED",
+                updatedAt = "2026-04-29T02:00:00Z",
+            ),
+        )
+        val texts = loadFixtureTexts("driver/uber_event_03_actionable_offer.txt")
+        val start = Instant.parse("2026-04-29T02:00:00Z")
+
+        DriverStateManager.recordOfferSnapshotAt(
+            providerKey = "UBER_DRIVER",
+            providerLabel = "Uber Driver",
+            packageName = "com.ubercab.driver",
+            rawTexts = texts,
+            detectedSignals = DriverOfferEventDetector.detectOfferSignals(texts),
+            capturedAt = start,
+        )
+
+        val snapshot = DriverStateManager.snapshotAt(start.plusSeconds(1))
+
+        assertEquals("USER_CONFIGURED", snapshot.signalPreferences.source)
+        assertEquals("GREEN", snapshot.offerSignalColor)
+        assertEquals("R$ 42,94/h", snapshot.farePerHourText)
+    }
+
+    @Test
     fun `eventos fragmentados da oferta viram snapshot após agregação completa`() {
         configureReadyUber()
         val capturedAt = Instant.parse("2026-04-29T01:11:00Z")

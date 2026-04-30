@@ -1237,15 +1237,27 @@ class FakeDriverNativeBridge implements DriverNativeBridge {
     this.error,
     this.openAccessibilitySettingsResult = true,
     this.acceptCommandResult,
+    this.signalPreferences,
+    this.saveSignalPreferencesResult,
+    this.resetSignalPreferencesResult,
+    this.signalPreferencesError,
   });
 
   DriverNativeFoundationStatus? status;
   Exception? error;
+  Exception? signalPreferencesError;
   int foundationStatusCalls = 0;
+  int getSignalPreferencesCalls = 0;
+  int saveSignalPreferencesCalls = 0;
+  int resetSignalPreferencesCalls = 0;
   int openAccessibilitySettingsCalls = 0;
   int requestAcceptCommandCalls = 0;
   bool openAccessibilitySettingsResult;
   DriverNativeFoundationStatus? acceptCommandResult;
+  DriverSignalPreferencesStatus? signalPreferences;
+  DriverNativeFoundationStatus? saveSignalPreferencesResult;
+  DriverNativeFoundationStatus? resetSignalPreferencesResult;
+  DriverSignalPreferencesInput? lastSignalPreferencesInput;
 
   @override
   Future<DriverNativeFoundationStatus> getFoundationStatus() async {
@@ -1254,6 +1266,40 @@ class FakeDriverNativeBridge implements DriverNativeBridge {
       throw error!;
     }
     return status ?? fakeDriverNativeFoundationStatus();
+  }
+
+  @override
+  Future<DriverSignalPreferencesStatus> getSignalPreferences() async {
+    getSignalPreferencesCalls += 1;
+    if (signalPreferencesError != null) {
+      throw signalPreferencesError!;
+    }
+    return signalPreferences ?? fakeDriverSignalPreferencesStatus();
+  }
+
+  @override
+  Future<DriverNativeFoundationStatus> saveSignalPreferences({
+    required DriverSignalPreferencesInput input,
+  }) async {
+    saveSignalPreferencesCalls += 1;
+    lastSignalPreferencesInput = input;
+    if (signalPreferencesError != null) {
+      throw signalPreferencesError!;
+    }
+    return saveSignalPreferencesResult ??
+        status ??
+        fakeDriverNativeFoundationStatus();
+  }
+
+  @override
+  Future<DriverNativeFoundationStatus> resetSignalPreferences() async {
+    resetSignalPreferencesCalls += 1;
+    if (signalPreferencesError != null) {
+      throw signalPreferencesError!;
+    }
+    return resetSignalPreferencesResult ??
+        status ??
+        fakeDriverNativeFoundationStatus();
   }
 
   @override
@@ -1472,10 +1518,22 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
   String? offerSignalReason,
   List<String> offerSignalWarnings = const [],
   String? farePerKmText,
-  String? farePerMinuteText,
+  String? farePerHourText,
   String? estimatedTotalDistanceText,
   String? estimatedTotalDurationText,
   String? signalRuleVersion,
+  DriverSignalPreferencesStatus signalPreferences =
+      const DriverSignalPreferencesStatus(
+        minGreenFarePerKm: 2.0,
+        minYellowFarePerKm: 1.5,
+        minGreenFarePerHour: 45.0,
+        minYellowFarePerHour: 30.0,
+        minTotalFare: 10.0,
+        maxTotalDistanceKm: 25.0,
+        maxTotalDurationMin: 60,
+        updatedAt: '',
+        source: 'DEFAULT',
+      ),
   int contextTtlSeconds = 15,
   bool androidAutoPrepared = false,
 }) {
@@ -1601,12 +1659,37 @@ DriverNativeFoundationStatus fakeDriverNativeFoundationStatus({
     offerSignalReason: offerSignalReason,
     offerSignalWarnings: offerSignalWarnings,
     farePerKmText: farePerKmText,
-    farePerMinuteText: farePerMinuteText,
+    farePerHourText: farePerHourText,
     estimatedTotalDistanceText: estimatedTotalDistanceText,
     estimatedTotalDurationText: estimatedTotalDurationText,
     signalRuleVersion: signalRuleVersion,
+    signalPreferences: signalPreferences,
     contextTtlSeconds: contextTtlSeconds,
     androidAutoPrepared: androidAutoPrepared,
+  );
+}
+
+DriverSignalPreferencesStatus fakeDriverSignalPreferencesStatus({
+  double minGreenFarePerKm = 2.0,
+  double minYellowFarePerKm = 1.5,
+  double minGreenFarePerHour = 45.0,
+  double minYellowFarePerHour = 30.0,
+  double minTotalFare = 10.0,
+  double maxTotalDistanceKm = 25.0,
+  int maxTotalDurationMin = 60,
+  String updatedAt = '',
+  String source = 'DEFAULT',
+}) {
+  return DriverSignalPreferencesStatus(
+    minGreenFarePerKm: minGreenFarePerKm,
+    minYellowFarePerKm: minYellowFarePerKm,
+    minGreenFarePerHour: minGreenFarePerHour,
+    minYellowFarePerHour: minYellowFarePerHour,
+    minTotalFare: minTotalFare,
+    maxTotalDistanceKm: maxTotalDistanceKm,
+    maxTotalDurationMin: maxTotalDurationMin,
+    updatedAt: updatedAt,
+    source: source,
   );
 }
 

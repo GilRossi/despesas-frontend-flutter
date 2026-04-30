@@ -195,6 +195,58 @@ class DriverModuleController extends ChangeNotifier {
     return opened;
   }
 
+  Future<void> saveSignalPreferences(DriverSignalPreferencesInput input) async {
+    final bootstrap = _state.bootstrap;
+    if (bootstrap == null) {
+      return;
+    }
+
+    try {
+      final nativeStatus = await _driverNativeBridge.saveSignalPreferences(
+        input: input,
+      );
+      _setState(
+        _buildState(
+          bootstrap,
+          nativeStatus,
+          message: 'Parâmetros do farol salvos no dispositivo.',
+        ),
+      );
+    } on DriverSignalPreferencesValidationException catch (error) {
+      _setState(_state.copyWith(message: error.validationErrors.join(' ')));
+    } catch (_) {
+      _setState(
+        _state.copyWith(
+          message: 'Não foi possível salvar os parâmetros do farol.',
+        ),
+      );
+    }
+  }
+
+  Future<void> resetSignalPreferences() async {
+    final bootstrap = _state.bootstrap;
+    if (bootstrap == null) {
+      return;
+    }
+
+    try {
+      final nativeStatus = await _driverNativeBridge.resetSignalPreferences();
+      _setState(
+        _buildState(
+          bootstrap,
+          nativeStatus,
+          message: 'Parâmetros do farol restaurados para o padrão do app.',
+        ),
+      );
+    } catch (_) {
+      _setState(
+        _state.copyWith(
+          message: 'Não foi possível restaurar os parâmetros padrão do farol.',
+        ),
+      );
+    }
+  }
+
   List<DriverModuleCapabilityCopy> describeMissingCapabilities() {
     final keys = _state.nativeStatus?.missingCapabilities ?? const <String>[];
     return keys.map(_mapCapability).toList();
@@ -490,12 +542,12 @@ class DriverModuleController extends ChangeNotifier {
     return nativeStatus.farePerKmText ?? 'Não calculado';
   }
 
-  String offerSignalFarePerMinuteLabel() {
+  String offerSignalFarePerHourLabel() {
     final nativeStatus = _state.nativeStatus;
     if (nativeStatus == null || !nativeStatus.offerSignalPresent) {
       return 'Não calculado';
     }
-    return nativeStatus.farePerMinuteText ?? 'Não calculado';
+    return nativeStatus.farePerHourText ?? 'Não calculado';
   }
 
   String offerSignalEstimatedDistanceLabel() {
@@ -528,6 +580,29 @@ class DriverModuleController extends ChangeNotifier {
       return 'Indisponível';
     }
     return nativeStatus.signalRuleVersion ?? 'Indisponível';
+  }
+
+  DriverSignalPreferencesStatus? signalPreferences() {
+    return _state.nativeStatus?.signalPreferences;
+  }
+
+  String signalPreferencesSourceLabel() {
+    final preferences = _state.nativeStatus?.signalPreferences;
+    if (preferences == null) {
+      return 'Indisponível';
+    }
+    return switch (preferences.source) {
+      'USER_CONFIGURED' => 'Usando configuração do motorista',
+      _ => 'Usando padrão do app',
+    };
+  }
+
+  String signalPreferencesUpdatedAtLabel() {
+    final preferences = _state.nativeStatus?.signalPreferences;
+    if (preferences == null || preferences.updatedAt.isEmpty) {
+      return 'Sem atualização manual';
+    }
+    return preferences.updatedAt;
   }
 
   String contextValidityLabel() {
