@@ -81,7 +81,7 @@ void main() {
       expect(find.text('Abrir acessibilidade'), findsOneWidget);
       await scrollToKey(
         tester,
-        const ValueKey('driver-module-command-section'),
+        const ValueKey('driver-module-command-path-section'),
       );
       expect(find.text('Registrar comando base'), findsOneWidget);
       await scrollToKey(
@@ -323,6 +323,10 @@ void main() {
         find.textContaining('Confiança: HIGH', findRichText: true),
         findsWidgets,
       );
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-command-path-section'),
+      );
       expect(find.text('Caminho unificado de comando'), findsOneWidget);
       expect(
         find.textContaining('Pendente no executor', findRichText: true),
@@ -409,23 +413,24 @@ void main() {
                 'Oferta acionável, mas abaixo do patamar verde da regra v1.',
             warnings: [],
             farePerKmText: 'R\$ 1,76/km',
-            farePerMinuteText: 'R\$ 0,80/min',
+            farePerHourText: 'R\$ 48,26/h',
             estimatedTotalDistanceKm: 10.5,
             estimatedTotalDurationMin: 23,
             estimatedTotalDistanceText: '10,5 km',
             estimatedTotalDurationText: '23 min',
-            ruleVersion: 'UBER_SIGNAL_V1',
+            ruleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
             computedAt: '2026-04-25T12:00:02Z',
+            preferencesSource: 'DEFAULT',
           ),
           offerSignalColor: 'YELLOW',
           offerSignalReason:
               'Oferta acionável, mas abaixo do patamar verde da regra v1.',
           offerSignalWarnings: const [],
           farePerKmText: 'R\$ 1,76/km',
-          farePerMinuteText: 'R\$ 0,80/min',
+          farePerHourText: 'R\$ 48,26/h',
           estimatedTotalDistanceText: '10,5 km',
           estimatedTotalDurationText: '23 min',
-          signalRuleVersion: 'UBER_SIGNAL_V1',
+          signalRuleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
         ),
       );
 
@@ -487,8 +492,12 @@ void main() {
         findsWidgets,
       );
       expect(
+        find.textContaining('Valor por hora: R\$ 48,26/h', findRichText: true),
+        findsWidgets,
+      );
+      expect(
         find.textContaining(
-          'Regra do farol: UBER_SIGNAL_V1',
+          'Regra do farol: UBER_SIGNAL_V1_CONFIGURABLE',
           findRichText: true,
         ),
         findsWidgets,
@@ -564,23 +573,24 @@ void main() {
             reason: 'Oferta incompleta: falta requisito crítico para ação.',
             warnings: ['CTA ausente.'],
             farePerKmText: 'R\$ 1,56/km',
-            farePerMinuteText: 'R\$ 0,98/min',
+            farePerHourText: 'R\$ 58,99/h',
             estimatedTotalDistanceKm: 24.0,
             estimatedTotalDurationMin: 38,
             estimatedTotalDistanceText: '24,0 km',
             estimatedTotalDurationText: '38 min',
-            ruleVersion: 'UBER_SIGNAL_V1',
+            ruleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
             computedAt: '2026-04-29T01:05:01Z',
+            preferencesSource: 'DEFAULT',
           ),
           offerSignalColor: 'RED',
           offerSignalReason:
               'Oferta incompleta: falta requisito crítico para ação.',
           offerSignalWarnings: const ['CTA ausente.'],
           farePerKmText: 'R\$ 1,56/km',
-          farePerMinuteText: 'R\$ 0,98/min',
+          farePerHourText: 'R\$ 58,99/h',
           estimatedTotalDistanceText: '24,0 km',
           estimatedTotalDurationText: '38 min',
-          signalRuleVersion: 'UBER_SIGNAL_V1',
+          signalRuleVersion: 'UBER_SIGNAL_V1_CONFIGURABLE',
         ),
       );
 
@@ -676,6 +686,10 @@ void main() {
         nativeBridge: nativeBridge,
       );
 
+      await scrollToKey(
+        tester,
+        const ValueKey('driver-module-structured-offer-section'),
+      );
       expect(
         find.textContaining(
           'Estado da oferta estruturada: Nenhuma oferta estruturada no contexto atual.',
@@ -1106,7 +1120,10 @@ void main() {
       nativeBridge: nativeBridge,
     );
 
-    await scrollToKey(tester, const ValueKey('driver-module-command-section'));
+    await scrollToKey(
+      tester,
+      const ValueKey('driver-module-command-path-section'),
+    );
     await tester.tap(find.text('Registrar comando base'));
     await tester.pumpAndSettle();
 
@@ -1115,5 +1132,130 @@ void main() {
       find.textContaining('Pendente no executor', findRichText: true),
       findsWidgets,
     );
+  });
+
+  testWidgets('mostra parametros do farol e salva configuracao do motorista', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+      ),
+      saveSignalPreferencesResult: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        signalPreferences: fakeDriverSignalPreferencesStatus(
+          minGreenFarePerKm: 2.4,
+          minYellowFarePerKm: 1.8,
+          minGreenFarePerHour: 52.0,
+          minYellowFarePerHour: 35.0,
+          minTotalFare: 12.0,
+          maxTotalDistanceKm: 20.0,
+          maxTotalDurationMin: 45,
+          updatedAt: '2026-04-29T15:00:00Z',
+          source: 'USER_CONFIGURED',
+        ),
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    await scrollToKey(
+      tester,
+      const ValueKey('driver-module-signal-preferences-section'),
+    );
+    expect(find.text('Parâmetros do farol'), findsOneWidget);
+    expect(find.text('Usando padrão do app'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(0), '2,40');
+    await tester.tap(
+      find.byKey(
+        const ValueKey('driver-module-save-signal-preferences-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(nativeBridge.saveSignalPreferencesCalls, 1);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1200));
+    await tester.pumpAndSettle();
+    expect(find.text('Usando configuração do motorista'), findsOneWidget);
+  });
+
+  testWidgets('mostra erro ao salvar parametro invalido e permite reset', (
+    tester,
+  ) async {
+    configureLargeViewport(tester);
+    final sessionController = await loginAsDriverOwner();
+    final repository = FakeDriverModuleRepository();
+    final nativeBridge = FakeDriverNativeBridge(
+      status: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        signalPreferences: fakeDriverSignalPreferencesStatus(
+          source: 'USER_CONFIGURED',
+          updatedAt: '2026-04-29T15:10:00Z',
+        ),
+      ),
+      signalPreferencesError: const DriverSignalPreferencesValidationException([
+        'Verde por km deve ser maior ou igual ao amarelo por km.',
+      ]),
+      resetSignalPreferencesResult: fakeDriverNativeFoundationStatus(
+        accessibilityServiceEnabled: true,
+        moduleReady: true,
+        missingCapabilities: const [],
+        signalPreferences: fakeDriverSignalPreferencesStatus(),
+      ),
+    );
+
+    await pumpScreen(
+      tester,
+      sessionController: sessionController,
+      repository: repository,
+      nativeBridge: nativeBridge,
+    );
+
+    await scrollToKey(
+      tester,
+      const ValueKey('driver-module-signal-preferences-section'),
+    );
+    await tester.enterText(find.byType(TextField).at(0), '1,40');
+    await tester.tap(
+      find.byKey(
+        const ValueKey('driver-module-save-signal-preferences-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(nativeBridge.saveSignalPreferencesCalls, 1);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1200));
+    await tester.pumpAndSettle();
+    expect(find.text('Usando configuração do motorista'), findsOneWidget);
+
+    nativeBridge.signalPreferencesError = null;
+    await scrollToKey(
+      tester,
+      const ValueKey('driver-module-signal-preferences-section'),
+    );
+    await tester.tap(
+      find.byKey(
+        const ValueKey('driver-module-reset-signal-preferences-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(nativeBridge.resetSignalPreferencesCalls, 1);
+    expect(find.text('Usando padrão do app'), findsOneWidget);
   });
 }

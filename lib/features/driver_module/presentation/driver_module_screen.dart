@@ -24,11 +24,26 @@ class DriverModuleScreen extends StatefulWidget {
 class _DriverModuleScreenState extends State<DriverModuleScreen>
     with WidgetsBindingObserver {
   late final DriverModuleController _controller;
+  late final TextEditingController _minGreenFarePerKmController;
+  late final TextEditingController _minYellowFarePerKmController;
+  late final TextEditingController _minGreenFarePerHourController;
+  late final TextEditingController _minYellowFarePerHourController;
+  late final TextEditingController _minTotalFareController;
+  late final TextEditingController _maxTotalDistanceKmController;
+  late final TextEditingController _maxTotalDurationMinController;
+  String? _signalPreferencesFingerprint;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _minGreenFarePerKmController = TextEditingController();
+    _minYellowFarePerKmController = TextEditingController();
+    _minGreenFarePerHourController = TextEditingController();
+    _minYellowFarePerHourController = TextEditingController();
+    _minTotalFareController = TextEditingController();
+    _maxTotalDistanceKmController = TextEditingController();
+    _maxTotalDurationMinController = TextEditingController();
     _controller = DriverModuleController(
       sessionController: widget.sessionController,
       driverModuleRepository: widget.driverModuleRepository,
@@ -39,6 +54,13 @@ class _DriverModuleScreenState extends State<DriverModuleScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _minGreenFarePerKmController.dispose();
+    _minYellowFarePerKmController.dispose();
+    _minGreenFarePerHourController.dispose();
+    _minYellowFarePerHourController.dispose();
+    _minTotalFareController.dispose();
+    _maxTotalDistanceKmController.dispose();
+    _maxTotalDurationMinController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -56,6 +78,9 @@ class _DriverModuleScreenState extends State<DriverModuleScreen>
       animation: _controller,
       builder: (context, _) {
         final state = _controller.state;
+        _syncSignalPreferencesControllers(
+          state.nativeStatus?.signalPreferences,
+        );
         return Scaffold(
           appBar: AppBar(
             title: const Text('Driver Module'),
@@ -111,8 +136,76 @@ class _DriverModuleScreenState extends State<DriverModuleScreen>
           bootstrap: state.bootstrap!,
           nativeStatus: state.nativeStatus!,
           ready: state.kind == DriverModuleStateKind.ready,
+          minGreenFarePerKmController: _minGreenFarePerKmController,
+          minYellowFarePerKmController: _minYellowFarePerKmController,
+          minGreenFarePerHourController: _minGreenFarePerHourController,
+          minYellowFarePerHourController: _minYellowFarePerHourController,
+          minTotalFareController: _minTotalFareController,
+          maxTotalDistanceKmController: _maxTotalDistanceKmController,
+          maxTotalDurationMinController: _maxTotalDurationMinController,
+          onSaveSignalPreferences: () {
+            _controller.saveSignalPreferences(_buildSignalPreferencesInput());
+          },
+          onResetSignalPreferences: _controller.resetSignalPreferences,
         );
     }
+  }
+
+  DriverSignalPreferencesInput _buildSignalPreferencesInput() {
+    return DriverSignalPreferencesInput(
+      minGreenFarePerKm: _minGreenFarePerKmController.text,
+      minYellowFarePerKm: _minYellowFarePerKmController.text,
+      minGreenFarePerHour: _minGreenFarePerHourController.text,
+      minYellowFarePerHour: _minYellowFarePerHourController.text,
+      minTotalFare: _minTotalFareController.text,
+      maxTotalDistanceKm: _maxTotalDistanceKmController.text,
+      maxTotalDurationMin: _maxTotalDurationMinController.text,
+    );
+  }
+
+  void _syncSignalPreferencesControllers(
+    DriverSignalPreferencesStatus? preferences,
+  ) {
+    if (preferences == null) {
+      return;
+    }
+    final fingerprint = [
+      preferences.minGreenFarePerKm,
+      preferences.minYellowFarePerKm,
+      preferences.minGreenFarePerHour,
+      preferences.minYellowFarePerHour,
+      preferences.minTotalFare,
+      preferences.maxTotalDistanceKm,
+      preferences.maxTotalDurationMin,
+      preferences.source,
+      preferences.updatedAt,
+    ].join('|');
+    if (_signalPreferencesFingerprint == fingerprint) {
+      return;
+    }
+    _signalPreferencesFingerprint = fingerprint;
+    _minGreenFarePerKmController.text = _formatDecimal(
+      preferences.minGreenFarePerKm,
+    );
+    _minYellowFarePerKmController.text = _formatDecimal(
+      preferences.minYellowFarePerKm,
+    );
+    _minGreenFarePerHourController.text = _formatDecimal(
+      preferences.minGreenFarePerHour,
+    );
+    _minYellowFarePerHourController.text = _formatDecimal(
+      preferences.minYellowFarePerHour,
+    );
+    _minTotalFareController.text = _formatDecimal(preferences.minTotalFare);
+    _maxTotalDistanceKmController.text = _formatDecimal(
+      preferences.maxTotalDistanceKm,
+    );
+    _maxTotalDurationMinController.text = preferences.maxTotalDurationMin
+        .toString();
+  }
+
+  String _formatDecimal(double value) {
+    return value.toStringAsFixed(2).replaceAll('.', ',');
   }
 }
 
@@ -124,6 +217,15 @@ class _DriverModuleReadinessState extends StatelessWidget {
     required this.bootstrap,
     required this.nativeStatus,
     required this.ready,
+    required this.minGreenFarePerKmController,
+    required this.minYellowFarePerKmController,
+    required this.minGreenFarePerHourController,
+    required this.minYellowFarePerHourController,
+    required this.minTotalFareController,
+    required this.maxTotalDistanceKmController,
+    required this.maxTotalDurationMinController,
+    required this.onSaveSignalPreferences,
+    required this.onResetSignalPreferences,
   });
 
   final DriverModuleController controller;
@@ -132,6 +234,15 @@ class _DriverModuleReadinessState extends StatelessWidget {
   final DriverModuleBootstrap bootstrap;
   final DriverNativeFoundationStatus nativeStatus;
   final bool ready;
+  final TextEditingController minGreenFarePerKmController;
+  final TextEditingController minYellowFarePerKmController;
+  final TextEditingController minGreenFarePerHourController;
+  final TextEditingController minYellowFarePerHourController;
+  final TextEditingController minTotalFareController;
+  final TextEditingController maxTotalDistanceKmController;
+  final TextEditingController maxTotalDurationMinController;
+  final VoidCallback onSaveSignalPreferences;
+  final VoidCallback onResetSignalPreferences;
 
   @override
   Widget build(BuildContext context) {
@@ -383,7 +494,85 @@ class _DriverModuleReadinessState extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _SectionCard(
-          key: const ValueKey('driver-module-command-section'),
+          key: const ValueKey('driver-module-signal-preferences-section'),
+          title: 'Parâmetros do farol',
+          children: [
+            Text(controller.signalPreferencesSourceLabel()),
+            const SizedBox(height: 4),
+            Text(
+              'Os parâmetros abaixo servem apenas para classificar o farol. Nenhuma corrida é aceita automaticamente.',
+            ),
+            const SizedBox(height: 12),
+            _StatusRow(
+              label: 'Última atualização',
+              value: controller.signalPreferencesUpdatedAtLabel(),
+            ),
+            _StatusRow(
+              label: 'Parâmetros usados no farol',
+              value:
+                  'Verde/km ${minGreenFarePerKmController.text} · Amarelo/km ${minYellowFarePerKmController.text} · Verde/h ${minGreenFarePerHourController.text} · Amarelo/h ${minYellowFarePerHourController.text}',
+            ),
+            _StatusRow(
+              label: 'Limites gerais',
+              value:
+                  'Valor mínimo ${minTotalFareController.text} · Distância máxima ${maxTotalDistanceKmController.text} km · Tempo máximo ${maxTotalDurationMinController.text} min',
+            ),
+            const SizedBox(height: 12),
+            _PreferenceField(
+              label: 'Verde a partir de R\$/km',
+              controller: minGreenFarePerKmController,
+            ),
+            _PreferenceField(
+              label: 'Amarelo a partir de R\$/km',
+              controller: minYellowFarePerKmController,
+            ),
+            _PreferenceField(
+              label: 'Verde a partir de R\$/hora',
+              controller: minGreenFarePerHourController,
+            ),
+            _PreferenceField(
+              label: 'Amarelo a partir de R\$/hora',
+              controller: minYellowFarePerHourController,
+            ),
+            _PreferenceField(
+              label: 'Valor mínimo',
+              controller: minTotalFareController,
+            ),
+            _PreferenceField(
+              label: 'Distância máxima',
+              controller: maxTotalDistanceKmController,
+            ),
+            _PreferenceField(
+              label: 'Tempo máximo',
+              controller: maxTotalDurationMinController,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                FilledButton(
+                  key: const ValueKey(
+                    'driver-module-save-signal-preferences-button',
+                  ),
+                  onPressed: onSaveSignalPreferences,
+                  child: const Text('Salvar parâmetros'),
+                ),
+                OutlinedButton(
+                  key: const ValueKey(
+                    'driver-module-reset-signal-preferences-button',
+                  ),
+                  onPressed: onResetSignalPreferences,
+                  child: const Text('Restaurar padrão'),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SectionCard(
+          key: const ValueKey('driver-module-structured-offer-section'),
           title: 'Oferta estruturada',
           children: [
             _StatusRow(
@@ -447,8 +636,8 @@ class _DriverModuleReadinessState extends StatelessWidget {
               value: controller.offerSignalFarePerKmLabel(),
             ),
             _StatusRow(
-              label: 'Valor por minuto',
-              value: controller.offerSignalFarePerMinuteLabel(),
+              label: 'Valor por hora',
+              value: controller.offerSignalFarePerHourLabel(),
             ),
             _StatusRow(
               label: 'Distância total estimada',
@@ -466,11 +655,15 @@ class _DriverModuleReadinessState extends StatelessWidget {
               label: 'Regra do farol',
               value: controller.offerSignalRuleVersionLabel(),
             ),
+            _StatusRow(
+              label: 'Origem dos parâmetros',
+              value: controller.signalPreferencesSourceLabel(),
+            ),
           ],
         ),
         const SizedBox(height: 16),
         _SectionCard(
-          key: const ValueKey('driver-module-command-section'),
+          key: const ValueKey('driver-module-command-path-section'),
           title: 'Caminho unificado de comando',
           children: [
             const Text(
@@ -880,6 +1073,34 @@ class _MessageState extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PreferenceField extends StatelessWidget {
+  const _PreferenceField({
+    required this.label,
+    required this.controller,
+    this.keyboardType = const TextInputType.numberWithOptions(decimal: true),
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final TextInputType keyboardType;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          isDense: true,
         ),
       ),
     );

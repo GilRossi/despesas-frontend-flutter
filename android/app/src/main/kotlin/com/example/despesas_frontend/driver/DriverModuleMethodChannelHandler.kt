@@ -12,6 +12,9 @@ import io.flutter.plugin.common.MethodChannel
 
 class DriverModuleMethodChannelHandler(
     private val context: Context,
+    private val signalPreferencesRepository: DriverSignalPreferencesRepository = DriverSignalPreferencesRepository(
+        AndroidDriverSignalPreferencesStore(context),
+    ),
 ) : MethodChannel.MethodCallHandler {
     data class DriverTargetApp(
         val key: String,
@@ -22,6 +25,9 @@ class DriverModuleMethodChannelHandler(
     companion object {
         const val CHANNEL_NAME = "com.gilrossi.despesas/driver_module"
         private const val METHOD_GET_FOUNDATION_STATUS = "getFoundationStatus"
+        private const val METHOD_GET_SIGNAL_PREFERENCES = "getSignalPreferences"
+        private const val METHOD_SAVE_SIGNAL_PREFERENCES = "saveSignalPreferences"
+        private const val METHOD_RESET_SIGNAL_PREFERENCES = "resetSignalPreferences"
         private const val METHOD_OPEN_ACCESSIBILITY_SETTINGS = "openAccessibilitySettings"
         private const val METHOD_REQUEST_ACCEPT_COMMAND = "requestAcceptCommand"
         private val TARGET_APPS = listOf(
@@ -76,6 +82,34 @@ class DriverModuleMethodChannelHandler(
                 result.success(buildSnapshot().toMap())
                 return
             }
+            METHOD_GET_SIGNAL_PREFERENCES -> {
+                result.success(signalPreferencesRepository.get().toMap())
+                return
+            }
+            METHOD_SAVE_SIGNAL_PREFERENCES -> {
+                val rawArguments = (call.arguments as? Map<*, *>)?.entries?.associate { (key, value) ->
+                    key.toString() to value
+                } ?: emptyMap()
+                val validation = signalPreferencesRepository.save(
+                    raw = rawArguments,
+                    now = java.time.Instant.now(),
+                )
+                if (validation.preferences == null) {
+                    result.error(
+                        "INVALID_SIGNAL_PREFERENCES",
+                        "Parâmetros inválidos.",
+                        mapOf("validationErrors" to validation.errors),
+                    )
+                    return
+                }
+                result.success(buildSnapshot().toMap())
+                return
+            }
+            METHOD_RESET_SIGNAL_PREFERENCES -> {
+                signalPreferencesRepository.reset()
+                result.success(buildSnapshot().toMap())
+                return
+            }
             METHOD_OPEN_ACCESSIBILITY_SETTINGS -> {
                 result.success(openAccessibilitySettings())
                 return
@@ -114,6 +148,7 @@ class DriverModuleMethodChannelHandler(
             targetApps = targetApps,
             androidAutoPrepared = true,
         )
+        DriverStateManager.updateSignalPreferences(signalPreferencesRepository.get())
         return DriverStateManager.snapshot()
     }
 

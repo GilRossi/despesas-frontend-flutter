@@ -339,6 +339,88 @@ class DriverStructuredOfferStatus {
   }
 }
 
+class DriverSignalPreferencesStatus {
+  const DriverSignalPreferencesStatus({
+    required this.minGreenFarePerKm,
+    required this.minYellowFarePerKm,
+    required this.minGreenFarePerHour,
+    required this.minYellowFarePerHour,
+    required this.minTotalFare,
+    required this.maxTotalDistanceKm,
+    required this.maxTotalDurationMin,
+    required this.updatedAt,
+    required this.source,
+  });
+
+  final double minGreenFarePerKm;
+  final double minYellowFarePerKm;
+  final double minGreenFarePerHour;
+  final double minYellowFarePerHour;
+  final double minTotalFare;
+  final double maxTotalDistanceKm;
+  final int maxTotalDurationMin;
+  final String updatedAt;
+  final String source;
+
+  bool get isDefault => source == 'DEFAULT';
+
+  factory DriverSignalPreferencesStatus.fromJson(Map<Object?, Object?> json) {
+    return DriverSignalPreferencesStatus(
+      minGreenFarePerKm: (json['minGreenFarePerKm'] as num?)?.toDouble() ?? 2.0,
+      minYellowFarePerKm:
+          (json['minYellowFarePerKm'] as num?)?.toDouble() ?? 1.5,
+      minGreenFarePerHour:
+          (json['minGreenFarePerHour'] as num?)?.toDouble() ?? 45.0,
+      minYellowFarePerHour:
+          (json['minYellowFarePerHour'] as num?)?.toDouble() ?? 30.0,
+      minTotalFare: (json['minTotalFare'] as num?)?.toDouble() ?? 10.0,
+      maxTotalDistanceKm:
+          (json['maxTotalDistanceKm'] as num?)?.toDouble() ?? 25.0,
+      maxTotalDurationMin: (json['maxTotalDurationMin'] as num?)?.toInt() ?? 60,
+      updatedAt: json['updatedAt'] as String? ?? '',
+      source: json['source'] as String? ?? 'DEFAULT',
+    );
+  }
+}
+
+class DriverSignalPreferencesInput {
+  const DriverSignalPreferencesInput({
+    required this.minGreenFarePerKm,
+    required this.minYellowFarePerKm,
+    required this.minGreenFarePerHour,
+    required this.minYellowFarePerHour,
+    required this.minTotalFare,
+    required this.maxTotalDistanceKm,
+    required this.maxTotalDurationMin,
+  });
+
+  final String minGreenFarePerKm;
+  final String minYellowFarePerKm;
+  final String minGreenFarePerHour;
+  final String minYellowFarePerHour;
+  final String minTotalFare;
+  final String maxTotalDistanceKm;
+  final String maxTotalDurationMin;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'minGreenFarePerKm': minGreenFarePerKm,
+      'minYellowFarePerKm': minYellowFarePerKm,
+      'minGreenFarePerHour': minGreenFarePerHour,
+      'minYellowFarePerHour': minYellowFarePerHour,
+      'minTotalFare': minTotalFare,
+      'maxTotalDistanceKm': maxTotalDistanceKm,
+      'maxTotalDurationMin': maxTotalDurationMin,
+    };
+  }
+}
+
+class DriverSignalPreferencesValidationException implements Exception {
+  const DriverSignalPreferencesValidationException(this.validationErrors);
+
+  final List<String> validationErrors;
+}
+
 class DriverOfferSignalStatus {
   const DriverOfferSignalStatus({
     required this.color,
@@ -346,13 +428,14 @@ class DriverOfferSignalStatus {
     required this.reason,
     this.warnings = const [],
     this.farePerKmText,
-    this.farePerMinuteText,
+    this.farePerHourText,
     this.estimatedTotalDistanceKm,
     this.estimatedTotalDurationMin,
     this.estimatedTotalDistanceText,
     this.estimatedTotalDurationText,
     this.ruleVersion,
     this.computedAt,
+    this.preferencesSource,
   });
 
   final String color;
@@ -360,13 +443,14 @@ class DriverOfferSignalStatus {
   final String reason;
   final List<String> warnings;
   final String? farePerKmText;
-  final String? farePerMinuteText;
+  final String? farePerHourText;
   final double? estimatedTotalDistanceKm;
   final int? estimatedTotalDurationMin;
   final String? estimatedTotalDistanceText;
   final String? estimatedTotalDurationText;
   final String? ruleVersion;
   final String? computedAt;
+  final String? preferencesSource;
 
   factory DriverOfferSignalStatus.fromJson(Map<Object?, Object?> json) {
     return DriverOfferSignalStatus(
@@ -377,7 +461,7 @@ class DriverOfferSignalStatus {
           .whereType<String>()
           .toList(),
       farePerKmText: json['farePerKmText'] as String?,
-      farePerMinuteText: json['farePerMinuteText'] as String?,
+      farePerHourText: json['farePerHourText'] as String?,
       estimatedTotalDistanceKm: (json['estimatedTotalDistanceKm'] as num?)
           ?.toDouble(),
       estimatedTotalDurationMin: (json['estimatedTotalDurationMin'] as num?)
@@ -386,6 +470,7 @@ class DriverOfferSignalStatus {
       estimatedTotalDurationText: json['estimatedTotalDurationText'] as String?,
       ruleVersion: json['ruleVersion'] as String?,
       computedAt: json['computedAt'] as String?,
+      preferencesSource: json['preferencesSource'] as String?,
     );
   }
 }
@@ -419,10 +504,11 @@ class DriverNativeFoundationStatus {
     required this.offerSignalReason,
     required this.offerSignalWarnings,
     required this.farePerKmText,
-    required this.farePerMinuteText,
+    required this.farePerHourText,
     required this.estimatedTotalDistanceText,
     required this.estimatedTotalDurationText,
     required this.signalRuleVersion,
+    required this.signalPreferences,
     required this.contextTtlSeconds,
     required this.androidAutoPrepared,
   });
@@ -454,10 +540,11 @@ class DriverNativeFoundationStatus {
   final String? offerSignalReason;
   final List<String> offerSignalWarnings;
   final String? farePerKmText;
-  final String? farePerMinuteText;
+  final String? farePerHourText;
   final String? estimatedTotalDistanceText;
   final String? estimatedTotalDurationText;
   final String? signalRuleVersion;
+  final DriverSignalPreferencesStatus signalPreferences;
   final int contextTtlSeconds;
   final bool androidAutoPrepared;
 
@@ -544,10 +631,13 @@ class DriverNativeFoundationStatus {
               .whereType<String>()
               .toList(),
       farePerKmText: json['farePerKmText'] as String?,
-      farePerMinuteText: json['farePerMinuteText'] as String?,
+      farePerHourText: json['farePerHourText'] as String?,
       estimatedTotalDistanceText: json['estimatedTotalDistanceText'] as String?,
       estimatedTotalDurationText: json['estimatedTotalDurationText'] as String?,
       signalRuleVersion: json['signalRuleVersion'] as String?,
+      signalPreferences: DriverSignalPreferencesStatus.fromJson(
+        json['signalPreferences'] as Map<Object?, Object?>? ?? const {},
+      ),
       contextTtlSeconds: json['contextTtlSeconds'] as int? ?? 15,
       androidAutoPrepared: json['androidAutoPrepared'] as bool? ?? false,
     );
@@ -556,6 +646,14 @@ class DriverNativeFoundationStatus {
 
 abstract interface class DriverNativeBridge {
   Future<DriverNativeFoundationStatus> getFoundationStatus();
+
+  Future<DriverSignalPreferencesStatus> getSignalPreferences();
+
+  Future<DriverNativeFoundationStatus> saveSignalPreferences({
+    required DriverSignalPreferencesInput input,
+  });
+
+  Future<DriverNativeFoundationStatus> resetSignalPreferences();
 
   Future<bool> openAccessibilitySettings();
 

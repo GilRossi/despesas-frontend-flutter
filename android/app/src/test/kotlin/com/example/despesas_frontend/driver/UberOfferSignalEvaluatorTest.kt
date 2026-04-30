@@ -1,66 +1,61 @@
 package com.example.despesas_frontend.driver
 
+import java.math.BigDecimal
 import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UberOfferSignalEvaluatorTest {
     @Test
-    fun `evento 03 gera farol yellow perto do limite verde`() {
+    fun `evento 03 gera farol yellow perto do limite verde com preferencias default`() {
         val signal = evaluateFixture(
             resourceName = "driver/uber_event_03_actionable_offer.txt",
             classification = "ACTIONABLE_OFFER",
             isActionable = true,
         )
 
-        assertNotNull(signal)
         assertEquals("YELLOW", signal?.color)
         assertEquals("R$ 1,96/km", signal?.farePerKmText)
-        assertEquals("R$ 0,72/min", signal?.farePerMinuteText)
+        assertEquals("R$ 42,94/h", signal?.farePerHourText)
         assertEquals("5,1 km", signal?.estimatedTotalDistanceText)
         assertEquals("14 min", signal?.estimatedTotalDurationText)
-        assertTrue(signal?.reason?.contains("abaixo do patamar verde") == true)
-        assertTrue(signal?.warnings?.isEmpty() == true)
+        assertTrue(signal?.reason?.contains("patamar verde configurado") == true)
+        assertEquals("DEFAULT", signal?.preferencesSource)
+        assertEquals("UBER_SIGNAL_V1_CONFIGURABLE", signal?.ruleVersion)
     }
 
     @Test
-    fun `evento 06 gera farol yellow com alertas de distancia e tempo`() {
+    fun `evento 06 gera farol yellow com alerta de distancia perto do limite`() {
         val signal = evaluateFixture(
             resourceName = "driver/uber_event_06_actionable_offer.txt",
             classification = "ACTIONABLE_OFFER",
             isActionable = true,
         )
 
-        assertNotNull(signal)
         assertEquals("YELLOW", signal?.color)
         assertEquals("R$ 1,56/km", signal?.farePerKmText)
-        assertEquals("R$ 0,98/min", signal?.farePerMinuteText)
+        assertEquals("R$ 59,01/h", signal?.farePerHourText)
         assertEquals("24,0 km", signal?.estimatedTotalDistanceText)
         assertEquals("38 min", signal?.estimatedTotalDurationText)
-        assertTrue(signal?.reason?.contains("distância ou tempo altos") == true)
-        assertTrue(signal?.warnings?.contains("Distância total alta.") == true)
-        assertTrue(signal?.warnings?.contains("Tempo total alto.") == true)
+        assertTrue(signal?.warnings?.contains("Distância total perto do limite configurado.") == true)
     }
 
     @Test
-    fun `evento 08 gera farol yellow com alerta de valor baixo`() {
+    fun `evento 08 gera farol yellow com alerta de valor total baixo`() {
         val signal = evaluateFixture(
             resourceName = "driver/uber_event_08_actionable_offer.txt",
             classification = "ACTIONABLE_OFFER",
             isActionable = true,
         )
 
-        assertNotNull(signal)
         assertEquals("YELLOW", signal?.color)
         assertEquals("R$ 1,98/km", signal?.farePerKmText)
-        assertEquals("R$ 0,58/min", signal?.farePerMinuteText)
+        assertEquals("R$ 34,65/h", signal?.farePerHourText)
         assertEquals("3,5 km", signal?.estimatedTotalDistanceText)
         assertEquals("12 min", signal?.estimatedTotalDurationText)
-        assertTrue(signal?.reason?.contains("valor total baixo") == true)
         assertTrue(signal?.warnings?.contains("Valor total baixo.") == true)
     }
 
@@ -72,12 +67,29 @@ class UberOfferSignalEvaluatorTest {
             isActionable = false,
         )
 
-        assertNotNull(signal)
         assertEquals("RED", signal?.color)
         assertEquals("R$ 1,56/km", signal?.farePerKmText)
-        assertEquals("R$ 0,98/min", signal?.farePerMinuteText)
+        assertEquals("R$ 59,01/h", signal?.farePerHourText)
         assertTrue(signal?.reason?.contains("falta requisito crítico") == true)
         assertTrue(signal?.warnings?.contains("CTA ausente.") == true)
+    }
+
+    @Test
+    fun `thresholds do usuario podem promover oferta para green`() {
+        val signal = evaluateFixture(
+            resourceName = "driver/uber_event_03_actionable_offer.txt",
+            classification = "ACTIONABLE_OFFER",
+            isActionable = true,
+            preferences = DriverSignalPreferences.defaults().copy(
+                minGreenFarePerKm = BigDecimal("1.90"),
+                minGreenFarePerHour = BigDecimal("40.00"),
+                source = "USER_CONFIGURED",
+            ),
+        )
+
+        assertEquals("GREEN", signal?.color)
+        assertEquals("USER_CONFIGURED", signal?.preferencesSource)
+        assertTrue(signal?.reason?.contains("limites verdes configurados") == true)
     }
 
     @Test
@@ -125,6 +137,7 @@ class UberOfferSignalEvaluatorTest {
 
         val signal = UberOfferSignalEvaluator.evaluate(
             offer = offer,
+            preferences = DriverSignalPreferences.defaults(),
             computedAt = Instant.parse("2026-04-29T12:00:01Z"),
         )
 
@@ -137,6 +150,7 @@ class UberOfferSignalEvaluatorTest {
         resourceName: String,
         classification: String,
         isActionable: Boolean,
+        preferences: DriverSignalPreferences = DriverSignalPreferences.defaults(),
     ): DriverOfferSignal? {
         val offer = UberOfferParser.parse(
             providerKey = "UBER_DRIVER",
@@ -148,6 +162,7 @@ class UberOfferSignalEvaluatorTest {
 
         return UberOfferSignalEvaluator.evaluate(
             offer = offer,
+            preferences = preferences,
             computedAt = Instant.parse("2026-04-29T12:00:01Z"),
         )
     }

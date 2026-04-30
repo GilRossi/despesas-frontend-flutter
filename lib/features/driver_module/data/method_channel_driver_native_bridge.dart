@@ -18,6 +18,45 @@ class MethodChannelDriverNativeBridge implements DriverNativeBridge {
   }
 
   @override
+  Future<DriverSignalPreferencesStatus> getSignalPreferences() async {
+    final response = await _channel.invokeMethod<Map<Object?, Object?>>(
+      'getSignalPreferences',
+    );
+    return DriverSignalPreferencesStatus.fromJson(response ?? const {});
+  }
+
+  @override
+  Future<DriverNativeFoundationStatus> saveSignalPreferences({
+    required DriverSignalPreferencesInput input,
+  }) async {
+    try {
+      final response = await _channel.invokeMethod<Map<Object?, Object?>>(
+        'saveSignalPreferences',
+        input.toJson(),
+      );
+      return DriverNativeFoundationStatus.fromJson(response ?? const {});
+    } on PlatformException catch (error) {
+      if (error.code == 'INVALID_SIGNAL_PREFERENCES') {
+        final details = error.details as Map<Object?, Object?>?;
+        final validationErrors =
+            (details?['validationErrors'] as List<Object?>? ?? const [])
+                .whereType<String>()
+                .toList();
+        throw DriverSignalPreferencesValidationException(validationErrors);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<DriverNativeFoundationStatus> resetSignalPreferences() async {
+    final response = await _channel.invokeMethod<Map<Object?, Object?>>(
+      'resetSignalPreferences',
+    );
+    return DriverNativeFoundationStatus.fromJson(response ?? const {});
+  }
+
+  @override
   Future<bool> openAccessibilitySettings() async {
     return await _channel.invokeMethod<bool>('openAccessibilitySettings') ??
         false;

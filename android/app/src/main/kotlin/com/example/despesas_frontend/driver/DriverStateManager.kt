@@ -113,6 +113,7 @@ object DriverStateManager {
     private var acceptCommand = DriverAcceptCommandSnapshot.idle()
     private var lastOfferSnapshot: DriverOfferSnapshot? = null
     private var offerCandidateWindow: DriverOfferCandidateWindow? = null
+    private var signalPreferences: DriverSignalPreferences = DriverSignalPreferences.defaults()
 
     @Synchronized
     fun resetForTest() {
@@ -136,6 +137,12 @@ object DriverStateManager {
         acceptCommand = DriverAcceptCommandSnapshot.idle()
         lastOfferSnapshot = null
         offerCandidateWindow = null
+        signalPreferences = DriverSignalPreferences.defaults()
+    }
+
+    @Synchronized
+    fun updateSignalPreferences(preferences: DriverSignalPreferences) {
+        signalPreferences = preferences
     }
 
     @Synchronized
@@ -397,6 +404,7 @@ object DriverStateManager {
         val offerSignal = structuredOffer?.let {
             UberOfferSignalEvaluator.evaluate(
                 offer = it,
+                preferences = signalPreferences,
                 computedAt = now,
             )
         }
@@ -442,10 +450,11 @@ object DriverStateManager {
             offerSignalReason = offerSignal?.reason,
             offerSignalWarnings = offerSignal?.warnings ?: emptyList(),
             farePerKmText = offerSignal?.farePerKmText,
-            farePerMinuteText = offerSignal?.farePerMinuteText,
+            farePerHourText = offerSignal?.farePerHourText,
             estimatedTotalDistanceText = offerSignal?.estimatedTotalDistanceText,
             estimatedTotalDurationText = offerSignal?.estimatedTotalDurationText,
             signalRuleVersion = offerSignal?.ruleVersion,
+            signalPreferences = signalPreferences,
             contextTtlSeconds = CONTEXT_TTL_SECONDS.toInt(),
             androidAutoPrepared = androidAutoPrepared,
         )
